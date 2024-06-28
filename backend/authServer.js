@@ -12,11 +12,7 @@ const jwt = require("jsonwebtoken");
 app.use(express.json());
 app.use(cors());
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
-
-//refresh token
+// Refresh token endpoint
 app.post("/token", async (req, res) => {
   const refreshToken = req.body.token;
   if (!refreshToken) return res.sendStatus(401);
@@ -34,11 +30,12 @@ app.post("/token", async (req, res) => {
   });
 });
 
-//login to your account
+// Login endpoint
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
   const user = await prisma.user.findUnique({
     where: { username },
+    include: { tokens: true },
   });
 
   if (!user) return res.status(400).json({ message: "User not found" });
@@ -63,6 +60,7 @@ app.post("/login", async (req, res) => {
   res.json({ accessToken, refreshToken });
 });
 
+// Registration endpoint
 app.post("/create", async (req, res) => {
   const { username, password } = req.body;
 
@@ -82,17 +80,33 @@ app.post("/create", async (req, res) => {
       data: { username, password: hashedPassword },
     });
 
-    req.session.user = user;
     res.json({ user });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-//logout of your account
-app.delete("/logout", (req, res) => {
-  refreshTokens = refreshTokens.filter((token) => token !== req.body.token);
-  res.sendStatus(204);
+// Logout endpoint
+app.delete("/logout", async (req, res) => {
+  const refreshToken = req.body.refreshToken;
+  if (!refreshToken) {
+    return res.status(400).json({ message: "Token is required" });
+  }
+  try {
+    const tokenRecord = await prisma.token.findFirst({
+      where: { refreshToken },
+    });
+
+    if (!tokenRecord) {
+      return res.status(404).json({ message: "Token not found" });
+    }
+    await prisma.token.delete({
+      where: { id: tokenRecord.id },
+    });
+    res.sendStatus(204);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 function generateAccessToken(user) {
@@ -100,3 +114,7 @@ function generateAccessToken(user) {
     expiresIn: "30min",
   });
 }
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
