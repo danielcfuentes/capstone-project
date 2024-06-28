@@ -1,46 +1,48 @@
 import "./LoginPage.css";
-import React, { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { UserContext } from "../../UserContext.js";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function LoginPage() {
+function LoginPage({ onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { updateUser } = useContext(UserContext);
-
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleChangeUser = (e) => {
+    setUsername(e.target.value);
+  };
+
+  const handleChangePassword = (e) => {
+    setPassword(e.target.value);
+  };
+
+  const handleLogin = (e) => {
     e.preventDefault();
 
-    try {
-      // Make the login API request
-      const response = await fetch(`http://localhost:3000/users/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-        credentials: "include",
+    fetch(`${import.meta.env.VITE_BACKEND_ADDRESS}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username,
+        password,
+      }),
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          console.log(response)
+          throw new Error("Failed to login");
+        }
+      })
+      .then((data) => {
+        onLogin(data);
+        navigate("/main");
+      })
+      .catch((error) => {
+        console.error("Error:", error);
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        const loggedInUser = data.user;
-
-        // Update the user context
-        updateUser(loggedInUser);
-
-        // Navigate to the home page after successful login
-        navigate("/");
-      } else {
-        // Handle the login failure case
-        alert("Login failed");
-      }
-    } catch (error) {
-      // Handle any network or API request errors
-      alert("Login failed: " + error);
-    }
   };
 
   return (
@@ -48,15 +50,15 @@ function LoginPage() {
       <div className="left-side">
         <div className="login-form">
           <h1>Login</h1>
-          <form onSubmit={handleLogin}>
+          <form>
             <label>
-              Email
+              Username
               <input
                 type="text"
-                placeholder="Ex. jonas_kahrwaldi@gmail.com"
-                id="email"
+                placeholder="Ex. J_Kahrwaldi"
+                id="username"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={handleChangeUser}
                 required
               />
             </label>
@@ -66,16 +68,21 @@ function LoginPage() {
                 type="password"
                 id="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handleChangePassword}
                 required
               />
             </label>
-            <button type="submit" className="login-button">
+            <button
+              type="submit"
+              className="login-button"
+              onClick={handleLogin}
+            >
               Login
             </button>
           </form>
           <p className="login-link">
-            Need an account <Link to="/signup">Create one</Link>
+            Need an account?{" "}
+            <button onClick={() => navigate("/signup")}>Sign Up</button>
           </p>
         </div>
       </div>

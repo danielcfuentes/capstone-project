@@ -1,54 +1,47 @@
 import "./SignUp.css";
-import React, { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { UserContext } from "../../UserContext.js";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function SignUp() {
+function SignUp({ onSignUp }) {
   const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const { updateUser } = useContext(UserContext);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleChangeUser = (e) => {
+    setUsername(e.target.value);
+  };
+
+  const handleChangePassword = (e) => {
+    setPassword(e.target.value);
+  };
+
+  const handleCreate = (e) => {
     e.preventDefault();
 
-    try {
-      // Make the signup API request
-      const response = await fetch(`http://localhost:3000/users`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, email, password }),
-        credentials: "include",
+    fetch(`${import.meta.env.VITE_BACKEND_ADDRESS}/create`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username,
+        password,
+      }),
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error("Failed to create account");
+        }
+      })
+      .then((data) => {
+        onSignUp(data);
+        navigate("/main");
+      })
+      .catch((error) => {
+        console.error("Error:", error);
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        const loggedInUser = data.user;
-
-        console.log("Signup successful");
-
-        // Reset form fields
-        setUsername("");
-        setEmail("");
-        setPassword("");
-
-        // Update the user context
-        updateUser(loggedInUser);
-
-        // Navigate to the home page after successful login
-        navigate("/");
-      } else {
-        // Handle signup failure case
-        alert("Signup failed");
-      }
-    } catch (error) {
-      // Handle any network or API request errors
-      alert("Signup failed: " + error);
-    }
   };
 
   return (
@@ -57,7 +50,7 @@ function SignUp() {
         <div className="signup-form">
           <h1>Sign up</h1>
           <p>Sign up to enjoy the features of Run It Up</p>
-          <form onSubmit={handleSubmit}>
+          <form>
             <label>
               Username
               <input
@@ -65,18 +58,7 @@ function SignUp() {
                 placeholder="Ex. J_Khurwaldi"
                 id="username"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-            </label>
-            <label>
-              Email
-              <input
-                type="email"
-                placeholder="Ex. jonas_kahrwaldi@gmail.com"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleChangeUser}
                 required
               />
             </label>
@@ -86,16 +68,21 @@ function SignUp() {
                 type="password"
                 id="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handleChangePassword}
                 required
               />
             </label>
-            <button type="submit" className="signup-button">
+            <button
+              type="submit"
+              className="signup-button"
+              onClick={handleCreate}
+            >
               Sign up
             </button>
           </form>
           <p className="login-link">
-            Already have an account? <Link to="/login">Sign in</Link>
+            Already have an account?{" "}
+            <button onClick={() => navigate("/login")}>Login</button>
           </p>
         </div>
       </div>

@@ -1,40 +1,68 @@
-import './App.css'
-import SignUp from './Components/Signup_Page/SignUp'
-import LoginPage from './Components/Login_Page/LoginPage'
+import "./App.css";
+import SignUp from "./Components/Signup_Page/SignUp";
+import LoginPage from "./Components/Login_Page/LoginPage";
+import Main from "./Components/Main/Main";
 import { useState, useEffect } from "react";
-import { UserContext } from "./UserContext";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Main from "./components/Main/Main";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 function App() {
-  const [user, setUser] = useState(() => {
-    // Retrieve the user data from storage or set it to null if not found
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
-
-  const updateUser = (newUser) => {
-    setUser(newUser);
-  };
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Save the user data to storage whenever the user state changes
-    localStorage.setItem("user", JSON.stringify(user));
-  }, [user]);
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("user");
+  };
+
   return (
     <div className="app">
-      <UserContext.Provider value={{ user, updateUser }}>
-        <BrowserRouter>
-          <Routes>
-            {/* <Route path="/" element={<Main />} /> */}
-            <Route path="/" element={user ? <Main /> : <LoginPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignUp />} />
-          </Routes>
-        </BrowserRouter>
-      </UserContext.Provider>
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/"
+            element={user ? <Navigate to="/main" /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/login"
+            element={
+              user ? (
+                <Navigate to="/main" />
+              ) : (
+                <LoginPage onLogin={handleLogin} />
+              )
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              user ? <Navigate to="/main" /> : <SignUp onSignUp={handleLogin} />
+            }
+          />
+          <Route
+            path="/main"
+            element={
+              user ? (
+                <Main user={user} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 }
 
-export default App
+export default App;
