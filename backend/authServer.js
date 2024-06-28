@@ -14,15 +14,12 @@ app.use(cors());
 
 // Refresh token endpoint
 app.post("/token", async (req, res) => {
-  const refreshToken = req.body.token;
+  const refreshToken = req.body.refreshToken;
   if (!refreshToken) return res.sendStatus(401);
-
-  const tokenRecord = await prisma.token.findUnique({
+  const tokenRecord = await prisma.token.findFirst({
     where: { refreshToken },
   });
-
   if (!tokenRecord) return res.sendStatus(403);
-
   jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
     if (err) return res.sendStatus(403);
     const accessToken = generateAccessToken({ name: user.name });
@@ -37,49 +34,40 @@ app.post("/login", async (req, res) => {
     where: { username },
     include: { tokens: true },
   });
-
   if (!user) return res.status(400).json({ message: "User not found" });
-
   const validPassword = await bcrypt.compare(password, user.password);
   if (!validPassword)
     return res.status(400).json({ message: "Invalid password" });
-
   const accessToken = generateAccessToken({ name: username });
   const refreshToken = jwt.sign(
     { name: username },
     process.env.REFRESH_TOKEN_SECRET
   );
-
   await prisma.token.create({
     data: {
       refreshToken,
       user: { connect: { username } },
     },
   });
-
   res.json({ accessToken, refreshToken });
 });
 
 // Registration endpoint
 app.post("/create", async (req, res) => {
   const { username, password } = req.body;
-
   try {
     const existingUser = await prisma.user.findUnique({
       where: { username },
     });
-
     if (existingUser) {
       return res
         .status(400)
         .json({ message: "User exists, if you have an account login" });
     }
-
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const user = await prisma.user.create({
       data: { username, password: hashedPassword },
     });
-
     res.json({ user });
   } catch (err) {
     res.status(500).json({ message: err.message });
