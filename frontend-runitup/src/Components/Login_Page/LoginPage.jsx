@@ -32,12 +32,11 @@ function LoginPage({ onLogin }) {
         if (response.ok) {
           return response.json();
         } else {
-          console.log(response)
           throw new Error("Failed to login");
         }
       })
       .then((data) => {
-        onLogin(data);
+        onLogin({ name: username }, data.accessToken, data.refreshToken);
         navigate("/main");
       })
       .catch((error) => {

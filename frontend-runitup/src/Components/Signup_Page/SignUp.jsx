@@ -2,7 +2,7 @@ import "./SignUp.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function SignUp({ onSignUp }) {
+function SignUp() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
@@ -30,14 +30,10 @@ function SignUp({ onSignUp }) {
     })
       .then((response) => {
         if (response.ok) {
-          return response.json();
+          navigate("/login");
         } else {
           throw new Error("Failed to create account");
         }
-      })
-      .then((data) => {
-        onSignUp(data);
-        navigate("/main");
       })
       .catch((error) => {
         console.error("Error:", error);
