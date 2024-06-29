@@ -3,7 +3,9 @@ import "../styles/Header.css"
 const Header = () => {
   return (
     <header className="header">
-      <div className="logo">Run It Up</div>
+      <div className="logo">
+        <h3>Run It Up</h3>
+      </div>
       <nav className="nav">
         <a href="#routes" className="nav-item">
           Routes
