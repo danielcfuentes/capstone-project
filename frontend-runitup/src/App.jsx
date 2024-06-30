@@ -6,7 +6,7 @@ import RoutesPage from "./Components/Routes/RoutesPage";
 import RecommendationPage from "./Components/Recommendation/RecommendationPage";
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Header from "./utils/Header";
+
 function App() {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
