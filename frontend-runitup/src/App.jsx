@@ -4,7 +4,7 @@ import LoginPage from "./Components/Login_Page/LoginPage";
 import Main from "./Components/Main/Main";
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
+import Header from './utils/Header'
 function App() {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
