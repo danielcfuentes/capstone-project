@@ -1,6 +1,6 @@
-import "./App.css";
-import SignUp from "./Components/Signup_Page/SignUp";
-import LoginPage from "./Components/Login_Page/LoginPage";
+import "./styles/App.css";
+import SignUp from "./Components/Authentication/SignUp";
+import LoginPage from "./Components/Authentication/LoginPage";
 import Main from "./Components/Main/Main";
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
