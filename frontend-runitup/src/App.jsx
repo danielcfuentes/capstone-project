@@ -2,6 +2,7 @@ import "./styles/App.css";
 import SignUp from "./Components/Authentication/SignUp";
 import LoginPage from "./Components/Authentication/LoginPage";
 import Main from "./Components/Main/Main";
+import Feed from "./Components/Feed/FeedPage"
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Header from './utils/Header'
@@ -91,13 +92,13 @@ function App() {
         <Routes>
           <Route
             path="/"
-            element={user ? <Navigate to="/main" /> : <Navigate to="/login" />}
+            element={user ? <Navigate to="/feed" /> : <Navigate to="/login" />}
           />
           <Route
             path="/login"
             element={
               user ? (
-                <Navigate to="/main" />
+                <Navigate to="/feed" />
               ) : (
                 <LoginPage onLogin={handleLogin} />
               )
@@ -105,10 +106,10 @@ function App() {
           />
           <Route path="/signup" element={<SignUp />} />
           <Route
-            path="/main"
+            path="/feed"
             element={
               user ? (
-                <Main user={user} onLogout={handleLogout} />
+                <Feed user={user} onLogout={handleLogout} />
               ) : (
                 <Navigate to="/login" />
               )
