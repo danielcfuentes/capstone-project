@@ -1,10 +1,12 @@
 import "./styles/App.css";
 import SignUp from "./Components/Authentication/SignUp";
 import LoginPage from "./Components/Authentication/LoginPage";
-import Feed from "./Components/Feed/FeedPage"
+import Feed from "./Components/Feed/FeedPage";
+import RoutesPage from "./Components/Routes/RoutesPage";
+import RecommendationPage from "./Components/Recommendation/RecommendationPage";
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Header from './utils/Header'
+import Header from "./utils/Header";
 function App() {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
@@ -106,9 +108,19 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route
             path="/feed"
+            element={user ? <Feed user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/routes"
+            element={
+              user ? <RoutesPage user={user} onLogout={handleLogout}/> : <Navigate to="/login" />
+            }
+          />
+          <Route
+            path="/recommendations"
             element={
               user ? (
-                <Feed user={user} onLogout={handleLogout} />
+                <RecommendationPage user={user} onLogout={handleLogout}/>
               ) : (
                 <Navigate to="/login" />
               )

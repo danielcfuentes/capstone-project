@@ -1,9 +1,10 @@
 import React from "react";
-
-function RecommendationPage() {
+import Header from "../../utils/Header";
+function RecommendationPage({user, onLogout}) {
   return (
     <div className="main-container">
-        <h1>Recommendation Page</h1>
+      <Header onLogout={onLogout} />
+      <h1>Recommendation Page</h1>
     </div>
   );
 }
