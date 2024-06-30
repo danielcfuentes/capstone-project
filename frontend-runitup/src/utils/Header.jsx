@@ -1,6 +1,6 @@
 import "../styles/Header.css"
 
-const Header = () => {
+const Header = ({onLogout}) => {
   return (
     <header className="header">
       <div className="logo">
@@ -16,7 +16,7 @@ const Header = () => {
         <a href="#recommend" className="nav-item">
           Recommedations
         </a>
-        <a href="#logout" className="nav-item">
+        <a href="#logout" className="nav-item" onClick={onLogout}>
           Logout
         </a>
       </nav>

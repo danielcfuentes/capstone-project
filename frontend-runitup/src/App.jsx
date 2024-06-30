@@ -1,7 +1,6 @@
 import "./styles/App.css";
 import SignUp from "./Components/Authentication/SignUp";
 import LoginPage from "./Components/Authentication/LoginPage";
-import Main from "./Components/Main/Main";
 import Feed from "./Components/Feed/FeedPage"
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
