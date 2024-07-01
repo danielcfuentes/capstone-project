@@ -1,10 +1,8 @@
 import React from "react";
-import Header from "../../utils/Header";
 
-function Feed({ user, onLogout }) {
+function Feed({ user }) {
   return (
     <div className="main-container">
-      <Header onLogout={onLogout} />
       <h1>Welcome to Feeds Page!</h1>
       <h1>{user.name}</h1>
     </div>

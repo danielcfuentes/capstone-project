@@ -90,6 +90,7 @@ function App() {
   return (
     <div className="app">
       <BrowserRouter>
+        {user && <Header user={user} onLogout={handleLogout} />}
         <Routes>
           <Route
             path="/"
@@ -108,19 +109,19 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route
             path="/feed"
-            element={user ? <Feed user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+            element={user ? <Feed user={user} /> : <Navigate to="/login" />}
           />
           <Route
             path="/routes"
             element={
-              user ? <RoutesPage user={user} onLogout={handleLogout}/> : <Navigate to="/login" />
+              user ? <RoutesPage user={user} /> : <Navigate to="/login" />
             }
           />
           <Route
             path="/recommendations"
             element={
               user ? (
-                <RecommendationPage user={user} onLogout={handleLogout}/>
+                <RecommendationPage user={user} />
               ) : (
                 <Navigate to="/login" />
               )
