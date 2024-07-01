@@ -18,13 +18,9 @@ function App() {
     const storedRefreshToken = localStorage.getItem("refreshToken");
 
     if (storedUser && storedAccessToken && storedRefreshToken) {
-      try {
-        setUser(JSON.parse(storedUser));
-        setAccessToken(storedAccessToken);
-        setRefreshToken(storedRefreshToken);
-      } catch (error) {
-        console.error("Error parsing stored user data:", error);
-      }
+      setUser(JSON.parse(storedUser));
+      setAccessToken(storedAccessToken);
+      setRefreshToken(storedRefreshToken);
     }
   }, []);
 
@@ -108,19 +104,29 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route
             path="/feed"
-            element={user ? <Feed user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+            element={
+              user ? (
+                <Feed user={user} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
           />
           <Route
             path="/routes"
             element={
-              user ? <RoutesPage user={user} onLogout={handleLogout}/> : <Navigate to="/login" />
+              user ? (
+                <RoutesPage user={user} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" />
+              )
             }
           />
           <Route
             path="/recommendations"
             element={
               user ? (
-                <RecommendationPage user={user} onLogout={handleLogout}/>
+                <RecommendationPage user={user} onLogout={handleLogout} />
               ) : (
                 <Navigate to="/login" />
               )
