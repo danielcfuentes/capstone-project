@@ -1,6 +1,7 @@
 import "../../styles/SignUp.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { DEFAULT_HEADERS } from "../../utils/apiConfig";
 
 function SignUp() {
   const [username, setUsername] = useState("");
@@ -20,24 +21,18 @@ function SignUp() {
 
     fetch(`${import.meta.env.VITE_BACKEND_ADDRESS}/create`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: DEFAULT_HEADERS,
       body: JSON.stringify({
         username,
         password,
       }),
-    })
-      .then((response) => {
-        if (response.ok) {
-          navigate("/login");
-        } else {
-          throw new Error("Failed to create account");
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
+    }).then((response) => {
+      if (response.ok) {
+        navigate("/login");
+      } else {
+        throw new Error("Failed to create account");
+      }
+    });
   };
 
   return (
