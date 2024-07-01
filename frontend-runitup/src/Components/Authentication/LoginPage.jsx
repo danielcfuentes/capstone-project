@@ -1,4 +1,4 @@
-import "./LoginPage.css";
+import "../../styles/LoginPage.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -37,7 +37,7 @@ function LoginPage({ onLogin }) {
       })
       .then((data) => {
         onLogin({ name: username }, data.accessToken, data.refreshToken);
-        navigate("/main");
+        navigate("/feed");
       })
       .catch((error) => {
         console.error("Error:", error);

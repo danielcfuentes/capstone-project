@@ -1,14 +1,23 @@
-import "./App.css";
-import SignUp from "./Components/Signup_Page/SignUp";
-import LoginPage from "./Components/Login_Page/LoginPage";
-import Main from "./Components/Main/Main";
+import "./styles/App.css";
+import SignUp from "./Components/Authentication/SignUp";
+import LoginPage from "./Components/Authentication/LoginPage";
+import Feed from "./Components/Feed/FeedPage";
+import RoutesPage from "./Components/Routes/RoutesPage";
+import RecommendationPage from "./Components/Recommendation/RecommendationPage";
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Header from "./utils/Header";
+
+// Protected route wrapper component
+const ProtectedRoute = ({ children, isLoggedIn }) => {
+  return isLoggedIn ? children : <Navigate to="/login" />;
+};
 
 function App() {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
+  const isLoggedIn = !!user && !!accessToken && !!refreshToken;
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -88,16 +97,19 @@ function App() {
   return (
     <div className="app">
       <BrowserRouter>
+        {isLoggedIn && <Header user={user} onLogout={handleLogout} />}
         <Routes>
           <Route
             path="/"
-            element={user ? <Navigate to="/main" /> : <Navigate to="/login" />}
+            element={
+              isLoggedIn ? <Navigate to="/feed" /> : <Navigate to="/login" />
+            }
           />
           <Route
             path="/login"
             element={
-              user ? (
-                <Navigate to="/main" />
+              isLoggedIn ? (
+                <Navigate to="/feed" />
               ) : (
                 <LoginPage onLogin={handleLogin} />
               )
@@ -105,13 +117,27 @@ function App() {
           />
           <Route path="/signup" element={<SignUp />} />
           <Route
-            path="/main"
+            path="/feed"
             element={
-              user ? (
-                <Main user={user} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/login" />
-              )
+              <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <Feed user={user} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/routes"
+            element={
+              <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <RoutesPage user={user} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/recommendations"
+            element={
+              <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <RecommendationPage user={user} />
+              </ProtectedRoute>
             }
           />
         </Routes>
