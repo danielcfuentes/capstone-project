@@ -4,7 +4,6 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
-
 // migration ex. npx prisma migrate dev --name init_books_table
 // launiching prisma: npx prisma studio
 generator client {
@@ -14,4 +13,17 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  username String  @id
+  password String
+  tokens   Token[]
+}
+
+model Token {
+  id           Int    @id @default(autoincrement())
+  refreshToken String
+  userId       String
+  user         User   @relation(fields: [userId], references: [username])
 }
