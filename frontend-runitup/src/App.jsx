@@ -7,6 +7,7 @@ import RecommendationPage from "./Components/Recommendation/RecommendationPage";
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Header from "./utils/Header";
+import Footer from "./utils/Footer";
 
 // Protected route wrapper component
 const ProtectedRoute = ({ children, isLoggedIn }) => {
@@ -137,6 +138,7 @@ function App() {
             }
           />
         </Routes>
+        {isLoggedIn && <Footer />}
       </BrowserRouter>
     </div>
   );
