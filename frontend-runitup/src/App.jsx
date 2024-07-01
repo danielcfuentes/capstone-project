@@ -7,10 +7,17 @@ import RecommendationPage from "./Components/Recommendation/RecommendationPage";
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Header from "./utils/Header";
+
+// Protected route wrapper component
+const ProtectedRoute = ({ children, isLoggedIn }) => {
+  return isLoggedIn ? children : <Navigate to="/login" />;
+};
+
 function App() {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
+  const isLoggedIn = !!user && !!accessToken && !!refreshToken;
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -90,16 +97,18 @@ function App() {
   return (
     <div className="app">
       <BrowserRouter>
-        {user && <Header user={user} onLogout={handleLogout} />}
+        {isLoggedIn && <Header user={user} onLogout={handleLogout} />}
         <Routes>
           <Route
             path="/"
-            element={user ? <Navigate to="/feed" /> : <Navigate to="/login" />}
+            element={
+              isLoggedIn ? <Navigate to="/feed" /> : <Navigate to="/login" />
+            }
           />
           <Route
             path="/login"
             element={
-              user ? (
+              isLoggedIn ? (
                 <Navigate to="/feed" />
               ) : (
                 <LoginPage onLogin={handleLogin} />
@@ -109,22 +118,26 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route
             path="/feed"
-            element={user ? <Feed user={user} /> : <Navigate to="/login" />}
+            element={
+              <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <Feed user={user} />
+              </ProtectedRoute>
+            }
           />
           <Route
             path="/routes"
             element={
-              user ? <RoutesPage user={user} /> : <Navigate to="/login" />
+              <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <RoutesPage user={user} />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/recommendations"
             element={
-              user ? (
+              <ProtectedRoute isLoggedIn={isLoggedIn}>
                 <RecommendationPage user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
+              </ProtectedRoute>
             }
           />
         </Routes>
