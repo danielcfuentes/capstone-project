@@ -39,9 +39,6 @@ function LoginPage({ onLogin }) {
         onLogin({ name: username }, data.accessToken, data.refreshToken);
         navigate("/feed");
       })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
   };
 
   return (

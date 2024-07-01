@@ -35,9 +35,6 @@ function SignUp() {
           throw new Error("Failed to create account");
         }
       })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
   };
 
   return (
