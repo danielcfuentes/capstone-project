@@ -21,7 +21,7 @@ function LoginPage({ onLogin }) {
 
     fetch(`${import.meta.env.VITE_BACKEND_ADDRESS}/login`, {
       method: "POST",
-      DEFAULT_HEADERS,
+      headers: DEFAULT_HEADERS,
       body: JSON.stringify({
         username,
         password,
