@@ -4,17 +4,8 @@ const app = express();
 const jwt = require("jsonwebtoken");
 app.use(express.json);
 
-const posts = [
-  {
-    username: "Kyle",
-    title: "Post 1",
-  },
-  {
-    username: "Jim",
-    title: "Post 2",
-  },
-];
-
+//example of how to get posts using user auth. keeping this so i can have an example when i later have to do this
+//before, posts were an array with a username and a title
 app.get("/posts", authenticateToken, (req, res) => {
   res.json(posts.filter((posts) => post.username === req.user.name));
 });
