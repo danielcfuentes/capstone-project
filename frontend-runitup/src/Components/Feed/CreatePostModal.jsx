@@ -1,21 +1,27 @@
 import React, { useState } from "react";
-import "./CreatePostModal.css";
+import "../../styles/CreateModal.css";
 
 const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
+  const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [image, setImage] = useState(null);
+  const [images, setImages] = useState([]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ content, image });
+    onSubmit({ title, content, images });
+    setTitle("");
     setContent("");
-    setImage(null);
+    setImages([]);
     onClose();
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    setImage(file);
+    const files = Array.from(e.target.files);
+    setImages((prevImages) => [...prevImages, ...files]);
+  };
+
+  const removeImage = (index) => {
+    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
   };
 
   if (!isOpen) return null;
@@ -25,14 +31,41 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
       <div className="modal-content">
         <h2>Create a New Post</h2>
         <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter post title"
+            required
+          />
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="What's on your mind?"
             rows="4"
+            required
           />
-          <input type="file" accept="image/*" onChange={handleImageChange} />
-          {image && <p>Image selected: {image.name}</p>}
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageChange}
+          />
+          {images.length > 0 && (
+            <div className="image-previews">
+              {images.map((image, index) => (
+                <div key={index} className="image-preview">
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt={`Preview ${index}`}
+                  />
+                  <button type="button" onClick={() => removeImage(index)}>
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="modal-actions">
             <button type="button" onClick={onClose}>
               Cancel

@@ -17,6 +17,8 @@
   border-radius: 8px;
   width: 90%;
   max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-content h2 {
@@ -28,6 +30,7 @@
   flex-direction: column;
 }
 
+.modal-content input[type="text"],
 .modal-content textarea {
   margin-bottom: 10px;
   padding: 8px;
@@ -35,6 +38,34 @@
 
 .modal-content input[type="file"] {
   margin-bottom: 10px;
+}
+
+.image-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.image-preview {
+  position: relative;
+  width: 100px;
+}
+
+.image-preview img {
+  width: 100%;
+  height: auto;
+}
+
+.image-preview button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: rgba(255, 0, 0, 0.7);
+  color: white;
+  border: none;
+  padding: 2px 5px;
+  cursor: pointer;
 }
 
 .modal-actions {
