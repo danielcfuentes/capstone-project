@@ -10,7 +10,6 @@ const AddButton = () => {
 
   const handleSubmitPost = (postData) => {
     // Here you would typically send the post data to your backend
-    console.log("Submitting post:", postData);
     // After submitting, you might want to refresh the feed or add the new post to the existing list
   };
 
