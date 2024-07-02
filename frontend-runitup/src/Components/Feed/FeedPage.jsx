@@ -1,13 +1,13 @@
 import React from "react";
 
 import NavBar from "./NavBar";
-import Home from "./Home";
+import AddButton from "./AddButton";
 
 function Feed({ user }) {
   return (
-    <div className="main-container">
-      <NavBar/>
-      <Home />
+    <div className="feed-page">
+      <NavBar />
+      <AddButton />
     </div>
   );
 }
