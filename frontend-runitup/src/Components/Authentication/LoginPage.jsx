@@ -1,6 +1,7 @@
 import "../../styles/LoginPage.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { DEFAULT_HEADERS } from "../../utils/apiConfig";
 
 function LoginPage({ onLogin }) {
   const [username, setUsername] = useState("");
@@ -20,9 +21,7 @@ function LoginPage({ onLogin }) {
 
     fetch(`${import.meta.env.VITE_BACKEND_ADDRESS}/login`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: DEFAULT_HEADERS,
       body: JSON.stringify({
         username,
         password,
@@ -39,9 +38,6 @@ function LoginPage({ onLogin }) {
         onLogin({ name: username }, data.accessToken, data.refreshToken);
         navigate("/feed");
       })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
   };
 
   return (

@@ -6,11 +6,19 @@ import RoutesPage from "./Components/Routes/RoutesPage";
 import RecommendationPage from "./Components/Recommendation/RecommendationPage";
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Header from "./utils/Header";
+import Footer from "./utils/Footer";
+
+// Protected route wrapper component
+const ProtectedRoute = ({ children, isLoggedIn }) => {
+  return isLoggedIn ? children : <Navigate to="/login" />;
+};
 
 function App() {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
+  const isLoggedIn = !!user && !!accessToken && !!refreshToken;
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -18,13 +26,9 @@ function App() {
     const storedRefreshToken = localStorage.getItem("refreshToken");
 
     if (storedUser && storedAccessToken && storedRefreshToken) {
-      try {
-        setUser(JSON.parse(storedUser));
-        setAccessToken(storedAccessToken);
-        setRefreshToken(storedRefreshToken);
-      } catch (error) {
-        console.error("Error parsing stored user data:", error);
-      }
+      setUser(JSON.parse(storedUser));
+      setAccessToken(storedAccessToken);
+      setRefreshToken(storedRefreshToken);
     }
   }, []);
 
@@ -90,15 +94,18 @@ function App() {
   return (
     <div className="app">
       <BrowserRouter>
+        {isLoggedIn && <Header user={user} onLogout={handleLogout} />}
         <Routes>
           <Route
             path="/"
-            element={user ? <Navigate to="/feed" /> : <Navigate to="/login" />}
+            element={
+              isLoggedIn ? <Navigate to="/feed" /> : <Navigate to="/login" />
+            }
           />
           <Route
             path="/login"
             element={
-              user ? (
+              isLoggedIn ? (
                 <Navigate to="/feed" />
               ) : (
                 <LoginPage onLogin={handleLogin} />
@@ -108,25 +115,30 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route
             path="/feed"
-            element={user ? <Feed user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+            element={
+              <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <Feed user={user} />
+              </ProtectedRoute>
+            }
           />
           <Route
             path="/routes"
             element={
-              user ? <RoutesPage user={user} onLogout={handleLogout}/> : <Navigate to="/login" />
+              <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <RoutesPage user={user} />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/recommendations"
             element={
-              user ? (
-                <RecommendationPage user={user} onLogout={handleLogout}/>
-              ) : (
-                <Navigate to="/login" />
-              )
+              <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <RecommendationPage user={user} />
+              </ProtectedRoute>
             }
           />
         </Routes>
+        {isLoggedIn && <Footer />}
       </BrowserRouter>
     </div>
   );
