@@ -1,27 +1,41 @@
+// src/components/CreatePostModal.jsx
 import React, { useState } from "react";
+import { createPost } from "./postrequests";
 import "../../styles/CreateModal.css";
 
-const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
+const CreatePostModal = ({ isOpen, onClose, accessToken, onPostCreated }) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit({ title, content, images });
-    setTitle("");
-    setContent("");
-    setImages([]);
-    onClose();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const imageUrls = images.map((image) => URL.createObjectURL(image)); // In a real app, you'd upload these to a server first
+      const newPost = await createPost(
+        { title, content, imageUrls },
+        accessToken
+      );
+      onPostCreated(newPost);
+      setTitle("");
+      setContent("");
+      setImages([]);
+      onClose();
+    } catch (err) {
+      setError("Failed to create post. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     setImages((prevImages) => [...prevImages, ...files]);
-  };
-
-  const removeImage = (index) => {
-    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
   };
 
   if (!isOpen) return null;
@@ -30,6 +44,7 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
     <div className="modal-overlay">
       <div className="modal-content">
         <h2>Create a New Post</h2>
+        {error && <p className="error-message">{error}</p>}
         <form onSubmit={handleSubmit}>
           <input
             type="text"
@@ -54,23 +69,21 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
           {images.length > 0 && (
             <div className="image-previews">
               {images.map((image, index) => (
-                <div key={index} className="image-preview">
-                  <img
-                    src={URL.createObjectURL(image)}
-                    alt={`Preview ${index}`}
-                  />
-                  <button type="button" onClick={() => removeImage(index)}>
-                    Remove
-                  </button>
-                </div>
+                <img
+                  key={index}
+                  src={URL.createObjectURL(image)}
+                  alt={`Preview ${index}`}
+                />
               ))}
             </div>
           )}
           <div className="modal-actions">
-            <button type="button" onClick={onClose}>
+            <button type="button" onClick={onClose} disabled={isLoading}>
               Cancel
             </button>
-            <button type="submit">Post</button>
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? "Creating..." : "Create Post"}
+            </button>
           </div>
         </form>
       </div>
