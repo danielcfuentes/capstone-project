@@ -2,14 +2,13 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 const jwt = require("jsonwebtoken");
-app.use(express.json);
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+const PORT = 3000;
 
-//example of how to get posts using user auth. keeping this so i can have an example when i later have to do this
-//before, posts were an array with a username and a title
-app.get("/posts", authenticateToken, (req, res) => {
-  res.json(posts.filter((posts) => post.username === req.user.name));
-});
+app.use(express.json());
 
+// Middleware to authenticate token
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
@@ -22,4 +21,57 @@ function authenticateToken(req, res, next) {
   });
 }
 
-app.listen(5000);
+// Create a new post
+app.post("/posts", authenticateToken, async (req, res) => {
+  const { title, content, imageUrls } = req.body;
+
+  try {
+    const newPost = await prisma.post.create({
+      data: {
+        title,
+        content,
+        user: { connect: { username: req.user.name } },
+        images: {
+          create: imageUrls.map((url) => ({ url })),
+        },
+      },
+      include: { images: true },
+    });
+
+    res.status(201).json(newPost);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error creating post", error: error.message });
+  }
+});
+
+// Get all posts from all users
+app.get("/allposts", authenticateToken, async (req, res) => {
+  try {
+    const posts = await prisma.post.findMany({
+      include: {
+        images: true,
+        user: {
+          select: {
+            username: true,
+            // Add other user fields want to include, but NOT the password
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc", // This will sort posts from newest to oldest
+      },
+    });
+
+    res.json(posts);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching all posts", error: error.message });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
