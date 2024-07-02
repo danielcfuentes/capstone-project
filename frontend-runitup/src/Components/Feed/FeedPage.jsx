@@ -1,10 +1,11 @@
 import React from "react";
 
+import AddButton from "./AddButton";
+
 function Feed({ user }) {
   return (
-    <div className="main-container">
-      <h1>Welcome to Feeds Page!</h1>
-      <h1>{user.name}</h1>
+    <div className="feed-page">
+      <AddButton />
     </div>
   );
 }
