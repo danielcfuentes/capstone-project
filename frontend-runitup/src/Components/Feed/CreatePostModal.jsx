@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "../../styles/CreateModal.css";
+import { getHeaders } from "../../utils/apiConfig";
 
 const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
   const [title, setTitle] = useState("");
@@ -17,10 +18,7 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
         `${import.meta.env.VITE_POST_ADDRESS}/posts`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
+          headers: getHeaders(),
           body: JSON.stringify({
             title,
             content,
