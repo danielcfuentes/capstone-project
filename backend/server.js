@@ -4,7 +4,7 @@ const app = express();
 const jwt = require("jsonwebtoken");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const PORT = 3000;
+const PORT = process.env.SERVER_PORT;
 
 app.use(express.json());
 
