@@ -30,6 +30,7 @@ app.post("/posts", authenticateToken, async (req, res) => {
       data: {
         title,
         content,
+        updatedAt: null, // Ensure updatedAt is null when the post is created
         user: { connect: { username: req.user.name } },
         images: {
           create: imageUrls.map((url) => ({ url })),
