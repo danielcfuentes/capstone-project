@@ -20,7 +20,7 @@ const PostCard = ({ post }) => {
         <span className="post-date">
           {new Date(post.createdAt).toLocaleDateString()}
         </span>
-        {/* You can add like and comment functionality here */}
+        {/* can add like and comment functionality here */}
         <button className="like-button">Like</button>
         <button className="comment-button">Comment</button>
       </div>
