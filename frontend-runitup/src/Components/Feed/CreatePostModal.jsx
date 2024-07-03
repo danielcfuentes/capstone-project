@@ -13,18 +13,21 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
     const imageUrls = images.map((image) => URL.createObjectURL(image));
 
     try {
-      const response = await fetch("http://localhost:3000/posts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-        body: JSON.stringify({
-          title,
-          content,
-          imageUrls,
-        }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/posts`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+          body: JSON.stringify({
+            title,
+            content,
+            imageUrls,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to create post");

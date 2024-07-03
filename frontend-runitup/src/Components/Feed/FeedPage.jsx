@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import PostCard from "./PostCard";
 import AddButton from "./AddButton";
 
+
 const FeedPage = () => {
   const [posts, setPosts] = useState([]);
 
@@ -11,7 +12,7 @@ const FeedPage = () => {
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch("http://localhost:3000/allposts", {
+      const response = await fetch(`${import.meta.env.VITE_POST_ADDRESS}/allposts`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
