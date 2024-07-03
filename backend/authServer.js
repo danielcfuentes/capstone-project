@@ -103,4 +103,6 @@ function generateAccessToken(user) {
   });
 }
 
-app.listen(PORT, () => {});
+app.listen(PORT, () => {
+  console.log(`Auth Server is running on http://localhost:${PORT}`);
+});

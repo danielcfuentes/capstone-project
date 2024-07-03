@@ -6,6 +6,7 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [images, setImages] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,8 +39,8 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
       setImages([]);
       onClose();
     } catch (error) {
-      console.error("Error creating post:", error);
       // Here show an error message to the user
+      setErrorMessage("Error creating post:", error)
     }
   };
 
@@ -100,6 +101,7 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
             </button>
             <button type="submit">Post</button>
           </div>
+          {errorMessage && <p className="error"> {errorMessage} </p>}
         </form>
       </div>
     </div>
