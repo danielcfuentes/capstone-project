@@ -1,35 +1,44 @@
-// src/components/CreatePostModal.jsx
 import React, { useState } from "react";
-import { createPost } from "./postrequests";
 import "../../styles/CreateModal.css";
 
-const CreatePostModal = ({ isOpen, onClose, accessToken, onPostCreated }) => {
+const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [images, setImages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+
+    // Convert images to URLs (assuming you're using local URLs for now)
+    const imageUrls = images.map((image) => URL.createObjectURL(image));
 
     try {
-      const imageUrls = images.map((image) => URL.createObjectURL(image)); // In a real app, you'd upload these to a server first
-      const newPost = await createPost(
-        { title, content, imageUrls },
-        accessToken
-      );
-      onPostCreated(newPost);
+      const response = await fetch("http://localhost:3000/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+        body: JSON.stringify({
+          title,
+          content,
+          imageUrls,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create post");
+      }
+
+      const newPost = await response.json();
+      onSubmit(newPost);
       setTitle("");
       setContent("");
       setImages([]);
       onClose();
-    } catch (err) {
-      setError("Failed to create post. Please try again.");
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      console.error("Error creating post:", error);
+      // Here show an error message to the user
     }
   };
 
@@ -38,13 +47,16 @@ const CreatePostModal = ({ isOpen, onClose, accessToken, onPostCreated }) => {
     setImages((prevImages) => [...prevImages, ...files]);
   };
 
+  const removeImage = (index) => {
+    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
         <h2>Create a New Post</h2>
-        {error && <p className="error-message">{error}</p>}
         <form onSubmit={handleSubmit}>
           <input
             type="text"
@@ -69,21 +81,23 @@ const CreatePostModal = ({ isOpen, onClose, accessToken, onPostCreated }) => {
           {images.length > 0 && (
             <div className="image-previews">
               {images.map((image, index) => (
-                <img
-                  key={index}
-                  src={URL.createObjectURL(image)}
-                  alt={`Preview ${index}`}
-                />
+                <div key={index} className="image-preview">
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt={`Preview ${index}`}
+                  />
+                  <button type="button" onClick={() => removeImage(index)}>
+                    Remove
+                  </button>
+                </div>
               ))}
             </div>
           )}
           <div className="modal-actions">
-            <button type="button" onClick={onClose} disabled={isLoading}>
+            <button type="button" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Create Post"}
-            </button>
+            <button type="submit">Post</button>
           </div>
         </form>
       </div>

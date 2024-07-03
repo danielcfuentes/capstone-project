@@ -1,13 +1,47 @@
-import React from "react";
-
+import React, { useState, useEffect } from "react";
+import PostCard from "./PostCard";
 import AddButton from "./AddButton";
 
-function Feed({ user }) {
+const FeedPage = () => {
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/allposts", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch posts");
+      }
+      const data = await response.json();
+      setPosts(data);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    }
+  };
+
+  const handlePostCreated = (newPost) => {
+    setPosts((prevPosts) => [newPost, ...prevPosts]);
+  };
+
   return (
     <div className="feed-page">
-      <AddButton />
+      <div className="content">
+        <main className="main-content">
+          {posts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </main>
+      </div>
+      <AddButton onPostCreated={handlePostCreated} />
     </div>
   );
-}
+};
 
-export default Feed;
+export default FeedPage;

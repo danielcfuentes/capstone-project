@@ -1,16 +1,15 @@
-import "../../styles/AddButton.css"
-import { useState } from "react";
+import React, { useState } from "react";
 import CreatePostModal from "./CreatePostModal";
+import "../../styles/AddButton.css";
 
-const AddButton = () => {
+const AddButton = ({ onPostCreated }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
-  const handleSubmitPost = (postData) => {
-    // Here you would typically send the post data to your backend
-    // After submitting, you might want to refresh the feed or add the new post to the existing list
+  const handleSubmitPost = (newPost) => {
+    onPostCreated(newPost);
   };
 
   return (
