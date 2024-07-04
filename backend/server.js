@@ -24,30 +24,38 @@ function authenticateToken(req, res, next) {
 }
 
 // Create a new post
-app.post("/posts", authenticateToken, async (req, res) => {
-  const { title, content, imageUrls } = req.body;
+const upload = multer({ storage: multer.memoryStorage() });
 
-  try {
-    const newPost = await prisma.post.create({
-      data: {
-        title,
-        content,
-        updatedAt: null, // Ensure updatedAt is null when the post is created
-        user: { connect: { username: req.user.name } },
-        images: {
-          create: imageUrls.map((url) => ({ url })),
+app.post(
+  "/posts",
+  authenticateToken,
+  upload.array("images"),
+  async (req, res) => {
+    const { title, content } = req.body;
+    const images = req.files;
+
+    try {
+      const newPost = await prisma.post.create({
+        data: {
+          title,
+          content,
+          userId: req.user.name,
+          images: {
+            create: images.map((image) => ({
+              data: image.buffer,
+              mimeType: image.mimetype,
+            })),
+          },
         },
-      },
-      include: { images: true },
-    });
+        include: { images: true },
+      });
 
-    res.status(201).json(newPost);
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error creating post", error: error.message });
+      res.json(newPost);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create post" });
+    }
   }
-});
+);
 
 // Get all posts from all users
 app.get("/allposts", authenticateToken, async (req, res) => {
