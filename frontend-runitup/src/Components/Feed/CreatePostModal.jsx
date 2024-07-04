@@ -14,14 +14,9 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
     const formData = new FormData();
     formData.append("title", title);
     formData.append("content", content);
-    for (let i = 0; i < images.length; i++) {
-      formData.append("images", images[i]);
-    }
-
-    // Log FormData contents
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
+    images.forEach((image, index) => {
+      formData.append(`images`, image);
+    });
 
     try {
       const response = await fetch(
@@ -34,8 +29,7 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create post");
+        throw new Error("Failed to create post");
       }
 
       const newPost = await response.json();
@@ -45,19 +39,16 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
       setImages([]);
       onClose();
     } catch (error) {
-      console.error("Error details:", error);
-      setErrorMessage(`Error creating post: ${error.message}`);
+      setErrorMessage("Error creating post");
     }
   };
 
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    setImages(files);
-    console.log("Selected images:", files);
+    setImages([...images, ...Array.from(e.target.files)]);
   };
 
   const removeImage = (index) => {
-    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
+    setImages(images.filter((_, i) => i !== index));
   };
 
   if (!isOpen) return null;
@@ -87,7 +78,7 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
             multiple
             onChange={handleImageChange}
           />
-          {images.length > 0 && (
+
             <div className="image-previews">
               {images.map((image, index) => (
                 <div key={index} className="image-preview">
@@ -101,7 +92,6 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
                 </div>
               ))}
             </div>
-          )}
           <div className="modal-actions">
             <button type="button" onClick={onClose}>
               Cancel

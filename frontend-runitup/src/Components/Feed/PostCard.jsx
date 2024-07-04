@@ -9,13 +9,12 @@ const PostCard = ({ post }) => {
         <p className="post-author">Posted by: {post.userId}</p>
       </div>
       <p className="post-content">{post.content}</p>
-      {/* {post.images && post.images.length > 0 && ( */}
       <div className="post-images">
-        {post.images.map((image) => (
+        {post.images.map((image, index) => (
           <img
-            key={image.id}
+            key={index}
             src={`${import.meta.env.VITE_POST_ADDRESS}/images/${image.id}`}
-            alt="Post image"
+            alt={`Post image ${index + 1}`}
           />
         ))}
       </div>

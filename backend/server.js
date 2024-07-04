@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const PORT = process.env.SERVER_PORT;
-const multer = require("multer")
+const multer = require("multer");
 
 app.use(express.json());
 app.use(cors());
@@ -32,9 +32,6 @@ app.post(
   authenticateToken,
   upload.array("images"),
   async (req, res) => {
-    console.log("Request body:", req.body);
-    console.log("Request files:", req.files);
-
     const { title, content } = req.body;
     const images = req.files || []; // Provide a default empty array if req.files is undefined
 
@@ -60,7 +57,6 @@ app.post(
 
       res.json(newPost);
     } catch (error) {
-      console.error("Error creating post:", error);
       res
         .status(500)
         .json({ error: "Failed to create post", details: error.message });
