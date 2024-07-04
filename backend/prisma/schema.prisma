@@ -30,19 +30,20 @@ model Token {
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
-  title     String   @db.VarChar(30)
-  content   String   @db.VarChar(2000)
-  createdAt DateTime @default(now())
+  id        Int       @id @default(autoincrement())
+  title     String    @db.VarChar(30)
+  content   String    @db.VarChar(2000)
+  createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt // Make updatedAt optional
   userId    String
-  user      User     @relation(fields: [userId], references: [username])
+  user      User      @relation(fields: [userId], references: [username])
   images    Image[]
 }
 
 model Image {
-  id     Int    @id @default(autoincrement())
-  url    String
-  postId Int
-  post   Post   @relation(fields: [postId], references: [id])
+  id       Int    @id @default(autoincrement())
+  data     Bytes
+  mimeType String
+  postId   Int
+  post     Post   @relation(fields: [postId], references: [id])
 }
