@@ -62,11 +62,16 @@ app.get("/allposts", authenticateToken, async (req, res) => {
   try {
     const posts = await prisma.post.findMany({
       include: {
-        images: true,
+        images: {
+          select: {
+            id: true,
+            mimeType: true
+          }
+        },
         user: {
           select: {
             username: true,
-            // Add other user fields want to include, but NOT the password
+            // Add other user fields to include, but NOT the password
           },
         },
       },
@@ -75,11 +80,39 @@ app.get("/allposts", authenticateToken, async (req, res) => {
       },
     });
 
-    res.json(posts);
+    // Transform the posts to include image URLs instead of raw data
+    const transformedPosts = posts.map(post => ({
+      ...post,
+      images: post.images.map(image => ({
+        id: image.id,
+        url: `http://localhost:3000/images/${image.id}`,
+        mimeType: image.mimeType
+      }))
+    }));
+
+    res.json(transformedPosts);
   } catch (error) {
     res
       .status(500)
       .json({ message: "Error fetching all posts", error: error.message });
+  }
+});
+
+app.get("/images/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const image = await prisma.image.findUnique({
+      where: { id: parseInt(id) },
+    });
+    if (!image) {
+      return res.status(404).send("Image not found");
+    }
+
+    res.set("Content-Type", image.mimeType);
+    res.send(image.data);
+  } catch (error) {
+    res.status(500).send("Error retrieving image");
   }
 });
 
