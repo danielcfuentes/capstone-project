@@ -1,18 +1,47 @@
 import React, { useState } from "react";
 import "../../styles/CreateModal.css";
+import { getHeaders } from "../../utils/apiConfig";
 
 const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [images, setImages] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit({ title, content, images });
-    setTitle("");
-    setContent("");
-    setImages([]);
-    onClose();
+
+    // Convert images to URLs (assuming you're using local URLs for now)
+    const imageUrls = images.map((image) => URL.createObjectURL(image));
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/posts`,
+        {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify({
+            title,
+            content,
+            imageUrls,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to create post");
+      }
+
+      const newPost = await response.json();
+      onSubmit(newPost);
+      setTitle("");
+      setContent("");
+      setImages([]);
+      onClose();
+    } catch (error) {
+      // Here show an error message to the user
+      setErrorMessage("Error creating post:", error)
+    }
   };
 
   const handleImageChange = (e) => {
@@ -72,6 +101,7 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
             </button>
             <button type="submit">Post</button>
           </div>
+          {errorMessage && <p className="error"> {errorMessage} </p>}
         </form>
       </div>
     </div>

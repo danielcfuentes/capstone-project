@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const app = express();
 const jwt = require("jsonwebtoken");
 const { PrismaClient } = require("@prisma/client");
@@ -7,6 +8,7 @@ const prisma = new PrismaClient();
 const PORT = process.env.SERVER_PORT;
 
 app.use(express.json());
+app.use(cors());
 
 // Middleware to authenticate token
 function authenticateToken(req, res, next) {
