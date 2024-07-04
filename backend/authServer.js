@@ -6,7 +6,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 const app = express();
-const PORT = 2000;
+const PORT = process.env.AUTH_PORT;
 const jwt = require("jsonwebtoken");
 
 app.use(express.json());
@@ -103,6 +103,4 @@ function generateAccessToken(user) {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+app.listen(PORT, () => {});

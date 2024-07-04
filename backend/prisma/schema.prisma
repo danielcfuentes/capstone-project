@@ -19,6 +19,7 @@ model User {
   username String  @id
   password String
   tokens   Token[]
+  posts    Post[]
 }
 
 model Token {
@@ -26,4 +27,22 @@ model Token {
   refreshToken String
   userId       String
   user         User   @relation(fields: [userId], references: [username])
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(30)
+  content   String   @db.VarChar(2000)
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt // Make updatedAt optional
+  userId    String
+  user      User     @relation(fields: [userId], references: [username])
+  images    Image[]
+}
+
+model Image {
+  id     Int    @id @default(autoincrement())
+  url    String
+  postId Int
+  post   Post   @relation(fields: [postId], references: [id])
 }
