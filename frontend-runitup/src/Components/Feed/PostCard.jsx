@@ -9,13 +9,16 @@ const PostCard = ({ post }) => {
         <p className="post-author">Posted by: {post.userId}</p>
       </div>
       <p className="post-content">{post.content}</p>
-      {post.images && post.images.length > 0 && (
-        <div className="post-images">
-          {post.images.map((image, index) => (
-            <img key={index} src={image.url} alt={`Post image ${index + 1}`} />
-          ))}
-        </div>
-      )}
+      {/* {post.images && post.images.length > 0 && ( */}
+      <div className="post-images">
+        {post.images.map((image) => (
+          <img
+            key={image.id}
+            src={`${import.meta.env.VITE_POST_ADDRESS}/images/${image.id}`}
+            alt="Post image"
+          />
+        ))}
+      </div>
       <div className="post-footer">
         <span className="post-date">
           {new Date(post.createdAt).toLocaleDateString()}

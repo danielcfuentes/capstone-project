@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const PORT = process.env.SERVER_PORT;
+const multer = require("multer")
 
 app.use(express.json());
 app.use(cors());
@@ -31,14 +32,21 @@ app.post(
   authenticateToken,
   upload.array("images"),
   async (req, res) => {
+    console.log("Request body:", req.body);
+    console.log("Request files:", req.files);
+
     const { title, content } = req.body;
-    const images = req.files;
+    const images = req.files || []; // Provide a default empty array if req.files is undefined
+
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
 
     try {
       const newPost = await prisma.post.create({
         data: {
           title,
-          content,
+          content: content || "",
           userId: req.user.name,
           images: {
             create: images.map((image) => ({
@@ -52,12 +60,14 @@ app.post(
 
       res.json(newPost);
     } catch (error) {
-      res.status(500).json({ error: "Failed to create post" });
+      console.error("Error creating post:", error);
+      res
+        .status(500)
+        .json({ error: "Failed to create post", details: error.message });
     }
   }
 );
 
-// Get all posts from all users
 app.get("/allposts", authenticateToken, async (req, res) => {
   try {
     const posts = await prisma.post.findMany({
@@ -65,29 +75,27 @@ app.get("/allposts", authenticateToken, async (req, res) => {
         images: {
           select: {
             id: true,
-            mimeType: true
-          }
+            mimeType: true,
+          },
         },
         user: {
           select: {
             username: true,
-            // Add other user fields to include, but NOT the password
           },
         },
       },
       orderBy: {
-        createdAt: "desc", // This will sort posts from newest to oldest
+        createdAt: "desc",
       },
     });
 
-    // Transform the posts to include image URLs instead of raw data
-    const transformedPosts = posts.map(post => ({
+    const transformedPosts = posts.map((post) => ({
       ...post,
-      images: post.images.map(image => ({
+      images: post.images.map((image) => ({
         id: image.id,
-        url: `http://localhost:3000/images/${image.id}`,
-        mimeType: image.mimeType
-      }))
+        url: `/images/${image.id}`,
+        mimeType: image.mimeType,
+      })),
     }));
 
     res.json(transformedPosts);

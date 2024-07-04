@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "../../styles/CreateModal.css";
-import { getHeaders } from "../../utils/apiConfig";
+import { getAuthHeaders } from "../../utils/apiConfig";
 
 const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
   const [title, setTitle] = useState("");
@@ -11,25 +11,31 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Convert images to URLs (assuming you're using local URLs for now)
-    const imageUrls = images.map((image) => URL.createObjectURL(image));
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("content", content);
+    for (let i = 0; i < images.length; i++) {
+      formData.append("images", images[i]);
+    }
+
+    // Log FormData contents
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
 
     try {
       const response = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/posts`,
         {
           method: "POST",
-          headers: getHeaders(),
-          body: JSON.stringify({
-            title,
-            content,
-            imageUrls,
-          }),
+          headers: getAuthHeaders(),
+          body: formData,
         }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to create post");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create post");
       }
 
       const newPost = await response.json();
@@ -39,14 +45,15 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
       setImages([]);
       onClose();
     } catch (error) {
-      // Here show an error message to the user
-      setErrorMessage("Error creating post:", error)
+      console.error("Error details:", error);
+      setErrorMessage(`Error creating post: ${error.message}`);
     }
   };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    setImages((prevImages) => [...prevImages, ...files]);
+    setImages(files);
+    console.log("Selected images:", files);
   };
 
   const removeImage = (index) => {
