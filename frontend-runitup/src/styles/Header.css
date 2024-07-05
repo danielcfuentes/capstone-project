@@ -2,6 +2,7 @@
   background: linear-gradient(90deg, #001529 0%, #003a8c 100%);
   padding: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  position: fixed;
   width: 100%;
   z-index: 1000;
 }
@@ -103,4 +104,9 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+/* Smooth scrolling for the whole page */
+html {
+  scroll-behavior: smooth;
 }
