@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "../../styles/CreateModal.css";
-import { getHeaders } from "../../utils/apiConfig";
+import { getAuthHeaders } from "../../utils/apiConfig";
 
 const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
   const [title, setTitle] = useState("");
@@ -11,20 +11,20 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Convert images to URLs (assuming you're using local URLs for now)
-    const imageUrls = images.map((image) => URL.createObjectURL(image));
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("content", content);
+    images.forEach((image, index) => {
+      formData.append(`images`, image);
+    });
 
     try {
       const response = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/posts`,
         {
           method: "POST",
-          headers: getHeaders(),
-          body: JSON.stringify({
-            title,
-            content,
-            imageUrls,
-          }),
+          headers: getAuthHeaders(),
+          body: formData,
         }
       );
 
@@ -39,18 +39,16 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
       setImages([]);
       onClose();
     } catch (error) {
-      // Here show an error message to the user
-      setErrorMessage("Error creating post:", error)
+      setErrorMessage("Error creating post");
     }
   };
 
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    setImages((prevImages) => [...prevImages, ...files]);
+    setImages([...images, ...Array.from(e.target.files)]);
   };
 
   const removeImage = (index) => {
-    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
+    setImages(images.filter((_, i) => i !== index));
   };
 
   if (!isOpen) return null;
@@ -80,7 +78,7 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
             multiple
             onChange={handleImageChange}
           />
-          {images.length > 0 && (
+
             <div className="image-previews">
               {images.map((image, index) => (
                 <div key={index} className="image-preview">
@@ -94,7 +92,6 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
                 </div>
               ))}
             </div>
-          )}
           <div className="modal-actions">
             <button type="button" onClick={onClose}>
               Cancel
