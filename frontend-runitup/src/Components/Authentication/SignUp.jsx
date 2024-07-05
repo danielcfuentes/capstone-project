@@ -9,11 +9,12 @@ import {
   Col,
   Card,
   Space,
+  message,
 } from "antd";
 import { UserOutlined, LockOutlined, RightOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { DEFAULT_HEADERS } from "../../utils/apiConfig";
-import "../../styles/SignUp.css"; // Import the CSS file
+import "../../styles/SignUp.css";
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
@@ -27,13 +28,28 @@ const SignUp = () => {
       method: "POST",
       headers: DEFAULT_HEADERS,
       body: JSON.stringify(values),
-    }).then((response) => {
-      if (response.ok) {
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (response.ok) {
+          return data;
+        } else {
+          throw new Error(data.message || "Failed to create account");
+        }
+      })
+      .then((data) => {
+        message.success("Account created successfully!");
         navigate("/login");
-      } else {
-        throw new Error("Failed to create account");
-      }
-    });
+      })
+      .catch((error) => {
+        if (error.message.includes("User already exists")) {
+          message.error(
+            "An account with this username already exists. Please try a different username or log in."
+          );
+        } else {
+          message.error("Failed to create account. Please try again.");
+        }
+      });
   };
 
   return (
