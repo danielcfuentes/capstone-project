@@ -32,14 +32,14 @@ app.post(
   authenticateToken,
   upload.array("images"),
   async (req, res) => {
-    const { title, content } = req.body;
-    const images = req.files || []; // Provide a default empty array if req.files is undefined
-
-    if (!title) {
-      return res.status(400).json({ error: "Title is required" });
-    }
 
     try {
+      const { title, content } = req.body;
+      const images = req.files || []; // Provide a default empty array if req.files is undefined
+
+      if (!title) {
+        return res.status(400).json({ error: "Title is required" });
+      }
       const newPost = await prisma.post.create({
         data: {
           title,
