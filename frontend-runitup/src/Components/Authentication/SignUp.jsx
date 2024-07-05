@@ -1,31 +1,32 @@
-import "../../styles/SignUp.css";
-import { useState } from "react";
+import React from "react";
+import {
+  Form,
+  Input,
+  Button,
+  Typography,
+  Layout,
+  Row,
+  Col,
+  Card,
+  Space,
+} from "antd";
+import { UserOutlined, LockOutlined, RightOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { DEFAULT_HEADERS } from "../../utils/apiConfig";
+import "../../styles/SignUp.css"; // Import the CSS file
 
-function SignUp() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+const { Title, Text } = Typography;
+const { Content } = Layout;
+
+const SignUp = () => {
+  const [form] = Form.useForm();
   const navigate = useNavigate();
 
-  const handleChangeUser = (e) => {
-    setUsername(e.target.value);
-  };
-
-  const handleChangePassword = (e) => {
-    setPassword(e.target.value);
-  };
-
-  const handleCreate = (e) => {
-    e.preventDefault();
-
+  const handleCreate = (values) => {
     fetch(`${import.meta.env.VITE_BACKEND_ADDRESS}/create`, {
       method: "POST",
       headers: DEFAULT_HEADERS,
-      body: JSON.stringify({
-        username,
-        password,
-      }),
+      body: JSON.stringify(values),
     }).then((response) => {
       if (response.ok) {
         navigate("/login");
@@ -36,56 +37,84 @@ function SignUp() {
   };
 
   return (
-    <div className="signup-container">
-      <div className="left-side">
-        <div className="signup-form">
-          <h1>Sign up</h1>
-          <p>Sign up to enjoy the features of Run It Up</p>
-          <form>
-            <label>
-              Username
-              <input
-                type="text"
-                placeholder="Ex. J_Khurwaldi"
-                id="username"
-                value={username}
-                onChange={handleChangeUser}
-                required
-              />
-            </label>
-            <label>
-              Password
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={handleChangePassword}
-                required
-              />
-            </label>
-            <button
-              type="submit"
-              className="signup-button"
-              onClick={handleCreate}
-            >
-              Sign up
-            </button>
-          </form>
-          <p className="login-link">
-            Already have an account?{" "}
-            <button onClick={() => navigate("/login")}>Login</button>
-          </p>
-        </div>
-      </div>
-      <div className="right-side">
-        <img
-          src="https://transform.octanecdn.com/crop/1000x600/https://octanecdn.com/prolianceorthopedicassociatescom/run-or-walk-1-1.jpg"
-          alt="signup background"
-        />
-        <h2>RUN IT UP</h2>
-      </div>
-    </div>
+    <Layout className="signup-layout">
+      <Content>
+        <Row justify="center" align="middle" className="signup-row">
+          <Col xs={22} sm={20} md={16} lg={12} xl={8}>
+            <Card className="signup-card">
+              <Space
+                direction="vertical"
+                size="large"
+                style={{ width: "100%" }}
+              >
+                <div className="signup-header">
+                  <Title level={2}>Run It Up</Title>
+                  <Text type="secondary">Sign up to start your journey</Text>
+                </div>
+
+                <Form
+                  form={form}
+                  name="signup"
+                  onFinish={handleCreate}
+                  layout="vertical"
+                  requiredMark={false}
+                >
+                  <Form.Item
+                    name="username"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please input your username!",
+                      },
+                    ]}
+                  >
+                    <Input
+                      prefix={<UserOutlined />}
+                      placeholder="Username"
+                      size="large"
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    name="password"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please input your password!",
+                      },
+                    ]}
+                  >
+                    <Input.Password
+                      prefix={<LockOutlined />}
+                      placeholder="Password"
+                      size="large"
+                    />
+                  </Form.Item>
+                  <Form.Item>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      size="large"
+                      block
+                      icon={<RightOutlined />}
+                    >
+                      Sign Up
+                    </Button>
+                  </Form.Item>
+                </Form>
+
+                <Text className="login-link">
+                  Already have an account?{" "}
+                  <Button type="link" onClick={() => navigate("/login")}>
+                    Log in
+                  </Button>
+                </Text>
+              </Space>
+            </Card>
+          </Col>
+        </Row>
+      </Content>
+    </Layout>
   );
-}
+};
 
 export default SignUp;
