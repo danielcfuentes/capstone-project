@@ -1,94 +1,138 @@
-import "../../styles/LoginPage.css";
-import { useState } from "react";
+import React from "react";
+import {
+  Form,
+  Input,
+  Button,
+  Typography,
+  Layout,
+  Row,
+  Col,
+  Card,
+  Space,
+  message,
+} from "antd";
+import { UserOutlined, LockOutlined, LoginOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { DEFAULT_HEADERS } from "../../utils/apiConfig";
+import "../../styles/LoginPage.css";
+
+const { Title, Text } = Typography;
+const { Content } = Layout;
 
 function LoginPage({ onLogin }) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [form] = Form.useForm();
   const navigate = useNavigate();
 
-  const handleChangeUser = (e) => {
-    setUsername(e.target.value);
-  };
-
-  const handleChangePassword = (e) => {
-    setPassword(e.target.value);
-  };
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-
+  const handleLogin = (values) => {
     fetch(`${import.meta.env.VITE_BACKEND_ADDRESS}/login`, {
       method: "POST",
       headers: DEFAULT_HEADERS,
-      body: JSON.stringify({
-        username,
-        password,
-      }),
+      body: JSON.stringify(values),
     })
-      .then((response) => {
+      .then(async (response) => {
+        const data = await response.json();
         if (response.ok) {
-          return response.json();
+          return data;
         } else {
-          throw new Error("Failed to login");
+          throw new Error(data.message || "Failed to login");
         }
       })
       .then((data) => {
-        onLogin({ name: username }, data.accessToken, data.refreshToken);
+        onLogin({ name: values.username }, data.accessToken, data.refreshToken);
+        message.success("Login successful!");
         navigate("/feed");
       })
+      .catch((error) => {
+        if (error.message === "User not found") {
+          message.error(
+            "User not found. Please check your username or sign up."
+          );
+        } else if (error.message === "Invalid password") {
+          message.error("Invalid password. Please try again.");
+        } else {
+          message.error("Login failed. Please try again.");
+        }
+      });
   };
 
   return (
-    <div className="login-container">
-      <div className="left-side">
-        <div className="login-form">
-          <h1>Login</h1>
-          <form>
-            <label>
-              Username
-              <input
-                type="text"
-                placeholder="Ex. J_Kahrwaldi"
-                id="username"
-                value={username}
-                onChange={handleChangeUser}
-                required
-              />
-            </label>
-            <label>
-              Password
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={handleChangePassword}
-                required
-              />
-            </label>
-            <button
-              type="submit"
-              className="login-button"
-              onClick={handleLogin}
-            >
-              Login
-            </button>
-          </form>
-          <p className="login-link">
-            Need an account?{" "}
-            <button onClick={() => navigate("/signup")}>Sign Up</button>
-          </p>
-        </div>
-      </div>
-      <div className="right-side">
-        <img
-          src="https://transform.octanecdn.com/crop/1000x600/https://octanecdn.com/prolianceorthopedicassociatescom/run-or-walk-1-1.jpg"
-          alt="signup background"
-        />
-        <h2>RUN IT UP</h2>
-      </div>
-    </div>
+    <Layout className="login-layout">
+      <Content>
+        <Row justify="center" align="middle" className="login-row">
+          <Col xs={22} sm={20} md={16} lg={12} xl={8}>
+            <Card className="login-card">
+              <Space
+                direction="vertical"
+                size="large"
+                style={{ width: "100%" }}
+              >
+                <div className="login-header">
+                  <Title level={2}>Run It Up</Title>
+                  <Text type="secondary">Login to your account</Text>
+                </div>
+
+                <Form
+                  form={form}
+                  name="login"
+                  onFinish={handleLogin}
+                  layout="vertical"
+                  requiredMark={false}
+                >
+                  <Form.Item
+                    name="username"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please input your username!",
+                      },
+                    ]}
+                  >
+                    <Input
+                      prefix={<UserOutlined />}
+                      placeholder="Username"
+                      size="large"
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    name="password"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please input your password!",
+                      },
+                    ]}
+                  >
+                    <Input.Password
+                      prefix={<LockOutlined />}
+                      placeholder="Password"
+                      size="large"
+                    />
+                  </Form.Item>
+                  <Form.Item>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      size="large"
+                      block
+                      icon={<LoginOutlined />}
+                    >
+                      Login
+                    </Button>
+                  </Form.Item>
+                </Form>
+
+                <Text className="signup-link">
+                  Need an account?{" "}
+                  <Button type="link" onClick={() => navigate("/signup")}>
+                    Sign Up
+                  </Button>
+                </Text>
+              </Space>
+            </Card>
+          </Col>
+        </Row>
+      </Content>
+    </Layout>
   );
 }
 

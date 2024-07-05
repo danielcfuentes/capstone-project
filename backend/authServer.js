@@ -34,10 +34,10 @@ app.post("/login", async (req, res) => {
     where: { username },
     include: { tokens: true },
   });
-  if (!user) return res.status(400).json({ message: "User not found" });
+  if (!user) return res.status(404).json({ message: "User not found" });
   const validPassword = await bcrypt.compare(password, user.password);
   if (!validPassword)
-    return res.status(400).json({ message: "Invalid password" });
+    return res.status(401).json({ message: "Invalid password" });
   const accessToken = generateAccessToken({ name: username });
   const refreshToken = jwt.sign(
     { name: username },
@@ -61,16 +61,21 @@ app.post("/create", async (req, res) => {
     });
     if (existingUser) {
       return res
-        .status(400)
-        .json({ message: "User exists, if you have an account login" });
+        .status(409) // Changed from 400 to 409
+        .json({
+          message:
+            "User already exists. Please try a different username or log in.",
+        });
     }
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const user = await prisma.user.create({
       data: { username, password: hashedPassword },
     });
-    res.json({ user });
+    res.status(201).json({ message: "User created successfully" }); // Added status 201 for successful creation
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to create account. Please try again." });
   }
 });
 
