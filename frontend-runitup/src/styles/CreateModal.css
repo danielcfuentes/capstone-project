@@ -1,91 +1,116 @@
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+.create-post-modal .ant-modal-content {
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
-.modal-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
+.create-post-modal .ant-modal-body {
+  padding: 0;
 }
 
-.modal-content h2 {
-  margin-top: 0;
+.create-post-modal .modal-content {
+  padding: 32px;
 }
 
-.modal-content form {
+.create-post-modal .modal-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.create-post-modal .modal-header h3 {
+  color: #2c3e50;
+  margin-bottom: 8px;
+}
+
+.create-post-modal .ant-typography-secondary {
+  color: #34495e;
+}
+
+.create-post-modal .ant-divider {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.create-post-modal .input-field {
+  border-radius: 12px;
+  border: 2px solid #e8e8e8;
+  transition: all 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+.create-post-modal .input-field:focus,
+.create-post-modal .input-field:hover {
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.create-post-modal .image-uploader .ant-upload-list-picture-card-container,
+.create-post-modal .image-uploader .ant-upload.ant-upload-select-picture-card {
+  width: 100px;
+  height: 100px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px dashed #bdc3c7;
+  transition: all 0.3s ease;
+}
+
+.create-post-modal .image-uploader .ant-upload-list-picture-card .ant-upload-list-item {
+  border-radius: 16px;
+  padding: 4px;
+}
+
+.create-post-modal .upload-button {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #34495e;
 }
 
-.modal-content input[type="text"],
-.modal-content textarea {
-  margin-bottom: 10px;
-  padding: 8px;
+.create-post-modal .upload-button .anticon {
+  font-size: 24px;
+  margin-bottom: 8px;
 }
 
-.modal-content input[type="file"] {
-  margin-bottom: 10px;
-}
-
-.image-previews {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.image-preview {
-  position: relative;
-  width: 100px;
-}
-
-.image-preview img {
-  width: 100%;
-  height: auto;
-}
-
-.image-preview button {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background-color: rgba(255, 0, 0, 0.7);
-  color: white;
+.create-post-modal .submit-button {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
   border: none;
-  padding: 2px 5px;
-  cursor: pointer;
+  height: 50px;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 25px;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+.create-post-modal .submit-button:hover,
+.create-post-modal .submit-button:focus {
+  background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+  box-shadow: 0 8px 16px rgba(52, 152, 219, 0.3);
+  transform: translateY(-2px);
 }
 
-.modal-actions button {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+.create-post-modal .close-icon {
+  color: #34495e;
+  transition: all 0.3s ease;
 }
 
-.modal-actions button[type="submit"] {
-  background-color: #007bff;
-  color: white;
+.create-post-modal .close-icon:hover {
+  color: #e74c3c;
+  transform: rotate(90deg);
 }
 
-.modal-actions button[type="button"] {
-  background-color: #f0f0f0;
+@media (max-width: 576px) {
+  .create-post-modal .ant-modal-content {
+    border-radius: 0;
+  }
+
+  .create-post-modal .modal-content {
+    padding: 24px;
+  }
 }

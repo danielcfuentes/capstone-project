@@ -1,21 +1,37 @@
 import React, { useState } from "react";
-import "../../styles/CreateModal.css";
+import {
+  Modal,
+  Form,
+  Input,
+  Upload,
+  Button,
+  message,
+  Typography,
+  Divider,
+} from "antd";
+import {
+  PictureOutlined,
+  SendOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
 import { getAuthHeaders } from "../../utils/apiConfig";
+import "../../styles/CreateModal.css";
+
+const { TextArea } = Input;
+const { Title, Text } = Typography;
 
 const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [images, setImages] = useState([]);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [form] = Form.useForm();
+  const [fileList, setFileList] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async (values) => {
+    setSubmitting(true);
     const formData = new FormData();
-    formData.append("title", title);
-    formData.append("content", content);
-    images.forEach((image, index) => {
-      formData.append(`images`, image);
+    formData.append("title", values.title);
+    formData.append("content", values.content);
+    fileList.forEach((file) => {
+      formData.append("images", file.originFileObj);
     });
 
     try {
@@ -34,74 +50,101 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
 
       const newPost = await response.json();
       onSubmit(newPost);
-      setTitle("");
-      setContent("");
-      setImages([]);
+      message.success("Post created successfully!");
+      form.resetFields();
+      setFileList([]);
       onClose();
     } catch (error) {
-      setErrorMessage("Error creating post");
+      message.error("Error creating post");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleImageChange = (e) => {
-    setImages([...images, ...Array.from(e.target.files)]);
+  const handleCancel = () => {
+    form.resetFields();
+    setFileList([]);
+    onClose();
   };
 
-  const removeImage = (index) => {
-    setImages(images.filter((_, i) => i !== index));
+  const handleFileChange = ({ fileList: newFileList }) => {
+    setFileList(newFileList);
   };
 
-  if (!isOpen) return null;
+  const beforeUpload = (file) => {
+    const isImage = file.type.startsWith("image/");
+    if (!isImage) {
+      message.error("You can only upload image files!");
+    }
+    return isImage || Upload.LIST_IGNORE;
+  };
 
   return (
-    <div className="modal-overlay">
+    <Modal
+      open={isOpen} // Changed from 'visible' to 'open'
+      onCancel={handleCancel}
+      footer={null}
+      width={500}
+      className="create-post-modal"
+      centered
+      closeIcon={<CloseOutlined className="close-icon" />}
+    >
       <div className="modal-content">
-        <h2>Create a New Post</h2>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter post title"
-            required
-          />
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="What's on your mind?"
-            rows="4"
-            required
-          />
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageChange}
-          />
-
-            <div className="image-previews">
-              {images.map((image, index) => (
-                <div key={index} className="image-preview">
-                  <img
-                    src={URL.createObjectURL(image)}
-                    alt={`Preview ${index}`}
-                  />
-                  <button type="button" onClick={() => removeImage(index)}>
-                    Remove
-                  </button>
+        <div className="modal-header">
+          <Title level={3}>Create a New Post</Title>
+          <Text type="secondary">Share your thoughts and moments</Text>
+        </div>
+        <Divider />
+        <Form form={form} onFinish={handleSubmit} layout="vertical">
+          <Form.Item
+            name="title"
+            rules={[{ required: true, message: "Please enter a title" }]}
+          >
+            <Input placeholder="Enter post title" className="input-field" />
+          </Form.Item>
+          <Form.Item
+            name="content"
+            rules={[{ required: true, message: "Please enter some content" }]}
+          >
+            <TextArea
+              placeholder="What's on your mind?"
+              autoSize={{ minRows: 4, maxRows: 8 }}
+              className="input-field"
+            />
+          </Form.Item>
+          <Form.Item>
+            <Upload
+              listType="picture-card"
+              fileList={fileList}
+              onChange={handleFileChange}
+              beforeUpload={beforeUpload}
+              accept="image/*"
+              className="image-uploader"
+            >
+              {fileList.length >= 8 ? null : (
+                <div className="upload-button">
+                  <PictureOutlined />
+                  <div>Add Photos</div>
                 </div>
-              ))}
-            </div>
-          <div className="modal-actions">
-            <button type="button" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit">Post</button>
-          </div>
-          {errorMessage && <p className="error"> {errorMessage} </p>}
-        </form>
+              )}
+            </Upload>
+          </Form.Item>
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              icon={<SendOutlined />}
+              loading={submitting}
+              block
+              size="large"
+              className="submit-button"
+            >
+              Create Post
+            </Button>
+          </Form.Item>
+        </Form>
       </div>
-    </div>
+    </Modal>
   );
 };
 
