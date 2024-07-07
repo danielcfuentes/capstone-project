@@ -6,4 +6,9 @@
 
 .main-content {
   flex: 1;
+  padding: 24px;
+}
+
+.ant-layout {
+  background: #f0f2f5;
 }
