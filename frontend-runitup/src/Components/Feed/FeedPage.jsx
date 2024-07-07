@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Layout, List, Spin, Alert, Typography } from "antd";
-import { LoadingOutlined } from "@ant-design/icons";
+import React, { useState, useEffect, useRef } from "react";
+import { Layout, List, Spin, Alert, Typography, BackTop } from "antd";
+import { LoadingOutlined, UpOutlined } from "@ant-design/icons";
 import PostCard from "./PostCard";
 import AddButton from "./AddButton";
 import { getHeaders } from "../../utils/apiConfig";
@@ -15,6 +15,7 @@ const FeedPage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const feedRef = useRef(null);
 
   useEffect(() => {
     fetchPosts();
@@ -43,11 +44,14 @@ const FeedPage = () => {
 
   const handlePostCreated = (newPost) => {
     setPosts((prevPosts) => [newPost, ...prevPosts]);
+    // Scroll to top of the feed
+    feedRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
     <Layout className="feed-page">
       <Content className="feed-content">
+        <div ref={feedRef}></div>
         {error && (
           <Alert
             message="Error"
@@ -71,6 +75,11 @@ const FeedPage = () => {
         </Spin>
       </Content>
       <AddButton onPostCreated={handlePostCreated} />
+      <BackTop className="back-top-left">
+        <div className="back-top-inner">
+          <UpOutlined />
+        </div>
+      </BackTop>
     </Layout>
   );
 };

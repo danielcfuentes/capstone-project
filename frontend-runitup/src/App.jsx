@@ -41,7 +41,6 @@ function App() {
     localStorage.setItem("user", JSON.stringify(userData));
     localStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
-    message.success("Login successful!");
   };
 
   const handleLogout = async () => {

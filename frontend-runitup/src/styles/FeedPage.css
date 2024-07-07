@@ -1,10 +1,11 @@
 .feed-page {
   background-color: #f0f2f5;
   min-height: 100vh;
+  position: relative;
 }
 
 .feed-content {
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 24px;
 }
@@ -12,6 +13,8 @@
 .feed-title {
   text-align: center;
   margin-bottom: 24px;
+  color: #1890ff;
+  font-weight: 600;
 }
 
 .error-alert {
@@ -22,9 +25,49 @@
   background-color: #fff;
   border-radius: 8px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.ant-list-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .ant-spin-nested-loading {
   width: 100%;
+}
+
+@media (max-width: 768px) {
+  .feed-content {
+    padding: 16px;
+  }
+}
+
+/* BackTop styles */
+.back-top-left {
+  left: 50px;
+  right: unset;
+}
+
+.back-top-inner {
+  height: 40px;
+  width: 40px;
+  line-height: 40px;
+  border-radius: 4px;
+  background-color: #1890ff;
+  color: #fff;
+  text-align: center;
+  font-size: 20px;
+}
+/* Ensure the BackTop doesn't overlap with content on smaller screens */
+@media (max-width: 768px) {
+  .back-top-left {
+    left: 20px;
+  }
+
+  .feed-content {
+    padding: 16px;
+    padding-left: 60px; /* Add left padding to account for the BackTop button */
+  }
 }
