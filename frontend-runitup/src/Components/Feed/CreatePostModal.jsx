@@ -76,13 +76,13 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
     if (!isImage) {
       message.error("You can only upload image files!");
     }
-    return isImage || Upload.LIST_IGNORE;
+    return false; // Prevent automatic upload
   };
 
   return (
     <Modal
-      open={isOpen} // Changed from 'visible' to 'open'
-      onCancel={handleCancel}
+      open={isOpen}
+      onCancel={onClose}
       footer={null}
       width={500}
       className="create-post-modal"
