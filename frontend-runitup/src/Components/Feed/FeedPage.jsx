@@ -1,18 +1,29 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Layout, List, Spin, Alert, Typography, BackTop } from "antd";
+import { LoadingOutlined, UpOutlined } from "@ant-design/icons";
 import PostCard from "./PostCard";
 import AddButton from "./AddButton";
 import { getHeaders } from "../../utils/apiConfig";
+import "../../styles/FeedPage.css";
+
+const { Content } = Layout;
+const { Title } = Typography;
+
+const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
 const FeedPage = () => {
   const [posts, setPosts] = useState([]);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const feedRef = useRef(null);
 
-  useEffect(() => {
+  useEffect(()  => {
     fetchPosts();
   }, []);
 
   const fetchPosts = async () => {
     try {
+      setLoading(true);
       const response = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/allposts`,
         {
@@ -25,27 +36,53 @@ const FeedPage = () => {
       const data = await response.json();
       setPosts(data);
     } catch (error) {
-      setErrorMessage("Error fetching posts");
+      setError("Error fetching posts");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handlePostCreated = (newPost) => {
     setPosts((prevPosts) => [newPost, ...prevPosts]);
+    // Scroll to top of the feed
+    feedRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <div className="feed-page">
-      <div className="content">
-        <main className="main-content">
-          {errorMessage && <p className="error"> {errorMessage} </p>}
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </main>
-      </div>
+    <Layout className="feed-page">
+      <Content className="feed-content">
+        <div ref={feedRef}></div>
+        {error && (
+          <Alert
+            message="Error"
+            description={error}
+            type="error"
+            showIcon
+            className="error-alert"
+          />
+        )}
+        <Spin spinning={loading} indicator={antIcon}>
+          <List
+            itemLayout="vertical"
+            size="large"
+            dataSource={posts}
+            renderItem={(post) => (
+              <List.Item key={post.id}>
+                <PostCard post={post} />
+              </List.Item>
+            )}
+          />
+        </Spin>
+      </Content>
       <AddButton onPostCreated={handlePostCreated} />
-    </div>
+      <BackTop className="back-top-left">
+        <div className="back-top-inner">
+          <UpOutlined />
+        </div>
+      </BackTop>
+    </Layout>
   );
 };
+
 
 export default FeedPage;

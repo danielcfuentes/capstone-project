@@ -1,15 +1,17 @@
-import "./styles/App.css";
+import React, { useState, useEffect } from "react";
+import { Layout, message } from "antd";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import SignUp from "./Components/Authentication/SignUp";
 import LoginPage from "./Components/Authentication/LoginPage";
 import Feed from "./Components/Feed/FeedPage";
 import RoutesPage from "./Components/Routes/RoutesPage";
 import RecommendationPage from "./Components/Recommendation/RecommendationPage";
-import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Header from "./utils/Header";
 import Footer from "./utils/Footer";
+import "./styles/App.css";
 
-// Protected route wrapper component
+const { Content } = Layout;
+
 const ProtectedRoute = ({ children, isLoggedIn }) => {
   return isLoggedIn ? children : <Navigate to="/login" />;
 };
@@ -43,15 +45,20 @@ function App() {
 
   const handleLogout = async () => {
     if (refreshToken) {
-      await fetch(`${import.meta.env.VITE_BACKEND_ADDRESS}/logout`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          refreshToken: refreshToken,
-        }),
-      });
+      try {
+        await fetch(`${import.meta.env.VITE_BACKEND_ADDRESS}/logout`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            refreshToken: refreshToken,
+          }),
+        });
+        message.success("Logged out successfully");
+      } catch (error) {
+        message.error("Error logging out");
+      }
     }
 
     setUser(null);
@@ -65,24 +72,29 @@ function App() {
   useEffect(() => {
     const interval = setInterval(async () => {
       if (refreshToken) {
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_ADDRESS}/token`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              refreshToken: refreshToken,
-            }),
-          }
-        );
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_BACKEND_ADDRESS}/token`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                refreshToken: refreshToken,
+              }),
+            }
+          );
 
-        if (response.ok) {
-          const data = await response.json();
-          setAccessToken(data.accessToken);
-          localStorage.setItem("accessToken", data.accessToken);
-        } else {
+          if (response.ok) {
+            const data = await response.json();
+            setAccessToken(data.accessToken);
+            localStorage.setItem("accessToken", data.accessToken);
+          } else {
+            throw new Error("Failed to refresh token");
+          }
+        } catch (error) {
+          message.error("Session expired. Please log in again.");
           handleLogout();
         }
       }
@@ -92,55 +104,57 @@ function App() {
   }, [refreshToken]);
 
   return (
-    <div className="app">
+    <Layout className="app">
       <BrowserRouter>
         {isLoggedIn && <Header user={user} onLogout={handleLogout} />}
-        <Routes>
-          <Route
-            path="/"
-            element={
-              isLoggedIn ? <Navigate to="/feed" /> : <Navigate to="/login" />
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              isLoggedIn ? (
-                <Navigate to="/feed" />
-              ) : (
-                <LoginPage onLogin={handleLogin} />
-              )
-            }
-          />
-          <Route path="/signup" element={<SignUp />} />
-          <Route
-            path="/feed"
-            element={
-              <ProtectedRoute isLoggedIn={isLoggedIn}>
-                <Feed user={user} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/routes"
-            element={
-              <ProtectedRoute isLoggedIn={isLoggedIn}>
-                <RoutesPage user={user} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/recommendations"
-            element={
-              <ProtectedRoute isLoggedIn={isLoggedIn}>
-                <RecommendationPage user={user} />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+        <Content className="main-content">
+          <Routes>
+            <Route
+              path="/"
+              element={
+                isLoggedIn ? <Navigate to="/feed" /> : <Navigate to="/login" />
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                isLoggedIn ? (
+                  <Navigate to="/feed" />
+                ) : (
+                  <LoginPage onLogin={handleLogin} />
+                )
+              }
+            />
+            <Route path="/signup" element={<SignUp />} />
+            <Route
+              path="/feed"
+              element={
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <Feed user={user} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/routes"
+              element={
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <RoutesPage user={user} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/recommendations"
+              element={
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <RecommendationPage user={user} />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </Content>
         {isLoggedIn && <Footer />}
       </BrowserRouter>
-    </div>
+    </Layout>
   );
 }
 

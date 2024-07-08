@@ -10,13 +10,14 @@ import {
   SettingOutlined,
 } from "@ant-design/icons";
 import "../styles/Header.css";
+import { generateColor } from "./apiConfig";
 
 const { Header: AntHeader } = Layout;
 const { Title } = Typography;
 
 const Header = ({ onLogout, user }) => {
   const location = useLocation();
-
+  const avatarColor = generateColor(user.name)
   const menuItems = [
     { key: "feed", label: "Feed", icon: <HomeOutlined />, link: "/feed" },
     {
@@ -64,7 +65,7 @@ const Header = ({ onLogout, user }) => {
               className="ant-dropdown-link"
               onClick={(e) => e.preventDefault()}
             >
-              <Avatar size="large" style={{ backgroundColor: "#1890ff" }}>
+              <Avatar size="large" style={{ backgroundColor: avatarColor }}>
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </Avatar>
               <span className="username">{user?.name || "User"}</span>
