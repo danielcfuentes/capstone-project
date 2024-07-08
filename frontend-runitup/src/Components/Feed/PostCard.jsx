@@ -6,18 +6,9 @@ import {
   ShareAltOutlined,
 } from "@ant-design/icons";
 import "../../styles/PostCard.css";
+import { generateColor } from "../../utils/apiConfig";
 
 const { Text, Paragraph, Title } = Typography;
-
-// Function to generate a color based on the user's name
-const generateColor = (name) => {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const c = (hash & 0x00ffffff).toString(16).toUpperCase();
-  return "#" + "00000".substring(0, 6 - c.length) + c;
-};
 
 const PostCard = ({ post }) => {
   const avatarColor = generateColor(post.userId);
