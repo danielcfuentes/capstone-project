@@ -17,7 +17,7 @@ const FeedPage = () => {
   const [error, setError] = useState(null);
   const feedRef = useRef(null);
 
-  useEffect(() => {
+  useEffect(()  => {
     fetchPosts();
   }, []);
 
