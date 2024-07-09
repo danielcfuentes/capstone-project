@@ -16,8 +16,8 @@ datasource db {
 }
 
 model User {
-  id                Int      @id @default(autoincrement())
-  username          String   @unique
+  id                Int               @id @default(autoincrement())
+  username          String            @unique
   password          String
   tokens            Token[]
   posts             Post[]
@@ -32,6 +32,7 @@ model User {
   lastKnownLocation String?
   runningGoals      UserRunningGoal[]
   completedRuns     CompletedRun[]
+  isProfileComplete Boolean           @default(false)
 }
 
 model Token {
@@ -60,41 +61,41 @@ model Image {
 }
 
 model UserRunningGoal {
-  id           Int       @id @default(autoincrement())
-  user         User      @relation(fields: [userId], references: [id])
-  userId       Int
-  goalType     String
-  targetValue  Float
-  deadline     DateTime?
-  isCompleted  Boolean   @default(false)
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  goalType    String
+  targetValue Float
+  deadline    DateTime?
+  isCompleted Boolean   @default(false)
 }
 
 model Route {
-  id                Int      @id @default(autoincrement())
-  name              String
-  distance          Float
-  elevationGain     Float
-  terrainType       String
-  startPoint        String
-  endPoint          String
-  waypoints         String[]
-  difficulty        String
-  sceneryType       String[]
-  pointsOfInterest  String[]
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  completedRuns     CompletedRun[]
+  id               Int            @id @default(autoincrement())
+  name             String
+  distance         Float
+  elevationGain    Float
+  terrainType      String
+  startPoint       String
+  endPoint         String
+  waypoints        String[]
+  difficulty       String
+  sceneryType      String[]
+  pointsOfInterest String[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  completedRuns    CompletedRun[]
 }
 
 model CompletedRun {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  route     Route    @relation(fields: [routeId], references: [id])
-  routeId   Int
-  duration  Float
-  date      DateTime
-  weather   String?
-  feedback  String?
-  rating    Int?
+  id       Int      @id @default(autoincrement())
+  user     User     @relation(fields: [userId], references: [id])
+  userId   Int
+  route    Route    @relation(fields: [routeId], references: [id])
+  routeId  Int
+  duration Float
+  date     DateTime
+  weather  String?
+  feedback String?
+  rating   Int?
 }
