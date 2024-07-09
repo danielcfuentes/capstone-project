@@ -35,8 +35,7 @@ function App() {
       setAccessToken(storedAccessToken);
       setRefreshToken(storedRefreshToken);
       setIsProfileComplete(parsedUser.isProfileComplete);
-
-    } 
+    }
   }, []);
 
   const handleLogin = (userData, accessToken, refreshToken) => {
@@ -110,7 +109,9 @@ function App() {
   return (
     <div className="app">
       <BrowserRouter>
-        {isLoggedIn && <Header user={user} onLogout={handleLogout} />}
+        {isLoggedIn && isProfileComplete && (
+          <Header user={user} onLogout={handleLogout} />
+        )}
         <Routes>
           <Route
             path="/"
@@ -191,7 +192,7 @@ function App() {
             }
           />
         </Routes>
-        {isLoggedIn && <Footer />}
+        {isLoggedIn && isProfileComplete && <Footer />}
       </BrowserRouter>
     </div>
   );
