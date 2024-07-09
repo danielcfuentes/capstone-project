@@ -1,6 +1,6 @@
 import React from "react";
 import { Layout, Menu, Typography, Avatar, Dropdown } from "antd";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ThunderboltOutlined,
   HomeOutlined,
@@ -17,6 +17,7 @@ const { Title } = Typography;
 
 const Header = ({ onLogout, user }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const avatarColor = generateColor(user.name)
   const menuItems = [
     { key: "feed", label: "Feed", icon: <HomeOutlined />, link: "/feed" },
@@ -37,6 +38,13 @@ const Header = ({ onLogout, user }) => {
 
   const userMenu = (
     <Menu>
+      <Menu.Item
+        key="profile"
+        icon={<UserOutlined />}
+        onClick={() => navigate("/profile")}
+      >
+        Profile
+      </Menu.Item>
       <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={onLogout}>
         Logout
       </Menu.Item>
