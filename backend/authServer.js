@@ -9,6 +9,7 @@ const app = express();
 const PORT = process.env.AUTH_PORT;
 const jwt = require("jsonwebtoken");
 
+
 app.use(express.json());
 app.use(cors());
 
@@ -58,10 +59,7 @@ app.post("/login", async (req, res) => {
   res.json({
     accessToken,
     refreshToken,
-    user: {
-      name: user.username,
-      isProfileComplete: user.isProfileComplete,
-    },
+    isProfileComplete: user.isProfileComplete,
   });
 });
 
@@ -121,41 +119,7 @@ function generateAccessToken(user) {
   });
 }
 
-app.put("/profile", authenticateToken, async (req, res) => {
-  const {
-    age,
-    gender,
-    weight,
-    height,
-    fitnessLevel,
-    runningExperience,
-    preferredTerrains,
-    healthConditions,
-    isProfileComplete,
-  } = req.body;
-  try {
-    const updatedUser = await prisma.user.update({
-      where: { username: req.user.name },
-      data: {
-        age,
-        gender,
-        weight,
-        height,
-        fitnessLevel,
-        runningExperience,
-        preferredTerrains,
-        healthConditions,
-        isProfileComplete,
-      },
-    });
-    res.json({
-      message: "Profile updated successfully",
-      isProfileComplete: updatedUser.isProfileComplete,
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to update profile" });
-  }
-});
+
 
 
 app.listen(PORT, () => {});

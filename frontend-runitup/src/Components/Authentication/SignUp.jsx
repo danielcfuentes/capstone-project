@@ -38,7 +38,7 @@ const SignUp = () => {
         }
       })
       .then((data) => {
-        message.success("Account created successfully!");
+        message.success("Account created successfully! Please log in.");
         navigate("/login");
       })
       .catch((error) => {

@@ -32,7 +32,6 @@ app.post(
   authenticateToken,
   upload.array("images"),
   async (req, res) => {
-
     try {
       const { title, content } = req.body;
       const images = req.files || []; // Provide a default empty array if req.files is undefined
@@ -117,6 +116,44 @@ app.get("/images/:id", async (req, res) => {
     res.send(image.data);
   } catch (error) {
     res.status(500).send("Error retrieving image");
+  }
+});
+
+app.put("/profile", authenticateToken, async (req, res) => {
+  const {
+    age,
+    gender,
+    weight,
+    height,
+    fitnessLevel,
+    runningExperience,
+    preferredTerrains,
+    healthConditions,
+    isProfileComplete,
+  } = req.body;
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { username: req.user.name },
+      data: {
+        age,
+        gender,
+        weight,
+        height,
+        fitnessLevel,
+        runningExperience,
+        preferredTerrains,
+        healthConditions,
+        isProfileComplete,
+      },
+    });
+    res.json({
+      message: "Profile updated successfully",
+      isProfileComplete: updatedUser.isProfileComplete,
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Failed to update profile", error: err.message });
   }
 });
 

@@ -38,9 +38,17 @@ function LoginPage({ onLogin }) {
         }
       })
       .then((data) => {
-        onLogin({ name: values.username }, data.accessToken, data.refreshToken);
+        onLogin(
+          { name: values.username, isProfileComplete: data.isProfileComplete },
+          data.accessToken,
+          data.refreshToken
+        );
         message.success("Login successful!");
-        navigate("/feed");
+        if (data.isProfileComplete) {
+          navigate("/feed");
+        } else {
+          navigate("/profile-setup");
+        }
       })
       .catch((error) => {
         if (error.message === "User not found") {
