@@ -98,7 +98,7 @@ function ProfileSetupPage({ user, onProfileComplete }) {
 
               <Form.Item
                 name="weight"
-                label="Weight (kg)"
+                label="Weight (lbs)"
                 rules={[
                   { required: true, message: "Please input your weight!" },
                 ]}
@@ -108,7 +108,7 @@ function ProfileSetupPage({ user, onProfileComplete }) {
 
               <Form.Item
                 name="height"
-                label="Height (cm)"
+                label="Height (ft.in)"
                 rules={[
                   { required: true, message: "Please input your height!" },
                 ]}
