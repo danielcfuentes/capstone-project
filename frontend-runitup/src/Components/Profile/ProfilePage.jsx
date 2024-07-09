@@ -86,7 +86,7 @@ function ProfilePage({ user, onProfileUpdate }) {
     <Layout style={{ padding: "100px 0 0 0" }} className="profile-page">
       <Content className="profile-content">
         <Title level={2} className="page-title">
-          {user.name} Profile
+          {user.name}'s Profile
         </Title>
         <Text type="secondary" className="page-subtitle">
           View and update your information
