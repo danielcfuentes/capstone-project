@@ -9,6 +9,7 @@ const app = express();
 const PORT = process.env.AUTH_PORT;
 const jwt = require("jsonwebtoken");
 
+
 app.use(express.json());
 app.use(cors());
 
@@ -32,7 +33,13 @@ app.post("/login", async (req, res) => {
   const { username, password } = req.body;
   const user = await prisma.user.findUnique({
     where: { username },
-    include: { tokens: true },
+    select: {
+      id: true,
+      username: true,
+      password: true,
+      isProfileComplete: true,
+      tokens: true,
+    },
   });
   if (!user) return res.status(404).json({ message: "User not found" });
   const validPassword = await bcrypt.compare(password, user.password);
@@ -49,7 +56,11 @@ app.post("/login", async (req, res) => {
       user: { connect: { username } },
     },
   });
-  res.json({ accessToken, refreshToken });
+  res.json({
+    accessToken,
+    refreshToken,
+    isProfileComplete: user.isProfileComplete,
+  });
 });
 
 // Registration endpoint
@@ -107,5 +118,8 @@ function generateAccessToken(user) {
     expiresIn: "30min",
   });
 }
+
+
+
 
 app.listen(PORT, () => {});

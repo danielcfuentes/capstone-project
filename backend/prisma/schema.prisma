@@ -16,27 +16,39 @@ datasource db {
 }
 
 model User {
-  username String  @id
-  password String
-  tokens   Token[]
-  posts    Post[]
+  id                Int               @id @default(autoincrement())
+  username          String            @unique
+  password          String
+  tokens            Token[]
+  posts             Post[]
+  age               Int?
+  gender            String?
+  weight            Float?
+  height            Float?
+  fitnessLevel      String?
+  runningExperience String?
+  preferredTerrains String[]
+  healthConditions  String[]
+  lastKnownLocation String?
+  runningGoals      UserRunningGoal[]
+  completedRuns     CompletedRun[]
+  isProfileComplete Boolean           @default(false)
 }
 
 model Token {
   id           Int    @id @default(autoincrement())
-  refreshToken String
-  userId       String
-  user         User   @relation(fields: [userId], references: [username])
+  refreshToken String @unique
+  userId       Int
+  user         User   @relation(fields: [userId], references: [id])
 }
 
 model Post {
-  id        Int       @id @default(autoincrement())
-  title     String    @db.VarChar(30)
-  content   String    @db.VarChar(2000)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime? @updatedAt // Make updatedAt optional
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String?
   userId    String
-  user      User      @relation(fields: [userId], references: [username])
+  user      User     @relation(fields: [userId], references: [username])
+  createdAt DateTime @default(now())
   images    Image[]
 }
 
@@ -46,4 +58,44 @@ model Image {
   mimeType String
   postId   Int
   post     Post   @relation(fields: [postId], references: [id])
+}
+
+model UserRunningGoal {
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  goalType    String
+  targetValue Float
+  deadline    DateTime?
+  isCompleted Boolean   @default(false)
+}
+
+model Route {
+  id               Int            @id @default(autoincrement())
+  name             String
+  distance         Float
+  elevationGain    Float
+  terrainType      String
+  startPoint       String
+  endPoint         String
+  waypoints        String[]
+  difficulty       String
+  sceneryType      String[]
+  pointsOfInterest String[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  completedRuns    CompletedRun[]
+}
+
+model CompletedRun {
+  id       Int      @id @default(autoincrement())
+  user     User     @relation(fields: [userId], references: [id])
+  userId   Int
+  route    Route    @relation(fields: [routeId], references: [id])
+  routeId  Int
+  duration Float
+  date     DateTime
+  weather  String?
+  feedback String?
+  rating   Int?
 }

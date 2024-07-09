@@ -1,0 +1,57 @@
+.profile-setup-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #1890ff 0%, #52c41a 100%);
+}
+
+.profile-setup-content {
+  width: 100%;
+  max-width: 600px;
+  padding: 24px;
+}
+
+.profile-setup-card {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.profile-setup-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.profile-setup-header h2 {
+  color: #1890ff;
+  margin-bottom: 8px;
+}
+
+.ant-form-item-label > label {
+  font-weight: 600;
+}
+
+.ant-input-number-prefix,
+.ant-select-selection-item .anticon {
+  margin-right: 8px;
+  color: #1890ff;
+}
+
+.ant-select-multiple .ant-select-selection-item {
+  background-color: #e6f7ff;
+  border-color: #91d5ff;
+}
+
+.ant-form-item-explain-error {
+  margin-top: 4px;
+}
+
+@media (max-width: 576px) {
+  .profile-setup-content {
+    padding: 16px;
+  }
+
+  .ant-card-body {
+    padding: 16px;
+  }
+}
