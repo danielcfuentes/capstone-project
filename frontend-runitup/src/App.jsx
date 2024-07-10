@@ -5,6 +5,7 @@ import Feed from "./Components/Feed/FeedPage";
 import RoutesPage from "./Components/Routes/RoutesPage";
 import RecommendationPage from "./Components/Recommendation/RecommendationPage";
 import ProfileSetupPage from "./Components/Profile/ProfileSetupPage";
+import ProfilePage from "./Components/Profile/ProfilePage";
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Header from "./utils/Header";
@@ -53,6 +54,14 @@ function App() {
     const updatedUser = { ...user, isProfileComplete: true };
     setUser(updatedUser);
     localStorage.setItem("user", JSON.stringify(updatedUser));
+  };
+
+  const handleProfileUpdate = (updatedProfile) => {
+    setUser((prevUser) => ({ ...prevUser, ...updatedProfile }));
+    localStorage.setItem(
+      "user",
+      JSON.stringify({ ...user, ...updatedProfile })
+    );
   };
 
   const handleLogout = async () => {
@@ -188,6 +197,20 @@ function App() {
                 isProfileComplete={isProfileComplete}
               >
                 <RecommendationPage user={user} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute
+                isLoggedIn={isLoggedIn}
+                isProfileComplete={isProfileComplete}
+              >
+                <ProfilePage
+                  user={user}
+                  onProfileUpdate={handleProfileUpdate}
+                />
               </ProtectedRoute>
             }
           />
