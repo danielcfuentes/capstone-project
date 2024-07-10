@@ -1,0 +1,19 @@
+.recommendation-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* .ant-form {
+  margin-bottom: 24px;
+} */
+
+.recommended-plan-card {
+  margin-top: 24px;
+}
+
+.recommended-plan-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

@@ -158,18 +158,40 @@ app.put("/profile", authenticateToken, async (req, res) => {
   }
 });
 
+app.get("/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { username: req.user.name },
+      select: {
+        age: true,
+        gender: true,
+        weight: true,
+        height: true,
+        fitnessLevel: true,
+        runningExperience: true,
+        preferredTerrains: true,
+        healthConditions: true,
+      },
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(user);
+  } catch (err) {
+    console.error("Error fetching profile:", err);
+    res.status(500).json({ message: "Failed to fetch profile" });
+  }
+});
 
 // Recommend
 
 // Endpoint to recommend a running plan based on user data and goals
 app.post("/api/recommend-plan", authenticateToken, async (req, res) => {
   try {
-    // Extract preferred distance and goal time from the request body
     const { preferredDistance, goalTime } = req.body;
 
-    // Fetch user data from the database using Prisma ORM
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id }, // Use the authenticated user's ID
+      where: { username: req.user.name },
       select: {
         fitnessLevel: true,
         runningExperience: true,
@@ -180,58 +202,51 @@ app.post("/api/recommend-plan", authenticateToken, async (req, res) => {
         preferredTerrains: true,
         healthConditions: true,
         runningGoals: {
-          where: { isCompleted: false }, // Only consider incomplete goals
-          orderBy: { createdAt: "desc" }, // Get the most recent goal
-          take: 1, // Limit to one result
-          select: { goalType: true, targetValue: true }, // Select goal type and target value
+          where: { isCompleted: false },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { goalType: true, targetValue: true },
         },
       },
     });
 
-    // If user is not found, return a 404 status with an error message
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Get the latest goal from the user's running goals
     const latestGoal = user.runningGoals[0];
-
-    // Estimate the user's weekly mileage based on their latest goal
     const estimatedWeeklyMileage = latestGoal
       ? estimateWeeklyMileage(
-          latestGoal.goalType, // Type of goal (distance or time)
-          latestGoal.targetValue, // Target value for the goal
-          user.fitnessLevel // User's fitness level
+          latestGoal.goalType,
+          latestGoal.targetValue,
+          user.fitnessLevel
         )
-      : 0; // Default to 0 if no goals are found
+      : 0;
 
-    // Construct a full user profile with all necessary data
     const fullUserProfile = {
-      fitnessLevel: user.fitnessLevel || "Beginner", // Default to "Beginner" if not specified
-      runningExperience: user.runningExperience || "Novice", // Default to "Novice" if not specified
-      weeklyMileage: estimatedWeeklyMileage, // Use the estimated weekly mileage
-      preferredDistance, // Use preferred distance from request body
-      goalTime, // Use goal time from request body
-      weight: user.weight, // User's weight
-      height: user.height, // User's height
-      age: user.age, // User's age
-      gender: user.gender, // User's gender
-      preferredTerrains: user.preferredTerrains, // User's preferred terrains
-      healthConditions: user.healthConditions, // User's health conditions
+      fitnessLevel: user.fitnessLevel || "Beginner",
+      runningExperience: user.runningExperience || "Novice",
+      weeklyMileage: estimatedWeeklyMileage,
+      preferredDistance,
+      goalTime,
+      weight: user.weight,
+      height: user.height,
+      age: user.age,
+      gender: user.gender,
+      preferredTerrains: user.preferredTerrains || [],
+      healthConditions: user.healthConditions || [],
     };
 
-    // Get a recommended running plan based on the full user profile
+    console.log("User profile for recommendation:", fullUserProfile);
+
     const recommendedPlan = recommendPlan(fullUserProfile);
 
-    // If a suitable plan is found, return it as a JSON response
     if (recommendedPlan) {
       res.json({ recommendedPlan });
     } else {
-      // If no suitable plan is found, return a 404 status with an error message
       res.status(404).json({ message: "No suitable plan found" });
     }
   } catch (error) {
-    // Log the error to the console and return a 500 status with an error message
     console.error("Error recommending plan:", error);
     res.status(500).json({ message: "Error recommending plan" });
   }
@@ -268,29 +283,5 @@ function estimateWeeklyMileage(goalType, targetValue, fitnessLevel) {
 
 
 
-app.get("/profile", authenticateToken, async (req, res) => {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { username: req.user.name },
-      select: {
-        age: true,
-        gender: true,
-        weight: true,
-        height: true,
-        fitnessLevel: true,
-        runningExperience: true,
-        preferredTerrains: true,
-        healthConditions: true,
-      },
-    });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.json(user);
-  } catch (err) {
-    console.error("Error fetching profile:", err);
-    res.status(500).json({ message: "Failed to fetch profile" });
-  }
-});
 
 app.listen(PORT, () => {});
