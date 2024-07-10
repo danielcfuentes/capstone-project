@@ -268,4 +268,29 @@ function estimateWeeklyMileage(goalType, targetValue, fitnessLevel) {
 
 
 
+app.get("/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { username: req.user.name },
+      select: {
+        age: true,
+        gender: true,
+        weight: true,
+        height: true,
+        fitnessLevel: true,
+        runningExperience: true,
+        preferredTerrains: true,
+        healthConditions: true,
+      },
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(user);
+  } catch (err) {
+    console.error("Error fetching profile:", err);
+    res.status(500).json({ message: "Failed to fetch profile" });
+  }
+});
+
 app.listen(PORT, () => {});
