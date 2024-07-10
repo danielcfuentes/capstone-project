@@ -111,4 +111,4 @@ const intermediate5K = {
   ],
 };
 
-export default intermediate5K;
+module.exports = intermediate5K;

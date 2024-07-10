@@ -116,4 +116,4 @@ const beginner5K = {
   ],
 };
 
-export default beginner5K;
+module.exports = beginner5K;

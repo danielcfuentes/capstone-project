@@ -74,4 +74,4 @@ const advancedMarathon = {
   ],
 };
 
-export default advancedMarathon;
+module.exports = advancedMarathon;

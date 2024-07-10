@@ -200,4 +200,4 @@ const intermediateHalfMarathon = {
   ],
 };
 
-export default intermediateHalfMarathon;
+module.exports = intermediateHalfMarathon;

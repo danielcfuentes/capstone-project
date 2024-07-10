@@ -148,4 +148,4 @@ const beginner10K = {
   ],
 };
 
-export default beginner10K;
+module.exports = beginner10K;

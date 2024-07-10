@@ -1,8 +1,8 @@
-import beginner5K from "./plans/beginner5K";
-import intermediate5K from "./plans/intermediate5K";
-import beginner10K from "./plans/beginner10K";
-import intermediateHalfMarathon from "./plans/intermediateHalfMarathon";
-import advancedMarathon from "./plans/advancedMarathon";
+const beginner5K = require("./plans/beginner5k");
+const intermediate5K = require("./plans/intermediate5k");
+const beginner10K = require("./plans/beginner10K");
+const intermediateHalfMarathon = require("./plans/intermediateHalfMarathon");
+const advancedMarathon = require("./plans/advancedMarathon");
 
 const runningPlans = [
   beginner5K,
@@ -12,4 +12,4 @@ const runningPlans = [
   advancedMarathon,
 ];
 
-export default runningPlans;
+module.exports = runningPlans;
