@@ -8,6 +8,7 @@ const prisma = new PrismaClient();
 const PORT = process.env.SERVER_PORT;
 const multer = require("multer");
 const { recommendPlan } = require("./utils/planRecommendation")
+const runningPlans = require("./data/runningPlans");
 
 app.use(express.json());
 app.use(cors());
@@ -281,6 +282,14 @@ function estimateWeeklyMileage(goalType, targetValue, fitnessLevel) {
   }
 }
 
+app.get("/api/all-plans", authenticateToken, (req, res) => {
+  try {
+    res.json({ plans: runningPlans });
+  } catch (error) {
+    console.error("Error fetching all plans:", error);
+    res.status(500).json({ message: "Error fetching all plans" });
+  }
+});
 
 
 
