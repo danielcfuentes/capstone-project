@@ -14,7 +14,9 @@ import {
   fitMapToRouteWithStart,
   removeCurrentMarker,
   clearRoute,
+  extractRouteInfo,
 } from "../../utils/mapUtils";
+import RouteInfo from "./RouteInfo";
 
 const { Content } = Layout;
 
@@ -24,6 +26,7 @@ const RoutesPage = () => {
   const [map, setMap] = useState(null);
   const mapContainer = useRef(null);
   const [form] = Form.useForm();
+  const [routeData, setRouteData] = useState(null);
 
   useEffect(() => {
     const map = initializeMap(mapContainer.current);
@@ -44,11 +47,28 @@ const RoutesPage = () => {
       const [startLng, startLat] = await geocodeLocation(startLocation);
       const startCoordinates = [startLng, startLat];
       const coordinates = generateCircularRoute(startLat, startLng, distance);
-      const routeGeometry = await getRouteFromMapbox(coordinates);
+      const routeResponse = await getRouteFromMapbox(coordinates);
 
-      addRouteToMap(map, routeGeometry);
+      if (
+        !routeResponse ||
+        !routeResponse.routes ||
+        routeResponse.routes.length === 0
+      ) {
+        throw new Error("No route found. Please try different parameters.");
+      }
+
+      const route = routeResponse.routes[0];
+
+      if (!route.geometry || !route.geometry.coordinates) {
+        throw new Error("Invalid route data received. Please try again.");
+      }
+
+      addRouteToMap(map, route.geometry);
       addStartMarker(map, startCoordinates, startLocation);
-      fitMapToRouteWithStart(map, routeGeometry.coordinates, startCoordinates);
+      fitMapToRouteWithStart(map, route.geometry.coordinates, startCoordinates);
+
+      const routeInfo = extractRouteInfo(route);
+      setRouteData(routeInfo);
 
       message.success("Route generated successfully!");
     } catch (error) {
@@ -57,6 +77,7 @@ const RoutesPage = () => {
         error.message ||
           "An error occurred while generating the route. Please try again."
       );
+      setRouteData(null);
     }
   };
 
@@ -90,6 +111,7 @@ const RoutesPage = () => {
           </Form.Item>
         </Form>
         <div ref={mapContainer} className="map-container" />
+        {routeData && <RouteInfo routeData={routeData} />}
       </Content>
     </Layout>
   );

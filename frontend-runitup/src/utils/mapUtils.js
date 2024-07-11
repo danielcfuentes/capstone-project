@@ -71,19 +71,28 @@ export const generateCircularRoute = (startLat, startLng, distanceMiles) => {
 
 // Function to get a route from Mapbox API given a set of coordinates
 export const getRouteFromMapbox = async (coordinates) => {
+  try {
+    const response = await fetch(
+      `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates.join(
+        ";"
+      )}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+    );
 
-  // Fetch route data from Mapbox Directions API
-  const response = await fetch(
-    `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates.join(
-      ";"
-    )}?geometries=geojson&access_token=${mapboxgl.accessToken}`
-  );
-  const data = await response.json();
-  if (data.routes.length === 0) {
-    // If no routes are found
-    throw new Error("Unable to generate a route"); // Throw an error
+    if (!response.ok) {
+      throw new Error("Failed to fetch route from Mapbox");
+    }
+
+    const data = await response.json();
+
+    if (!data.routes || data.routes.length === 0) {
+      throw new Error("No routes found");
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching route from Mapbox:", error);
+    throw error;
   }
-  return data.routes[0].geometry; // Return the geometry of the first route found
 };
 
 // Function to add a route to the map
@@ -116,11 +125,7 @@ export const addRouteToMap = (map, routeGeometry) => {
       "line-opacity": 0.75,
     },
   });
-
-
 };
-
-
 
 // Function to fit the map view to the given route coordinates
 export const fitMapToRouteWithStart = (
@@ -135,10 +140,8 @@ export const fitMapToRouteWithStart = (
   map.fitBounds(bounds, { padding: 50 });
 };
 
-
 let currentMarker = null;
 let currentPopup = null;
-
 
 export const addStartMarker = (map, coordinates, locationName) => {
   // Remove existing marker and popup
@@ -172,8 +175,6 @@ export const clearRoute = (map) => {
   }
 };
 
-
-
 export const removeCurrentMarker = () => {
   if (currentMarker) {
     currentMarker.remove();
@@ -183,4 +184,60 @@ export const removeCurrentMarker = () => {
     currentPopup.remove();
     currentPopup = null;
   }
+};
+
+//route info
+
+export const extractRouteInfo = (route) => {
+  const distance = (route.distance * 0.000621371).toFixed(2); // Convert meters to miles
+  const duration = formatDuration(route.duration);
+  const elevationGain = calculateElevationGain(route.geometry.coordinates);
+  const elevationLoss = calculateElevationLoss(route.geometry.coordinates);
+  const terrain = determineTerrain(elevationGain, distance);
+  const directions = extractDirections(route.legs[0].steps);
+
+  return {
+    distance,
+    duration,
+    elevationGain,
+    elevationLoss,
+    terrain,
+    directions,
+  };
+};
+
+const formatDuration = (seconds) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+};
+
+const calculateElevationGain = (coordinates) => {
+  let gain = 0;
+  for (let i = 1; i < coordinates.length; i++) {
+    const elevationDiff = coordinates[i][2] - coordinates[i - 1][2];
+    if (elevationDiff > 0) gain += elevationDiff;
+  }
+  return Math.round(gain * 3.28084); // Convert meters to feet
+};
+
+const calculateElevationLoss = (coordinates) => {
+  let loss = 0;
+  for (let i = 1; i < coordinates.length; i++) {
+    const elevationDiff = coordinates[i - 1][2] - coordinates[i][2];
+    if (elevationDiff > 0) loss += elevationDiff;
+  }
+  return Math.round(loss * 3.28084); // Convert meters to feet
+};
+
+const determineTerrain = (elevationGain, distance) => {
+  const gainPerMile = elevationGain / distance;
+  if (gainPerMile < 50) return "Flat";
+  if (gainPerMile < 150) return "Rolling Hills";
+  if (gainPerMile < 300) return "Hilly";
+  return "Mountainous";
+};
+
+const extractDirections = (steps) => {
+  return steps.map((step) => step.maneuver.instruction);
 };
