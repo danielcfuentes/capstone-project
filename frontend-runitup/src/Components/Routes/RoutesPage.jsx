@@ -1,58 +1,58 @@
+import "../../styles/RoutesPage.css"
 import React, { useState, useEffect, useRef } from "react";
-import { Layout, message } from "antd";
+import { Layout, Form, Input, Button, message } from "antd";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import RouteForm from "./RouteForm";
+import { getHeaders } from "../../utils/apiConfig";
 import {
   initializeMap,
   geocodeLocation,
   generateCircularRoute,
   getRouteFromMapbox,
   addRouteToMap,
-  fitMapToRoute,
+  addStartMarker,
+  fitMapToRouteWithStart,
+  removeCurrentMarker,
+  clearRoute,
 } from "../../utils/mapUtils";
-import "../../styles/RoutesPage.css";
 
 const { Content } = Layout;
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const RoutesPage = () => {
-  const [map, setMap] = useState(null); // State to store the map instance
-  const mapContainer = useRef(null); // Ref to store the map container DOM element
+  const [map, setMap] = useState(null);
+  const mapContainer = useRef(null);
+  const [form] = Form.useForm();
 
-  // Initialize the map when the component mounts
   useEffect(() => {
     const map = initializeMap(mapContainer.current);
-    map.on("load", () => setMap(map)); // Set the map state once it's fully loaded
-    return () => map.remove(); // Clean up the map instance when the component unmounts
+    map.on("load", () => setMap(map));
+    return () => map.remove();
   }, []);
 
-  // Handle form submission to generate a route
   const handleSubmit = async (values) => {
     const { startLocation, distance } = values;
 
     try {
-      // Geocode the start location to get coordinates
+      // Clear previous route and marker
+      if (map) {
+        clearRoute(map);
+        removeCurrentMarker();
+      }
+
       const [startLng, startLat] = await geocodeLocation(startLocation);
-
-      // Generate a circular route based on start coordinates and distance
+      const startCoordinates = [startLng, startLat];
       const coordinates = generateCircularRoute(startLat, startLng, distance);
-
-      // Fetch the route geometry from Mapbox API
       const routeGeometry = await getRouteFromMapbox(coordinates);
 
-      // Add the route to the map
       addRouteToMap(map, routeGeometry);
+      addStartMarker(map, startCoordinates, startLocation);
+      fitMapToRouteWithStart(map, routeGeometry.coordinates, startCoordinates);
 
-      // Adjust the map view to fit the route
-      fitMapToRoute(map, routeGeometry.coordinates);
-
-      // Display success message
       message.success("Route generated successfully!");
-
     } catch (error) {
-      // Display error message
+      console.error("Error generating route:", error);
       message.error(
         error.message ||
           "An error occurred while generating the route. Please try again."
@@ -63,8 +63,33 @@ const RoutesPage = () => {
   return (
     <Layout className="routes-page">
       <Content className="routes-content">
-        <RouteForm onSubmit={handleSubmit} />{" "}
-        <div ref={mapContainer} className="map-container" />{" "}
+        <Form
+          form={form}
+          onFinish={handleSubmit}
+          layout="inline"
+          className="route-form"
+        >
+          <Form.Item
+            name="startLocation"
+            rules={[
+              { required: true, message: "Please enter a starting location" },
+            ]}
+          >
+            <Input placeholder="Starting Location" />
+          </Form.Item>
+          <Form.Item
+            name="distance"
+            rules={[{ required: true, message: "Please enter a distance" }]}
+          >
+            <Input type="number" placeholder="Distance (miles)" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Generate Route
+            </Button>
+          </Form.Item>
+        </Form>
+        <div ref={mapContainer} className="map-container" />
       </Content>
     </Layout>
   );

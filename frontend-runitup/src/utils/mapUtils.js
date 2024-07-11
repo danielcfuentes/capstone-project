@@ -2,12 +2,31 @@ import mapboxgl from "mapbox-gl";
 
 // Function to initialize the map with given container, center, and zoom level
 export const initializeMap = (container, center = [-74.5, 40], zoom = 9) => {
-  return new mapboxgl.Map({
-    container, 
+  const map = new mapboxgl.Map({
+    container,
     style: "mapbox://styles/mapbox/streets-v11",
     center,
     zoom,
   });
+
+  map.on("load", () => {
+    // Add start flag icon
+    const startFlagSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#00FF00" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+        <line x1="4" y1="22" x2="4" y2="15"></line>
+      </svg>
+    `;
+
+    const startFlagImage = new Image(24, 24);
+    startFlagImage.onload = () => {
+      map.addImage("start-flag", startFlagImage);
+    };
+    startFlagImage.src =
+      "data:image/svg+xml;charset=utf-8," + encodeURIComponent(startFlagSvg);
+  });
+
+  return map;
 };
 
 // Function to geocode a location (convert location name to geographical coordinates)
@@ -69,23 +88,20 @@ export const getRouteFromMapbox = async (coordinates) => {
 
 // Function to add a route to the map
 export const addRouteToMap = (map, routeGeometry) => {
-  // Remove existing route layer and source if they exist
   if (map.getSource("route")) {
     map.removeLayer("route");
     map.removeSource("route");
   }
 
-  // Add new source for the route
   map.addSource("route", {
     type: "geojson",
     data: {
       type: "Feature",
       properties: {},
-      geometry: routeGeometry, // GeoJSON data for the route
+      geometry: routeGeometry,
     },
   });
 
-  // Add new layer to display the route
   map.addLayer({
     id: "route",
     type: "line",
@@ -95,18 +111,76 @@ export const addRouteToMap = (map, routeGeometry) => {
       "line-cap": "round",
     },
     paint: {
-      "line-color": "red",
-      "line-width": 8,
+      "line-color": "#3887be",
+      "line-width": 5,
+      "line-opacity": 0.75,
     },
   });
+
+
 };
 
-// Function to fit the map view to the given route coordinates
-export const fitMapToRoute = (map, coordinates) => {
-  // Create a bounding box to fit all the coordinates
-  const bounds = coordinates.reduce((bounds, coord) => {
-    return bounds.extend(coord); // Extend the bounds to include each coordinate
-  }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0])); // Initialize bounds with the first coordinate
 
-  map.fitBounds(bounds, { padding: 50 }); // Adjust the map view to fit the bounds with padding
+
+// Function to fit the map view to the given route coordinates
+export const fitMapToRouteWithStart = (
+  map,
+  routeCoordinates,
+  startCoordinates
+) => {
+  const bounds = routeCoordinates.reduce((bounds, coord) => {
+    return bounds.extend(coord);
+  }, new mapboxgl.LngLatBounds(startCoordinates, startCoordinates));
+
+  map.fitBounds(bounds, { padding: 50 });
+};
+
+
+let currentMarker = null;
+let currentPopup = null;
+
+
+export const addStartMarker = (map, coordinates, locationName) => {
+  // Remove existing marker and popup
+  removeCurrentMarker();
+
+  // Add new marker
+  currentMarker = new mapboxgl.Marker({
+    color: "#00FF00",
+    scale: 1.2,
+  })
+    .setLngLat(coordinates)
+    .addTo(map);
+
+  // Add new popup
+  currentPopup = new mapboxgl.Popup({
+    offset: 25,
+    closeButton: false,
+    closeOnClick: false,
+  })
+    .setLngLat(coordinates)
+    .setHTML(`<h3>Start: ${locationName}</h3>`)
+    .addTo(map);
+
+  return currentMarker;
+};
+
+export const clearRoute = (map) => {
+  if (map.getSource("route")) {
+    map.removeLayer("route");
+    map.removeSource("route");
+  }
+};
+
+
+
+export const removeCurrentMarker = () => {
+  if (currentMarker) {
+    currentMarker.remove();
+    currentMarker = null;
+  }
+  if (currentPopup) {
+    currentPopup.remove();
+    currentPopup = null;
+  }
 };
