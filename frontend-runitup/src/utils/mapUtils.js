@@ -3,10 +3,10 @@ import mapboxgl from "mapbox-gl";
 // Function to initialize the map with given container, center, and zoom level
 export const initializeMap = (container, center = [-74.5, 40], zoom = 9) => {
   return new mapboxgl.Map({
-    container, // HTML element or ID of the element to contain the map
-    style: "mapbox://styles/mapbox/streets-v11", // Mapbox style URL for the map appearance
-    center, // Initial geographical center of the map [longitude, latitude]
-    zoom, // Initial zoom level of the map
+    container, 
+    style: "mapbox://styles/mapbox/streets-v11",
+    center,
+    zoom,
   });
 };
 
@@ -18,12 +18,12 @@ export const geocodeLocation = async (location) => {
       location
     )}.json?access_token=${mapboxgl.accessToken}`
   );
-  const data = await response.json(); // Parse the JSON response
+  const data = await response.json();
   if (data.features.length === 0) {
     // If no features (locations) are found
-    throw new Error("Location not found"); // Throw an error
+    throw new Error("Location not found");
   }
-  return data.features[0].center; // Return the coordinates of the first feature found
+  return data.features[0].center; // Return the coordinates of the first feature  (location) found
 };
 
 // Function to generate a circular route given a start point and distance
@@ -33,6 +33,7 @@ export const generateCircularRoute = (startLat, startLng, distanceMiles) => {
   const radiusKm = distanceKm / (2 * Math.PI); // Calculate radius of the circle
 
   const coordinates = []; // Array to store route coordinates
+
   // Generate coordinates for the circular route
   for (let i = 0; i <= 360; i += 45) {
     const angle = i * (Math.PI / 180); // Convert angle to radians
@@ -51,13 +52,14 @@ export const generateCircularRoute = (startLat, startLng, distanceMiles) => {
 
 // Function to get a route from Mapbox API given a set of coordinates
 export const getRouteFromMapbox = async (coordinates) => {
+
   // Fetch route data from Mapbox Directions API
   const response = await fetch(
     `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates.join(
       ";"
     )}?geometries=geojson&access_token=${mapboxgl.accessToken}`
   );
-  const data = await response.json(); // Parse the JSON response
+  const data = await response.json();
   if (data.routes.length === 0) {
     // If no routes are found
     throw new Error("Unable to generate a route"); // Throw an error
@@ -85,16 +87,16 @@ export const addRouteToMap = (map, routeGeometry) => {
 
   // Add new layer to display the route
   map.addLayer({
-    id: "route", // Layer ID
-    type: "line", // Layer type
-    source: "route", // Source ID
+    id: "route",
+    type: "line",
+    source: "route",
     layout: {
-      "line-join": "round", // Join style for line segments
-      "line-cap": "round", // Cap style for line ends
+      "line-join": "round",
+      "line-cap": "round",
     },
     paint: {
-      "line-color": "red", // Line color
-      "line-width": 8, // Line width
+      "line-color": "red",
+      "line-width": 8,
     },
   });
 };
