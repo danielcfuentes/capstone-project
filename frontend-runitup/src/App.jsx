@@ -185,7 +185,7 @@ function App() {
                 isLoggedIn={isLoggedIn}
                 isProfileComplete={isProfileComplete}
               >
-                <RoutesPage user={user} />
+                <RoutesPage />
               </ProtectedRoute>
             }
           />

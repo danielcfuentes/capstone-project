@@ -1,0 +1,35 @@
+.routes-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding-top: 100px;
+}
+
+.routes-content {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.route-form {
+  margin-bottom: 20px;
+}
+
+.map-container {
+  flex: 1;
+  min-height: 400px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .route-form {
+    flex-direction: column;
+  }
+
+  .route-form .ant-form-item {
+    margin-right: 0;
+    margin-bottom: 16px;
+  }
+}
