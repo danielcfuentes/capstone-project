@@ -2,11 +2,12 @@ const advancedMarathon = {
   id: "advanced_marathon",
   name: "Advanced Marathon",
   description:
-    "An 18-week plan for experienced runners aiming to achieve a competitive marathon time. This high-mileage plan includes intense speed work and long runs.",
+    "An 18-week plan for experienced runners aiming to achieve a competitive marathon time.",
   distance: "Marathon",
   level: "Advanced",
   duration: 18,
-  goalTime: "Sub 3 hours",
+  goalTime: "3:00:00",
+  terrain: ["Road", "Trail", "Track"],
   weeklySchedule: [
     {
       week: 1,

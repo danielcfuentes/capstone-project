@@ -2,11 +2,12 @@ const intermediateHalfMarathon = {
   id: "intermediate_half_marathon",
   name: "Intermediate Half Marathon",
   description:
-    "A 12-week plan for runners who have completed a 10K and want to step up to the half marathon distance. This plan includes a mix of speed work and endurance-building runs.",
+    "A 12-week plan for runners who have completed a 10K and want to tackle the half marathon distance.",
   distance: "Half Marathon",
   level: "Intermediate",
   duration: 12,
-  goalTime: "Sub 2 hours",
+  goalTime: "1:45:00",
+  terrain: ["Road", "Trail"],
   weeklySchedule: [
     {
       week: 1,

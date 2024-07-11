@@ -2,11 +2,12 @@ const intermediate5K = {
   id: "intermediate_5k",
   name: "Intermediate 5K",
   description:
-    "A 6-week plan for runners who can already run 5K and want to improve their time. This plan introduces speed work and longer runs to boost performance.",
+    "For runners looking to improve their 5K time. This 6-week plan includes speed work and hill training.",
   distance: "5K",
   level: "Intermediate",
   duration: 6,
-  goalTime: "Sub 25 minutes",
+  goalTime: "25:00",
+  terrain: ["Road", "Track", "Trail"],
   weeklySchedule: [
     {
       week: 1,

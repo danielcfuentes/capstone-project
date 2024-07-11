@@ -2,11 +2,12 @@ const beginner10K = {
   id: "beginner_10k",
   name: "Beginner 10K",
   description:
-    "A 10-week plan for runners who have completed a 5K and are ready to tackle the 10K distance. This plan focuses on gradually increasing endurance.",
+    "A 10-week plan for runners who have completed a 5K and want to step up to the 10K distance.",
   distance: "10K",
   level: "Beginner",
   duration: 10,
-  goalTime: "Finish strong",
+  goalTime: "60:00",
+  terrain: ["Road", "Treadmill"],
   weeklySchedule: [
     {
       week: 1,

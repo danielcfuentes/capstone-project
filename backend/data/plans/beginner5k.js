@@ -2,11 +2,12 @@ const beginner5K = {
   id: "beginner_5k",
   name: "Beginner 5K",
   description:
-    "An 8-week plan designed for new runners or those returning to running after a long break. This plan will gradually build your endurance and confidence to complete a 5K race.",
+    "Perfect for new runners or those returning to running. This 8-week plan will prepare you for your first 5K.",
   distance: "5K",
   level: "Beginner",
-  duration: 8, // weeks
-  goalTime: "Finish comfortably",
+  duration: 8,
+  goalTime: "30:00",
+  terrain: ["Road", "Treadmill"],
   weeklySchedule: [
     {
       week: 1,
