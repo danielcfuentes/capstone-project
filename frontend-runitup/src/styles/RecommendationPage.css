@@ -1,19 +1,37 @@
 .recommendation-page {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
 }
 
-/* .ant-form {
+.recommendation-form {
+  max-width: 500px;
   margin-bottom: 24px;
-} */
-
-.recommended-plan-card {
-  margin-top: 24px;
 }
 
-.recommended-plan-card .ant-card-body {
+.recommended-plan-section {
+  margin-bottom: 24px;
+}
+
+.all-plans-section {
+  margin-top: 48px;
+}
+
+.plan-card {
+  height: 100%;
+}
+
+.plan-card .ant-card-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  justify-content: space-between;
+}
+
+.plan-modal .ant-modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.plan-modal ul {
+  padding-left: 20px;
 }
