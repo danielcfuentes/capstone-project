@@ -7,7 +7,6 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const PORT = process.env.SERVER_PORT;
 const multer = require("multer");
-const routeHandler = require("./routeHandler");
 
 app.use(express.json());
 app.use(cors());
@@ -183,8 +182,6 @@ app.get("/profile", authenticateToken, async (req, res) => {
   }
 });
 
-// New route for generating routes
-app.use('/api/routes', authenticateToken, routeHandler);
 
 
 app.listen(PORT, () => {});
