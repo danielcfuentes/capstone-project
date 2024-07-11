@@ -52,7 +52,6 @@ const RoutesPage = () => {
       message.success("Route generated successfully!");
 
     } catch (error) {
-      console.error("Error generating route:", error); // Log any errors
       // Display error message
       message.error(
         error.message ||
