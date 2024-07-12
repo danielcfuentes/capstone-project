@@ -1,20 +1,22 @@
-import "../../styles/RoutesPage.css"
+import "../../styles/RoutesPage.css";
 import React, { useState, useEffect, useRef } from "react";
-import { Layout, Form, Input, Button, message } from "antd";
+import { Layout, Form, Input, Button, message, Alert } from "antd";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { getHeaders } from "../../utils/apiConfig";
 import {
   initializeMap,
   geocodeLocation,
-  generateCircularRoute,
+  generateSimpleCircularRoute,
   getRouteFromMapbox,
   addRouteToMap,
   addStartMarker,
   fitMapToRouteWithStart,
   removeCurrentMarker,
   clearRoute,
-  extractRouteInfo,
+  calculateRouteDistance,
+  estimateElevationChange,
+  calculateRunningTime,
+  extractDirections,
 } from "../../utils/mapUtils";
 import RouteInfo from "./RouteInfo";
 
@@ -27,6 +29,7 @@ const RoutesPage = () => {
   const mapContainer = useRef(null);
   const [form] = Form.useForm();
   const [routeData, setRouteData] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const map = initializeMap(mapContainer.current);
@@ -36,9 +39,10 @@ const RoutesPage = () => {
 
   const handleSubmit = async (values) => {
     const { startLocation, distance } = values;
+    setError(null);
+    setRouteData(null);
 
     try {
-      // Clear previous route and marker
       if (map) {
         clearRoute(map);
         removeCurrentMarker();
@@ -46,14 +50,14 @@ const RoutesPage = () => {
 
       const [startLng, startLat] = await geocodeLocation(startLocation);
       const startCoordinates = [startLng, startLat];
-      const coordinates = generateCircularRoute(startLat, startLng, distance);
-      const routeResponse = await getRouteFromMapbox(coordinates);
+      const routeCoordinates = generateSimpleCircularRoute(
+        startLat,
+        startLng,
+        parseFloat(distance)
+      );
+      const routeResponse = await getRouteFromMapbox(routeCoordinates);
 
-      if (
-        !routeResponse ||
-        !routeResponse.routes ||
-        routeResponse.routes.length === 0
-      ) {
+      if (!routeResponse.routes || routeResponse.routes.length === 0) {
         throw new Error("No route found. Please try different parameters.");
       }
 
@@ -67,17 +71,27 @@ const RoutesPage = () => {
       addStartMarker(map, startCoordinates, startLocation);
       fitMapToRouteWithStart(map, route.geometry.coordinates, startCoordinates);
 
-      const routeInfo = extractRouteInfo(route);
-      setRouteData(routeInfo);
+      const actualDistance = calculateRouteDistance(route);
+      const { gain, loss } = estimateElevationChange(route);
+      const duration = calculateRunningTime(parseFloat(actualDistance));
+      const directions = extractDirections(route.legs);
+
+      setRouteData({
+        distance: actualDistance,
+        duration,
+        elevationGain: gain,
+        elevationLoss: loss,
+        terrain: "Mixed", // This could be improved with more detailed terrain analysis
+        directions,
+      });
 
       message.success("Route generated successfully!");
     } catch (error) {
       console.error("Error generating route:", error);
-      message.error(
+      setError(
         error.message ||
           "An error occurred while generating the route. Please try again."
       );
-      setRouteData(null);
     }
   };
 
@@ -102,7 +116,7 @@ const RoutesPage = () => {
             name="distance"
             rules={[{ required: true, message: "Please enter a distance" }]}
           >
-            <Input type="number" placeholder="Distance (miles)" />
+            <Input type="number" placeholder="Distance (miles)" step="0.1" />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">
@@ -110,6 +124,16 @@ const RoutesPage = () => {
             </Button>
           </Form.Item>
         </Form>
+        {error && (
+          <Alert
+            message="Error"
+            description={error}
+            type="error"
+            showIcon
+            closable
+            onClose={() => setError(null)}
+          />
+        )}
         <div ref={mapContainer} className="map-container" />
         {routeData && <RouteInfo routeData={routeData} />}
       </Content>

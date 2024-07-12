@@ -52,46 +52,80 @@ export const generateCircularRoute = async (
   startLng,
   desiredDistanceMiles
 ) => {
-  const startPoint = turf.point([startLng, startLat]);
-  let radius = (desiredDistanceMiles * 1609.34) / (2 * Math.PI); // Initial estimate
-  let route;
-  let actualDistance;
+  const desiredDistanceKm = desiredDistanceMiles * 1.60934;
+  let radius = desiredDistanceKm / (2 * Math.PI);
+  let coordinates = [];
+  let actualDistance = 0;
   let iterations = 0;
-  const maxIterations = 10;
-  const tolerance = 0.1; // 10% tolerance
+  const maxIterations = 20;
 
-  do {
-    const options = { steps: 64, units: "meters" };
-    const circle = turf.circle(startPoint, radius, options);
-    route = circle.geometry.coordinates[0];
-
-    const lineString = turf.lineString(route);
-    actualDistance = turf.length(lineString, { units: "miles" });
-
-    const ratio = desiredDistanceMiles / actualDistance;
-    radius *= ratio;
-
-    iterations++;
-  } while (
-    Math.abs(actualDistance - desiredDistanceMiles) / desiredDistanceMiles >
-      tolerance &&
+  while (
+    Math.abs(actualDistance - desiredDistanceKm) > 0.1 &&
     iterations < maxIterations
-  );
+  ) {
+    coordinates = [];
+    for (let i = 0; i <= 360; i += 10) {
+      const angle = i * (Math.PI / 180);
+      const lat = startLat + (radius / 111.32) * Math.sin(angle);
+      const lng =
+        startLng +
+        (radius / (111.32 * Math.cos((startLat * Math.PI) / 180))) *
+          Math.cos(angle);
+      coordinates.push([lng, lat]);
+    }
+    coordinates.push(coordinates[0]); // Close the loop
 
-  return route.map((coord) => coord.join(","));
+    const line = turf.lineString(coordinates);
+    actualDistance = turf.length(line, { units: "kilometers" });
+
+    if (actualDistance < desiredDistanceKm) {
+      radius *= 1.05;
+    } else {
+      radius *= 0.95;
+    }
+    iterations++;
+  }
+
+  return coordinates;
+};
+
+export const generateSimpleCircularRoute = (
+  startLat,
+  startLng,
+  desiredDistanceMiles
+) => {
+  const desiredDistanceKm = desiredDistanceMiles * 1.60934;
+  const radius = desiredDistanceKm / (2 * Math.PI);
+  const coordinates = [];
+  const numPoints = 8; // Reduced number of points
+
+  for (let i = 0; i <= numPoints; i++) {
+    const angle = (i / numPoints) * 2 * Math.PI;
+    const lat = startLat + (radius / 111.32) * Math.sin(angle);
+    const lng =
+      startLng +
+      (radius / (111.32 * Math.cos((startLat * Math.PI) / 180))) *
+        Math.cos(angle);
+    coordinates.push([lng, lat]);
+  }
+
+  return coordinates;
 };
 
 // Function to get a route from Mapbox API given a set of coordinates
 export const getRouteFromMapbox = async (coordinates) => {
   try {
+    const coordinateString = coordinates
+      .map((coord) => coord.join(","))
+      .join(";");
     const response = await fetch(
-      `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates.join(
-        ";"
-      )}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+      `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinateString}?geometries=geojson&steps=true&access_token=${mapboxgl.accessToken}&annotations=distance,duration,speed`
     );
 
     if (!response.ok) {
-      throw new Error("Failed to fetch route from Mapbox");
+      throw new Error(
+        `Failed to fetch route from Mapbox: ${response.statusText}`
+      );
     }
 
     const data = await response.json();
@@ -199,57 +233,36 @@ export const removeCurrentMarker = () => {
 };
 
 //route info
-
-export const extractRouteInfo = (route) => {
-  const distance = (route.distance * 0.000621371).toFixed(2); // Convert meters to miles
-  const duration = formatDuration(route.duration);
-  const elevationGain = calculateElevationGain(route.geometry.coordinates);
-  const elevationLoss = calculateElevationLoss(route.geometry.coordinates);
-  const terrain = determineTerrain(elevationGain, distance);
-  const directions = extractDirections(route.legs[0].steps);
-
-  return {
-    distance,
-    duration,
-    elevationGain,
-    elevationLoss,
-    terrain,
-    directions,
-  };
+export const calculateRouteDistance = (route) => {
+  return (route.distance / 1609.34).toFixed(2); // Convert meters to miles and round to 2 decimal places
 };
 
-const formatDuration = (seconds) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
+export const calculateRunningTime = (distanceMiles) => {
+  const averagePaceMinPerMile = 9; // Assume 9 minutes per mile for an average runner
+  const totalMinutes = distanceMiles * averagePaceMinPerMile;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = Math.round(totalMinutes % 60);
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 };
 
-const calculateElevationGain = (coordinates) => {
-  let gain = 0;
-  for (let i = 1; i < coordinates.length; i++) {
-    const elevationDiff = coordinates[i][2] - coordinates[i - 1][2];
-    if (elevationDiff > 0) gain += elevationDiff;
-  }
-  return Math.round(gain * 3.28084); // Convert meters to feet
+export const extractDirections = (legs) => {
+  if (!legs || legs.length === 0) return [];
+
+  return legs.flatMap((leg) =>
+    leg.steps.map((step) => ({
+      instruction: step.maneuver.instruction,
+      distance: (step.distance * 0.000621371).toFixed(2), // Convert meters to miles
+    }))
+  );
 };
 
-const calculateElevationLoss = (coordinates) => {
-  let loss = 0;
-  for (let i = 1; i < coordinates.length; i++) {
-    const elevationDiff = coordinates[i - 1][2] - coordinates[i][2];
-    if (elevationDiff > 0) loss += elevationDiff;
-  }
-  return Math.round(loss * 3.28084); // Convert meters to feet
-};
+export const estimateElevationChange = (route) => {
+  // Since we don't have accurate elevation data, we'll provide a rough estimate
+  const distanceInKm = route.distance / 1000;
+  const estimatedGainPerKm = 10; // Assume an average of 10m elevation gain per km
 
-const determineTerrain = (elevationGain, distance) => {
-  const gainPerMile = elevationGain / distance;
-  if (gainPerMile < 50) return "Flat";
-  if (gainPerMile < 150) return "Rolling Hills";
-  if (gainPerMile < 300) return "Hilly";
-  return "Mountainous";
-};
+  const gain = Math.round(distanceInKm * estimatedGainPerKm);
+  const loss = gain; // Assume the route ends where it starts, so loss should equal gain
 
-const extractDirections = (steps) => {
-  return steps.map((step) => step.maneuver.instruction);
+  return { gain, loss };
 };

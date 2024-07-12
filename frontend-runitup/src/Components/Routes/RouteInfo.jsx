@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Descriptions, Typography } from "antd";
+import { Card, Descriptions, Typography, List } from "antd";
 import {
   EnvironmentOutlined,
   CompassOutlined,
@@ -72,11 +72,15 @@ const RouteInfo = ({ routeData }) => {
         </Descriptions.Item>
       </Descriptions>
       <Title level={5}>Turn-by-Turn Directions</Title>
-      <ol>
-        {directions.map((direction, index) => (
-          <li key={index}>{direction}</li>
-        ))}
-      </ol>
+      <List
+        dataSource={directions}
+        renderItem={(item, index) => (
+          <List.Item>
+            <Typography.Text strong>{index + 1}. </Typography.Text>{" "}
+            {item.instruction} ({item.distance} miles)
+          </List.Item>
+        )}
+      />
     </Card>
   );
 };
