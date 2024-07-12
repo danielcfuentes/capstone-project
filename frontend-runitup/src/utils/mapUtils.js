@@ -1,5 +1,12 @@
 import mapboxgl from "mapbox-gl";
 import * as turf from "@turf/turf";
+import axios from "axios";
+
+// Define the delay function
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 
 // Function to initialize the map with given container, center, and zoom level
 export const initializeMap = (container, center = [-74.5, 40], zoom = 9) => {
@@ -235,7 +242,6 @@ export const extractDirections = (legs) => {
   );
 };
 
-
 export const getElevationData = async (coordinates) => {
   const chunkSize = 50; // Mapbox allows up to 50 points per request
   let elevationGain = 0;
@@ -273,7 +279,6 @@ export const getElevationData = async (coordinates) => {
   return { gain: Math.round(elevationGain), loss: Math.round(elevationLoss) };
 };
 
-
 export const calculateRouteDistance = (route) => {
   return (route.distance / 1609.34).toFixed(2); // Convert meters to miles and round to 2 decimal places
 };
@@ -289,6 +294,7 @@ export const generateRouteWithinDistance = async (
   let bestRoute = null;
   let bestDistance = Infinity;
   let bestElevationData = null;
+  let bestTerrainInfo = null;
   const maxAttempts = 10;
 
   for (let i = 0; i < maxAttempts; i++) {
@@ -309,6 +315,9 @@ export const generateRouteWithinDistance = async (
       bestDistance = actualDistance;
       // Only fetch elevation data for the best route so far
       bestElevationData = await getElevationData(route.geometry.coordinates);
+      bestTerrainInfo = await getDetailedTerrainInfo(
+        bestRoute.geometry.coordinates
+      );
     }
 
     if (Math.abs(actualDistance - desiredDistanceMiles) <= tolerance) {
@@ -316,6 +325,7 @@ export const generateRouteWithinDistance = async (
         route: bestRoute,
         actualDistance: bestDistance,
         elevationData: bestElevationData,
+        terrainInfo: bestTerrainInfo,
       };
     }
 
@@ -331,6 +341,7 @@ export const generateRouteWithinDistance = async (
     route: bestRoute,
     actualDistance: bestDistance,
     elevationData: bestElevationData,
+    terrainInfo: bestTerrainInfo,
   };
 };
 
@@ -422,35 +433,57 @@ export const calculatePersonalizedRunningTime = (
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 };
 
-export const getTerrainInfo = async (coordinates) => {
-  const chunkSize = 100; // Mapbox allows up to 100 coordinates per request
-  let terrainTypes = {};
+export const getDetailedTerrainInfo = async (coordinates) => {
+  const terrainTypes = {
+    "Paved Road": 0,
+    "Urban Path": 0,
+    "Gravel/Dirt Path": 0,
+    "Nature Trail": 0,
+    "Mixed Terrain": 0,
+  };
   let totalDistance = 0;
 
-  for (let i = 0; i < coordinates.length; i += chunkSize) {
-    const chunk = coordinates.slice(i, i + chunkSize);
-    const coordinatesString = chunk.map((coord) => coord.join(",")).join(";");
+  for (let i = 0; i < coordinates.length - 1; i++) {
+    const [startLon, startLat] = coordinates[i];
+    const [endLon, endLat] = coordinates[i + 1];
+    const segmentLength = turf.distance(
+      turf.point([startLon, startLat]),
+      turf.point([endLon, endLat]),
+      { units: "kilometers" }
+    );
+    totalDistance += segmentLength;
 
-    const response = await fetch(
-      `https://api.mapbox.com/matching/v5/mapbox/walking/${coordinatesString}?overview=full&annotations=duration,distance,speed&geometries=geojson&access_token=${mapboxgl.accessToken}`
+    const midPoint = turf.midpoint(
+      turf.point([startLon, startLat]),
+      turf.point([endLon, endLat])
     );
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch terrain data: ${response.statusText}`);
-    }
+    const [lon, lat] = midPoint.geometry.coordinates;
 
-    const data = await response.json();
+    try {
+      // Get Mapbox Vector Tile data
+      const tileResponse = await axios.get(
+        `https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/tilequery/${lon},${lat}.json?layers=road,landuse&radius=10&access_token=${mapboxgl.accessToken}`
+      );
 
-    if (data.matchings && data.matchings.length > 0) {
-      data.matchings[0].legs.forEach((leg) => {
-        leg.annotation.distance.forEach((distance, index) => {
-          totalDistance += distance;
-          const speed = leg.annotation.speed[index];
-          let terrainType = determineTerrainType(speed);
-          terrainTypes[terrainType] =
-            (terrainTypes[terrainType] || 0) + distance;
-        });
-      });
+      // Get OpenStreetMap data
+      const osmResponse = await axios.get(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`
+      );
+
+      const terrainType = determineDetailedTerrainType(
+        tileResponse.data,
+        osmResponse.data,
+        segmentLength
+      );
+      terrainTypes[terrainType] += segmentLength;
+
+      // Respect Nominatim's rate limit (1 request per second)
+      await delay(1000);
+    } catch (error) {
+      console.error("Error fetching terrain data:", error);
+      // If there's an error, default to Mixed Terrain
+      terrainTypes["Mixed Terrain"] += segmentLength;
     }
   }
 
@@ -459,12 +492,60 @@ export const getTerrainInfo = async (coordinates) => {
     terrainTypes[key] = ((terrainTypes[key] / totalDistance) * 100).toFixed(2);
   });
 
+  // Remove terrain types with 0%
+  Object.keys(terrainTypes).forEach((key) => {
+    if (parseFloat(terrainTypes[key]) === 0) {
+      delete terrainTypes[key];
+    }
+  });
+
   return terrainTypes;
 };
 
-const determineTerrainType = (speed) => {
-  if (speed < 1) return "Steep or Difficult";
-  if (speed < 1.5) return "Hilly or Rough";
-  if (speed < 2) return "Mixed";
-  return "Flat or Paved";
+const determineDetailedTerrainType = (mapboxData, osmData, length) => {
+  console.log("Mapbox Data:", JSON.stringify(mapboxData, null, 2));
+  console.log("OSM Data:", JSON.stringify(osmData, null, 2));
+
+  const mapboxFeatures = mapboxData.features || [];
+  const osmTags = osmData.addressdetails || {};
+
+  // Check for roads first
+  const roadFeature = mapboxFeatures.find(
+    (f) => f.layer && f.layer.id === "road"
+  );
+  if (roadFeature && roadFeature.properties) {
+    const roadClass = roadFeature.properties.class;
+    const roadType = roadFeature.properties.type;
+
+    if (["primary", "secondary", "tertiary", "trunk"].includes(roadClass)) {
+      return "Paved Road";
+    } else if (["residential", "service"].includes(roadClass)) {
+      return "Urban Path";
+    } else if (roadClass === "path" || roadType === "track") {
+      return "Gravel/Dirt Path";
+    }
+  }
+
+  // Check for trails and paths
+  if (osmTags.path || osmTags.footway || osmTags.bridleway) {
+    return "Nature Trail";
+  }
+
+  // Check land use
+  const landuseFeature = mapboxFeatures.find(
+    (f) => f.layer && f.layer.id === "landuse"
+  );
+  if (landuseFeature && landuseFeature.properties) {
+    const landuseClass = landuseFeature.properties.class;
+    if (["park", "wood", "forest"].includes(landuseClass)) {
+      return "Nature Trail";
+    } else if (
+      ["residential", "commercial", "industrial"].includes(landuseClass)
+    ) {
+      return "Urban Path";
+    }
+  }
+
+  // Default to Mixed Terrain if we can't determine a specific type
+  return "Mixed Terrain";
 };

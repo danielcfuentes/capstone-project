@@ -1,4 +1,4 @@
-import "../../styles/RoutesPage.css"
+import "../../styles/RoutesPage.css";
 import React, { useState, useEffect, useRef } from "react";
 import { Layout, Form, Input, Button, message, Alert } from "antd";
 import mapboxgl from "mapbox-gl";
@@ -57,81 +57,78 @@ const RoutesPage = () => {
     }
   };
 
-    const handleSubmit = async (values) => {
-      const { startLocation, distance } = values;
-      setError(null);
-      setWarning(null);
-      setRouteData(null);
 
-      try {
-        if (map) {
-          clearRoute(map);
-          removeCurrentMarker();
-        }
+  const handleSubmit = async (values) => {
+    const { startLocation, distance } = values;
+    setError(null);
+    setWarning(null);
+    setRouteData(null);
 
-        const [startLng, startLat] = await geocodeLocation(startLocation);
-        const startCoordinates = [startLng, startLat];
+    try {
+      if (map) {
+        clearRoute(map);
+        removeCurrentMarker();
+      }
 
-        const { route, actualDistance, elevationData } =
-          await generateRouteWithinDistance(
-            startLat,
-            startLng,
-            parseFloat(distance)
-          );
+      const [startLng, startLat] = await geocodeLocation(startLocation);
+      const startCoordinates = [startLng, startLat];
 
-        if (!route.geometry || !route.geometry.coordinates) {
-          throw new Error("Invalid route data received. Please try again.");
-        }
-
-        addRouteToMap(map, route.geometry);
-        addStartMarker(map, startCoordinates, startLocation);
-        fitMapToRouteWithStart(
-          map,
-          route.geometry.coordinates,
-          startCoordinates
+      const { route, actualDistance, elevationData, terrainInfo } =
+        await generateRouteWithinDistance(
+          startLat,
+          startLng,
+          parseFloat(distance)
         );
 
-        const profileForCalculation = {
-          age: userProfile.age || 30,
-          gender: userProfile.gender || "male",
-          weight: userProfile.weight || 150,
-          height: userProfile.height || 5.8,
-          fitnessLevel: userProfile.fitnessLevel || "intermediate",
-          runningExperience: userProfile.runningExperience || "recreational",
-          healthConditions: userProfile.healthConditions || [],
-        };
+      if (!route.geometry || !route.geometry.coordinates) {
+        throw new Error("Invalid route data received. Please try again.");
+      }
 
-        const duration = calculatePersonalizedRunningTime(
-          actualDistance,
-          elevationData.gain,
-          profileForCalculation
-        );
-        const directions = extractDirections(route.legs);
+      addRouteToMap(map, route.geometry);
+      addStartMarker(map, startCoordinates, startLocation);
+      fitMapToRouteWithStart(map, route.geometry.coordinates, startCoordinates);
 
-        setRouteData({
-          distance: actualDistance,
-          duration,
-          elevationGain: elevationData.gain,
-          elevationLoss: elevationData.loss,
-          terrain: "Mixed",
-          directions,
-        });
+      const profileForCalculation = {
+        age: userProfile.age || 30,
+        gender: userProfile.gender || "male",
+        weight: userProfile.weight || 150,
+        height: userProfile.height || 5.8,
+        fitnessLevel: userProfile.fitnessLevel || "intermediate",
+        runningExperience: userProfile.runningExperience || "recreational",
+        healthConditions: userProfile.healthConditions || [],
+      };
 
-        if (Math.abs(actualDistance - distance) > 0.5) {
-          setWarning(
-            `Note: The generated route is ${actualDistance} miles, which differs from your requested ${distance} miles. This is due to the constraints of available roads and paths.`
-          );
-        }
+      const duration = calculatePersonalizedRunningTime(
+        actualDistance,
+        elevationData.gain,
+        profileForCalculation
+      );
+      const directions = extractDirections(route.legs);
 
-        message.success("Route generated successfully!");
-      } catch (error) {
-        console.error("Error generating route:", error);
-        setError(
-          error.message ||
-            "An error occurred while generating the route. Please try again."
+      setRouteData({
+        distance: actualDistance,
+        duration,
+        elevationGain: elevationData.gain,
+        elevationLoss: elevationData.loss,
+        terrain: terrainInfo,
+        directions,
+      });
+
+      if (Math.abs(actualDistance - distance) > 0.5) {
+        setWarning(
+          `Note: The generated route is ${actualDistance} miles, which differs from your requested ${distance} miles. This is due to the constraints of available roads and paths.`
         );
       }
-    };
+
+      message.success("Route generated successfully!");
+    } catch (error) {
+      console.error("Error generating route:", error);
+      setError(
+        error.message ||
+          "An error occurred while generating the route. Please try again."
+      );
+    }
+  };
 
   return (
     <Layout className="routes-page">

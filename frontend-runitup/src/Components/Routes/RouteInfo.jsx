@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Descriptions, Typography, List } from "antd";
+import { Card, Descriptions, Typography, List, Progress } from "antd";
 import {
   EnvironmentOutlined,
   CompassOutlined,
@@ -21,6 +21,33 @@ const RouteInfo = ({ routeData }) => {
     directions,
   } = routeData;
 
+  const renderTerrain = () => {
+    const terrainColors = {
+      "Paved Road": "#1890ff",
+      "Urban Path": "#722ed1",
+      "Gravel/Dirt Path": "#faad14",
+      "Nature Trail": "#52c41a",
+      "Mixed Terrain": "#8c8c8c",
+    };
+
+    return (
+      <div>
+        {Object.entries(terrain).map(([type, percentage]) => (
+          <div key={type} style={{ marginBottom: "10px" }}>
+            <span>
+              {type}: {percentage}%
+            </span>
+            <Progress
+              percent={parseFloat(percentage)}
+              strokeColor={terrainColors[type]}
+              size="small"
+            />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <Card className="route-info-card">
       <Title level={4}>Route Information</Title>
@@ -37,7 +64,7 @@ const RouteInfo = ({ routeData }) => {
         <Descriptions.Item
           label={
             <>
-              <FieldTimeOutlined /> Estimated Duration Based On Your Profile
+              <FieldTimeOutlined /> Estimated Duration
             </>
           }
         >
@@ -61,17 +88,12 @@ const RouteInfo = ({ routeData }) => {
         >
           {elevationLoss} ft
         </Descriptions.Item>
-        <Descriptions.Item
-          label={
-            <>
-              <CompassOutlined /> Terrain
-            </>
-          }
-        >
-          {terrain}
-        </Descriptions.Item>
       </Descriptions>
-      {/* <Title level={5}>Turn-by-Turn Directions</Title>
+      <Title level={5}>
+        <CompassOutlined /> Terrain Breakdown
+      </Title>
+      {renderTerrain()}
+      <Title level={5}>Turn-by-Turn Directions</Title>
       <List
         dataSource={directions}
         renderItem={(item, index) => (
@@ -80,7 +102,7 @@ const RouteInfo = ({ routeData }) => {
             {item.instruction} ({item.distance} miles)
           </List.Item>
         )}
-      /> */}
+      />
     </Card>
   );
 };
