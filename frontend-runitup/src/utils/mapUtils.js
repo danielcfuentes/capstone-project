@@ -464,7 +464,13 @@ export const getBasicRouteInfo = async (route) => {
   return { distance, elevationData };
 };
 
+
+let mileMarkers = []; // Array to store mile marker
+
 export const addMileMarkers = (map, route) => {
+  // Clear existing mile markers
+  clearMileMarkers();
+
   const routeLine = turf.lineString(route.geometry.coordinates);
   const totalDistance = turf.length(routeLine, { units: "miles" });
 
@@ -481,6 +487,17 @@ export const addMileMarkers = (map, route) => {
     const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`Mile ${mile}`);
 
     // Add marker to map
-    new mapboxgl.Marker(el).setLngLat([lng, lat]).setPopup(popup).addTo(map);
+    const marker = new mapboxgl.Marker(el)
+      .setLngLat([lng, lat])
+      .setPopup(popup)
+      .addTo(map);
+
+    // Store the marker
+    mileMarkers.push(marker);
   }
+};
+
+export const clearMileMarkers = () => {
+  mileMarkers.forEach((marker) => marker.remove());
+  mileMarkers = [];
 };
