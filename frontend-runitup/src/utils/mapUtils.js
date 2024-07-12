@@ -2,11 +2,6 @@ import mapboxgl from "mapbox-gl";
 import * as turf from "@turf/turf";
 import axios from "axios";
 
-// Define the delay function
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 // Function to initialize the map with given container, center, and zoom level
 export const initializeMap = (container, center = [-74.5, 40], zoom = 9) => {
   const map = new mapboxgl.Map({
@@ -230,7 +225,6 @@ export const calculateRunningTime = (distanceMiles) => {
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 };
 
-
 export const getElevationData = async (coordinates) => {
   const chunkSize = 50; // Mapbox allows up to 50 points per request
   let elevationGain = 0;
@@ -282,8 +276,6 @@ export const generateRouteWithinDistance = async (
   let maxRadius = desiredDistanceKm / Math.PI;
   let bestRoute = null;
   let bestDistance = Infinity;
-  let bestElevationData = null;
-  let bestTerrainInfo = null;
   const maxAttempts = 10;
 
   for (let i = 0; i < maxAttempts; i++) {
@@ -302,11 +294,6 @@ export const generateRouteWithinDistance = async (
     ) {
       bestRoute = route;
       bestDistance = actualDistance;
-      // Only fetch elevation data for the best route so far
-      bestElevationData = await getElevationData(route.geometry.coordinates);
-      bestTerrainInfo = await getDetailedTerrainInfo(
-        bestRoute.geometry.coordinates
-      );
     }
 
     if (Math.abs(actualDistance - desiredDistanceMiles) <= tolerance) {
@@ -328,33 +315,6 @@ export const generateRouteWithinDistance = async (
     route: bestRoute,
     actualDistance: bestDistance,
   };
-};
-
-const calculateBMI = (weightPounds, height) => {
-  let heightInches;
-  if (typeof height === "number") {
-    // If height is a number, assume it's in inches
-    heightInches = height;
-  } else if (typeof height === "string") {
-    // If height is a string, try to parse it
-    const parts = height.split("'");
-    if (parts.length === 2) {
-      heightInches = parseInt(parts[0]) * 12 + parseInt(parts[1]);
-    } else {
-      // If we can't parse it, default to average height
-      heightInches = 67; // 5'7" in inches
-    }
-  } else if (typeof height === "object" && height.feet && height.inches) {
-    // If height is an object with feet and inches
-    heightInches = height.feet * 12 + height.inches;
-  } else {
-    // If we can't determine the format, default to average height
-    heightInches = 67; // 5'7" in inches
-  }
-
-  const heightInMeters = (heightInches * 2.54) / 100;
-  const weightInKg = weightPounds * 0.453592;
-  return weightInKg / (heightInMeters * heightInMeters);
 };
 
 export const calculatePersonalizedRunningTime = (
@@ -485,54 +445,6 @@ export const getDetailedTerrainInfo = async (coordinates) => {
   });
 
   return terrainTypes;
-};
-
-const determineDetailedTerrainType = (mapboxData, osmData, length) => {
-  console.log("Mapbox Data:", JSON.stringify(mapboxData, null, 2));
-  console.log("OSM Data:", JSON.stringify(osmData, null, 2));
-
-  const mapboxFeatures = mapboxData.features || [];
-  const osmTags = osmData.addressdetails || {};
-
-  // Check for roads first
-  const roadFeature = mapboxFeatures.find(
-    (f) => f.layer && f.layer.id === "road"
-  );
-  if (roadFeature && roadFeature.properties) {
-    const roadClass = roadFeature.properties.class;
-    const roadType = roadFeature.properties.type;
-
-    if (["primary", "secondary", "tertiary", "trunk"].includes(roadClass)) {
-      return "Paved Road";
-    } else if (["residential", "service"].includes(roadClass)) {
-      return "Urban Path";
-    } else if (roadClass === "path" || roadType === "track") {
-      return "Gravel/Dirt Path";
-    }
-  }
-
-  // Check for trails and paths
-  if (osmTags.path || osmTags.footway || osmTags.bridleway) {
-    return "Nature Trail";
-  }
-
-  // Check land use
-  const landuseFeature = mapboxFeatures.find(
-    (f) => f.layer && f.layer.id === "landuse"
-  );
-  if (landuseFeature && landuseFeature.properties) {
-    const landuseClass = landuseFeature.properties.class;
-    if (["park", "wood", "forest"].includes(landuseClass)) {
-      return "Nature Trail";
-    } else if (
-      ["residential", "commercial", "industrial"].includes(landuseClass)
-    ) {
-      return "Urban Path";
-    }
-  }
-
-  // Default to Mixed Terrain if we can't determine a specific type
-  return "Mixed Terrain";
 };
 
 export const getBasicRouteInfo = async (route) => {
