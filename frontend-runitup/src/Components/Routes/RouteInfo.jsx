@@ -71,7 +71,7 @@ const RouteInfo = ({ routeData }) => {
           {terrain}
         </Descriptions.Item>
       </Descriptions>
-      <Title level={5}>Turn-by-Turn Directions</Title>
+      {/* <Title level={5}>Turn-by-Turn Directions</Title>
       <List
         dataSource={directions}
         renderItem={(item, index) => (
@@ -80,7 +80,7 @@ const RouteInfo = ({ routeData }) => {
             {item.instruction} ({item.distance} miles)
           </List.Item>
         )}
-      />
+      /> */}
     </Card>
   );
 };

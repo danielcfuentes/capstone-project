@@ -421,3 +421,50 @@ export const calculatePersonalizedRunningTime = (
 
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 };
+
+export const getTerrainInfo = async (coordinates) => {
+  const chunkSize = 100; // Mapbox allows up to 100 coordinates per request
+  let terrainTypes = {};
+  let totalDistance = 0;
+
+  for (let i = 0; i < coordinates.length; i += chunkSize) {
+    const chunk = coordinates.slice(i, i + chunkSize);
+    const coordinatesString = chunk.map((coord) => coord.join(",")).join(";");
+
+    const response = await fetch(
+      `https://api.mapbox.com/matching/v5/mapbox/walking/${coordinatesString}?overview=full&annotations=duration,distance,speed&geometries=geojson&access_token=${mapboxgl.accessToken}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch terrain data: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    if (data.matchings && data.matchings.length > 0) {
+      data.matchings[0].legs.forEach((leg) => {
+        leg.annotation.distance.forEach((distance, index) => {
+          totalDistance += distance;
+          const speed = leg.annotation.speed[index];
+          let terrainType = determineTerrainType(speed);
+          terrainTypes[terrainType] =
+            (terrainTypes[terrainType] || 0) + distance;
+        });
+      });
+    }
+  }
+
+  // Convert distances to percentages
+  Object.keys(terrainTypes).forEach((key) => {
+    terrainTypes[key] = ((terrainTypes[key] / totalDistance) * 100).toFixed(2);
+  });
+
+  return terrainTypes;
+};
+
+const determineTerrainType = (speed) => {
+  if (speed < 1) return "Steep or Difficult";
+  if (speed < 1.5) return "Hilly or Rough";
+  if (speed < 2) return "Mixed";
+  return "Flat or Paved";
+};
