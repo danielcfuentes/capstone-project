@@ -24,25 +24,27 @@ const { Content } = Layout;
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const RoutesPage = () => {
-  const [map, setMap] = useState(null);
-  const mapContainer = useRef(null);
-  const [form] = Form.useForm();
-  const [routeData, setRouteData] = useState(null);
-  const [error, setError] = useState(null);
-  const [warning, setWarning] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
-  const [isGeneratingRoute, setIsGeneratingRoute] = useState(false);
-  const [isLoadingBasicInfo, setIsLoadingBasicInfo] = useState(false);
-  const [isLoadingTerrainInfo, setIsLoadingTerrainInfo] = useState(false);
-  const [basicRouteData, setBasicRouteData] = useState(null);
+  const [map, setMap] = useState(null); // State for the map instance
+  const mapContainer = useRef(null); // Ref for the map container
+  const [form] = Form.useForm(); // Ant Design form instance
+  const [routeData, setRouteData] = useState(null); // State for route data
+  const [error, setError] = useState(null); // State for error messages
+  const [warning, setWarning] = useState(null); // State for warning messages
+  const [userProfile, setUserProfile] = useState(null); // State for user profile
+  const [isGeneratingRoute, setIsGeneratingRoute] = useState(false); // State for route generation status
+  const [isLoadingBasicInfo, setIsLoadingBasicInfo] = useState(false); // State for loading basic info
+  const [isLoadingTerrainInfo, setIsLoadingTerrainInfo] = useState(false); // State for loading terrain info
+  const [basicRouteData, setBasicRouteData] = useState(null); // State for basic route data
 
+  // Effect to initialize the map and fetch user profile on component mount
   useEffect(() => {
-    const map = initializeMap(mapContainer.current);
-    map.on("load", () => setMap(map));
-    fetchUserProfile();
-    return () => map.remove();
+    const map = initializeMap(mapContainer.current); // Initialize the map
+    map.on("load", () => setMap(map)); // Set map instance in state on load
+    fetchUserProfile(); // Fetch user profile
+    return () => map.remove(); // Clean up map instance on unmount
   }, []);
 
+  // Function to fetch user profile from API
   const fetchUserProfile = async () => {
     try {
       const response = await fetch(
@@ -53,13 +55,14 @@ const RoutesPage = () => {
       );
       if (response.ok) {
         const profile = await response.json();
-        setUserProfile(profile);
+        setUserProfile(profile); // Set user profile in state
       }
     } catch (error) {
-      message.error("Error fetching user profile:", error);
+      message.error("Error fetching user profile:", error); // Display error message
     }
   };
 
+  // Function to handle form submission
   const handleSubmit = async (values) => {
     const { startLocation, distance } = values;
     setError(null);
@@ -70,11 +73,11 @@ const RoutesPage = () => {
 
     try {
       if (map) {
-        clearRoute(map);
-        removeCurrentMarker();
+        clearRoute(map); // Clear existing route from map
+        removeCurrentMarker(); // Remove existing marker from map
       }
 
-      const [startLng, startLat] = await geocodeLocation(startLocation);
+      const [startLng, startLat] = await geocodeLocation(startLocation); // Geocode start location
       const startCoordinates = [startLng, startLat];
 
       const { route, actualDistance } = await generateRouteWithinDistance(
@@ -87,9 +90,9 @@ const RoutesPage = () => {
         throw new Error("Invalid route data received. Please try again.");
       }
 
-      addRouteToMap(map, route.geometry);
-      addStartMarker(map, startCoordinates, startLocation);
-      fitMapToRouteWithStart(map, route.geometry.coordinates, startCoordinates);
+      addRouteToMap(map, route.geometry); // Add generated route to map
+      addStartMarker(map, startCoordinates, startLocation); // Add start marker to map
+      fitMapToRouteWithStart(map, route.geometry.coordinates, startCoordinates); // Fit map view to route
 
       setIsGeneratingRoute(false);
       setIsLoadingBasicInfo(true);
@@ -130,6 +133,7 @@ const RoutesPage = () => {
 
       setIsLoadingTerrainInfo(false);
 
+      // Display a warning if the generated route distance significantly differs from the requested distance
       if (Math.abs(actualDistance - distance) > 0.5) {
         setWarning(
           `Note: The generated route is ${actualDistance.toFixed(

@@ -5,14 +5,14 @@ import axios from "axios";
 // Function to initialize the map with given container, center, and zoom level
 export const initializeMap = (container, center = [-74.5, 40], zoom = 9) => {
   const map = new mapboxgl.Map({
-    container,
-    style: "mapbox://styles/mapbox/streets-v11",
-    center,
-    zoom,
+    container, // HTML container ID for the map
+    style: "mapbox://styles/mapbox/streets-v11", // Map style to use
+    center, // Initial center coordinates [longitude, latitude]
+    zoom, // Initial zoom level
   });
 
+  // Add a custom start flag icon to the map once it loads
   map.on("load", () => {
-    // Add start flag icon
     const startFlagSvg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#00FF00" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
@@ -22,7 +22,7 @@ export const initializeMap = (container, center = [-74.5, 40], zoom = 9) => {
 
     const startFlagImage = new Image(24, 24);
     startFlagImage.onload = () => {
-      map.addImage("start-flag", startFlagImage);
+      map.addImage("start-flag", startFlagImage); // Add the start flag icon to the map
     };
     startFlagImage.src =
       "data:image/svg+xml;charset=utf-8," + encodeURIComponent(startFlagSvg);
@@ -41,14 +41,12 @@ export const geocodeLocation = async (location) => {
   );
   const data = await response.json();
   if (data.features.length === 0) {
-    // If no features (locations) are found
-    throw new Error("Location not found");
+    throw new Error("Location not found"); // If no features (locations) are found
   }
-  return data.features[0].center; // Return the coordinates of the first feature  (location) found
+  return data.features[0].center; // Return the coordinates of the first feature (location) found
 };
 
 // Function to generate a circular route given a start point and distance
-
 export const generateCircularRouteCoordinates = (
   startLat,
   startLng,
@@ -59,11 +57,11 @@ export const generateCircularRouteCoordinates = (
 
   for (let i = 0; i <= numPoints; i++) {
     const angle = (i / numPoints) * 2 * Math.PI;
-    const lat = startLat + (radiusInKm / 111.32) * Math.sin(angle);
+    const lat = startLat + (radiusInKm / 111.32) * Math.sin(angle); // Calculate latitude
     const lng =
       startLng +
       (radiusInKm / (111.32 * Math.cos((startLat * Math.PI) / 180))) *
-        Math.cos(angle);
+        Math.cos(angle); // Calculate longitude
     coordinates.push([lng, lat]);
   }
 
@@ -74,11 +72,13 @@ export const generateCircularRouteCoordinates = (
   return coordinates;
 };
 
+// Function to get a route from Mapbox given a set of coordinates
 export const getRouteFromMapbox = async (coordinates) => {
   try {
     const chunkedCoordinates = chunkArray(coordinates, 25); // Mapbox has a limit of 25 coordinates per request
     let fullRoute = null;
 
+    // Fetch route in chunks if needed
     for (const chunk of chunkedCoordinates) {
       const coordinateString = chunk.map((coord) => coord.join(",")).join(";");
       const response = await fetch(
@@ -97,6 +97,7 @@ export const getRouteFromMapbox = async (coordinates) => {
         throw new Error("No routes found");
       }
 
+      // Combine chunks into a full route
       if (!fullRoute) {
         fullRoute = data.routes[0];
       } else {
@@ -111,10 +112,11 @@ export const getRouteFromMapbox = async (coordinates) => {
 
     return fullRoute;
   } catch (error) {
-        return
+    return null;
   }
 };
 
+// Helper function to split an array into chunks of a specified size
 const chunkArray = (array, chunkSize) => {
   const chunks = [];
   for (let i = 0; i < array.length; i += chunkSize - 1) {
@@ -171,6 +173,7 @@ export const fitMapToRouteWithStart = (
 let currentMarker = null;
 let currentPopup = null;
 
+// Function to add a start marker to the map
 export const addStartMarker = (map, coordinates, locationName) => {
   // Remove existing marker and popup
   removeCurrentMarker();
@@ -196,6 +199,7 @@ export const addStartMarker = (map, coordinates, locationName) => {
   return currentMarker;
 };
 
+// Function to clear the route from the map
 export const clearRoute = (map) => {
   if (map.getSource("route")) {
     map.removeLayer("route");
@@ -203,6 +207,7 @@ export const clearRoute = (map) => {
   }
 };
 
+// Function to remove the current marker and popup from the map
 export const removeCurrentMarker = () => {
   if (currentMarker) {
     currentMarker.remove();
@@ -214,8 +219,7 @@ export const removeCurrentMarker = () => {
   }
 };
 
-//route info
-
+// Function to calculate estimated running time based on distance
 export const calculateRunningTime = (distanceMiles) => {
   const averagePaceMinPerMile = 9; // Assume 9 minutes per mile for an average runner
   const totalMinutes = distanceMiles * averagePaceMinPerMile;
@@ -224,6 +228,7 @@ export const calculateRunningTime = (distanceMiles) => {
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 };
 
+// Function to get elevation data for a set of coordinates
 export const getElevationData = async (coordinates) => {
   const chunkSize = 50; // Mapbox allows up to 50 points per request
   let elevationGain = 0;
@@ -261,9 +266,12 @@ export const getElevationData = async (coordinates) => {
   return { gain: Math.round(elevationGain), loss: Math.round(elevationLoss) };
 };
 
+// Function to calculate the distance of a route
 export const calculateRouteDistance = (route) => {
   return (route.distance / 1609.34).toFixed(2); // Convert meters to miles and round to 2 decimal places
 };
+
+// Function to generate a route within a desired distance
 export const generateRouteWithinDistance = async (
   startLat,
   startLng,
@@ -277,6 +285,7 @@ export const generateRouteWithinDistance = async (
   let bestDistance = Infinity;
   const maxAttempts = 10;
 
+  // Binary search to find the best route within the desired distance
   for (let i = 0; i < maxAttempts; i++) {
     const radius = (minRadius + maxRadius) / 2;
     const coordinates = generateCircularRouteCoordinates(
@@ -316,6 +325,7 @@ export const generateRouteWithinDistance = async (
   };
 };
 
+// Function to calculate personalized running time based on user profile
 export const calculatePersonalizedRunningTime = (
   distanceMiles,
   elevationGain,
@@ -377,6 +387,7 @@ export const calculatePersonalizedRunningTime = (
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 };
 
+// Function to get detailed terrain information for a set of coordinates
 export const getDetailedTerrainInfo = async (coordinates) => {
   const terrainTypes = {
     "Paved Road": 0,
@@ -387,8 +398,8 @@ export const getDetailedTerrainInfo = async (coordinates) => {
   };
   let totalDistance = 0;
 
+  // Sample every 10th point to reduce API calls
   for (let i = 0; i < coordinates.length - 1; i += 10) {
-    // Sample every 10th point to reduce API calls
     const [startLon, startLat] = coordinates[i];
     const [endLon, endLat] =
       coordinates[Math.min(i + 10, coordinates.length - 1)];
@@ -438,6 +449,7 @@ export const getDetailedTerrainInfo = async (coordinates) => {
     }
   }
 
+  // Convert distances to percentages
   Object.keys(terrainTypes).forEach((key) => {
     terrainTypes[key] = ((terrainTypes[key] / totalDistance) * 100).toFixed(2);
   });
@@ -445,6 +457,7 @@ export const getDetailedTerrainInfo = async (coordinates) => {
   return terrainTypes;
 };
 
+// Function to get basic route information including distance and elevation data
 export const getBasicRouteInfo = async (route) => {
   const distance = calculateRouteDistance(route);
   const elevationData = await getElevationData(route.geometry.coordinates);
