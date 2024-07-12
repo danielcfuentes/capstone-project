@@ -47,58 +47,17 @@ export const geocodeLocation = async (location) => {
 };
 
 // Function to generate a circular route given a start point and distance
-export const generateCircularRoute = async (
+export const generateCircularRouteCoordinates = (
   startLat,
   startLng,
   desiredDistanceMiles
 ) => {
   const desiredDistanceKm = desiredDistanceMiles * 1.60934;
   let radius = desiredDistanceKm / (2 * Math.PI);
+  const numPoints = 16; // Increase number of points for better accuracy
   let coordinates = [];
-  let actualDistance = 0;
-  let iterations = 0;
-  const maxIterations = 20;
 
-  while (
-    Math.abs(actualDistance - desiredDistanceKm) > 0.1 &&
-    iterations < maxIterations
-  ) {
-    coordinates = [];
-    for (let i = 0; i <= 360; i += 10) {
-      const angle = i * (Math.PI / 180);
-      const lat = startLat + (radius / 111.32) * Math.sin(angle);
-      const lng =
-        startLng +
-        (radius / (111.32 * Math.cos((startLat * Math.PI) / 180))) *
-          Math.cos(angle);
-      coordinates.push([lng, lat]);
-    }
-    coordinates.push(coordinates[0]); // Close the loop
-
-    const line = turf.lineString(coordinates);
-    actualDistance = turf.length(line, { units: "kilometers" });
-
-    if (actualDistance < desiredDistanceKm) {
-      radius *= 1.05;
-    } else {
-      radius *= 0.95;
-    }
-    iterations++;
-  }
-
-  return coordinates;
-};
-
-export const generateSimpleCircularRoute = (
-  startLat,
-  startLng,
-  desiredDistanceMiles
-) => {
-  const desiredDistanceKm = desiredDistanceMiles * 1.60934;
-  const radius = desiredDistanceKm / (2 * Math.PI);
-  const coordinates = [];
-  const numPoints = 8; // Reduced number of points
-
+  // Generate initial circle
   for (let i = 0; i <= numPoints; i++) {
     const angle = (i / numPoints) * 2 * Math.PI;
     const lat = startLat + (radius / 111.32) * Math.sin(angle);
@@ -109,36 +68,61 @@ export const generateSimpleCircularRoute = (
     coordinates.push([lng, lat]);
   }
 
+  // Add start/end point
+  coordinates.unshift([startLng, startLat]);
+  coordinates.push([startLng, startLat]);
+
   return coordinates;
 };
 
-// Function to get a route from Mapbox API given a set of coordinates
 export const getRouteFromMapbox = async (coordinates) => {
   try {
-    const coordinateString = coordinates
-      .map((coord) => coord.join(","))
-      .join(";");
-    const response = await fetch(
-      `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinateString}?geometries=geojson&steps=true&access_token=${mapboxgl.accessToken}&annotations=distance,duration,speed`
-    );
+    const chunkedCoordinates = chunkArray(coordinates, 25); // Mapbox has a limit of 25 coordinates per request
+    let fullRoute = null;
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch route from Mapbox: ${response.statusText}`
+    for (const chunk of chunkedCoordinates) {
+      const coordinateString = chunk.map((coord) => coord.join(",")).join(";");
+      const response = await fetch(
+        `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinateString}?geometries=geojson&steps=true&access_token=${mapboxgl.accessToken}&annotations=distance,duration,speed`
       );
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch route from Mapbox: ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (!data.routes || data.routes.length === 0) {
+        throw new Error("No routes found");
+      }
+
+      if (!fullRoute) {
+        fullRoute = data.routes[0];
+      } else {
+        fullRoute.geometry.coordinates = fullRoute.geometry.coordinates.concat(
+          data.routes[0].geometry.coordinates.slice(1)
+        );
+        fullRoute.distance += data.routes[0].distance;
+        fullRoute.duration += data.routes[0].duration;
+        fullRoute.legs = fullRoute.legs.concat(data.routes[0].legs);
+      }
     }
 
-    const data = await response.json();
-
-    if (!data.routes || data.routes.length === 0) {
-      throw new Error("No routes found");
-    }
-
-    return data;
+    return { routes: [fullRoute] };
   } catch (error) {
     console.error("Error fetching route from Mapbox:", error);
     throw error;
   }
+};
+
+const chunkArray = (array, chunkSize) => {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += chunkSize - 1) {
+    chunks.push(array.slice(i, i + chunkSize));
+  }
+  return chunks;
 };
 
 // Function to add a route to the map

@@ -6,7 +6,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import {
   initializeMap,
   geocodeLocation,
-  generateSimpleCircularRoute,
+  generateCircularRouteCoordinates,
   getRouteFromMapbox,
   addRouteToMap,
   addStartMarker,
@@ -50,7 +50,7 @@ const RoutesPage = () => {
 
       const [startLng, startLat] = await geocodeLocation(startLocation);
       const startCoordinates = [startLng, startLat];
-      const routeCoordinates = generateSimpleCircularRoute(
+      const routeCoordinates = generateCircularRouteCoordinates(
         startLat,
         startLng,
         parseFloat(distance)
