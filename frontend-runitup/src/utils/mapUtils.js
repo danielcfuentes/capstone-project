@@ -235,21 +235,48 @@ export const extractDirections = (legs) => {
   );
 };
 
-export const estimateElevationChange = (route) => {
-  // Since we don't have accurate elevation data, we'll provide a rough estimate
-  const distanceInKm = route.distance / 1000;
-  const estimatedGainPerKm = 10; // Assume an average of 10m elevation gain per km
 
-  const gain = Math.round(distanceInKm * estimatedGainPerKm);
-  const loss = gain; // Assume the route ends where it starts, so loss should equal gain
+export const getElevationData = async (coordinates) => {
+  const chunkSize = 50; // Mapbox allows up to 50 points per request
+  let elevationGain = 0;
+  let elevationLoss = 0;
+  let prevElevation = null;
 
-  return { gain, loss };
+  for (let i = 0; i < coordinates.length; i += chunkSize) {
+    const chunk = coordinates.slice(i, i + chunkSize);
+    const query = chunk.map((coord) => coord.join(",")).join(",");
+
+    const response = await fetch(
+      `https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2/tilequery/${query}.json?layers=contour&access_token=${mapboxgl.accessToken}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch elevation data: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    data.features.forEach((feature, index) => {
+      const elevation = feature.properties.ele;
+      if (prevElevation !== null) {
+        const diff = elevation - prevElevation;
+        if (diff > 0) {
+          elevationGain += diff;
+        } else {
+          elevationLoss += Math.abs(diff);
+        }
+      }
+      prevElevation = elevation;
+    });
+  }
+
+  return { gain: Math.round(elevationGain), loss: Math.round(elevationLoss) };
 };
+
 
 export const calculateRouteDistance = (route) => {
   return (route.distance / 1609.34).toFixed(2); // Convert meters to miles and round to 2 decimal places
 };
-
 export const generateRouteWithinDistance = async (
   startLat,
   startLng,
@@ -261,6 +288,7 @@ export const generateRouteWithinDistance = async (
   let maxRadius = desiredDistanceKm / Math.PI;
   let bestRoute = null;
   let bestDistance = Infinity;
+  let bestElevationData = null;
   const maxAttempts = 10;
 
   for (let i = 0; i < maxAttempts; i++) {
@@ -279,10 +307,16 @@ export const generateRouteWithinDistance = async (
     ) {
       bestRoute = route;
       bestDistance = actualDistance;
+      // Only fetch elevation data for the best route so far
+      bestElevationData = await getElevationData(route.geometry.coordinates);
     }
 
     if (Math.abs(actualDistance - desiredDistanceMiles) <= tolerance) {
-      return { route: bestRoute, actualDistance: bestDistance };
+      return {
+        route: bestRoute,
+        actualDistance: bestDistance,
+        elevationData: bestElevationData,
+      };
     }
 
     if (actualDistance > desiredDistanceMiles) {
@@ -293,9 +327,12 @@ export const generateRouteWithinDistance = async (
   }
 
   // If we couldn't get within tolerance, return the best route we found
-  return { route: bestRoute, actualDistance: bestDistance };
+  return {
+    route: bestRoute,
+    actualDistance: bestDistance,
+    elevationData: bestElevationData,
+  };
 };
-
 
 const calculateBMI = (weightPounds, height) => {
   let heightInches;
