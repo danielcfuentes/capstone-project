@@ -4,9 +4,8 @@ import axios from "axios";
 
 // Define the delay function
 function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
 
 // Function to initialize the map with given container, center, and zoom level
 export const initializeMap = (container, center = [-74.5, 40], zoom = 9) => {
@@ -231,16 +230,6 @@ export const calculateRunningTime = (distanceMiles) => {
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 };
 
-export const extractDirections = (legs) => {
-  if (!legs || legs.length === 0) return [];
-
-  return legs.flatMap((leg) =>
-    leg.steps.map((step) => ({
-      instruction: step.maneuver.instruction,
-      distance: (step.distance * 0.000621371).toFixed(2), // Convert meters to miles
-    }))
-  );
-};
 
 export const getElevationData = async (coordinates) => {
   const chunkSize = 50; // Mapbox allows up to 50 points per request
@@ -324,8 +313,6 @@ export const generateRouteWithinDistance = async (
       return {
         route: bestRoute,
         actualDistance: bestDistance,
-        elevationData: bestElevationData,
-        terrainInfo: bestTerrainInfo,
       };
     }
 
@@ -340,8 +327,6 @@ export const generateRouteWithinDistance = async (
   return {
     route: bestRoute,
     actualDistance: bestDistance,
-    elevationData: bestElevationData,
-    terrainInfo: bestTerrainInfo,
   };
 };
 
@@ -443,9 +428,11 @@ export const getDetailedTerrainInfo = async (coordinates) => {
   };
   let totalDistance = 0;
 
-  for (let i = 0; i < coordinates.length - 1; i++) {
+  for (let i = 0; i < coordinates.length - 1; i += 10) {
+    // Sample every 10th point to reduce API calls
     const [startLon, startLat] = coordinates[i];
-    const [endLon, endLat] = coordinates[i + 1];
+    const [endLon, endLat] =
+      coordinates[Math.min(i + 10, coordinates.length - 1)];
     const segmentLength = turf.distance(
       turf.point([startLon, startLat]),
       turf.point([endLon, endLat]),
@@ -453,50 +440,48 @@ export const getDetailedTerrainInfo = async (coordinates) => {
     );
     totalDistance += segmentLength;
 
-    const midPoint = turf.midpoint(
-      turf.point([startLon, startLat]),
-      turf.point([endLon, endLat])
-    );
-
-    const [lon, lat] = midPoint.geometry.coordinates;
+    const [lon, lat] = turf.midpoint([startLon, startLat], [endLon, endLat])
+      .geometry.coordinates;
 
     try {
-      // Get Mapbox Vector Tile data
-      const tileResponse = await axios.get(
-        `https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/tilequery/${lon},${lat}.json?layers=road,landuse&radius=10&access_token=${mapboxgl.accessToken}`
+      const response = await axios.get(
+        `https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/tilequery/${lon},${lat}.json?layers=road&access_token=${mapboxgl.accessToken}`
       );
 
-      // Get OpenStreetMap data
-      const osmResponse = await axios.get(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`
-      );
-
-      const terrainType = determineDetailedTerrainType(
-        tileResponse.data,
-        osmResponse.data,
-        segmentLength
-      );
-      terrainTypes[terrainType] += segmentLength;
-
-      // Respect Nominatim's rate limit (1 request per second)
-      await delay(1000);
+      const feature = response.data.features[0];
+      if (feature && feature.properties) {
+        if (
+          feature.properties.class === "path" ||
+          feature.properties.class === "footway"
+        ) {
+          terrainTypes["Nature Trail"] += segmentLength;
+        } else if (
+          feature.properties.class === "minor" ||
+          feature.properties.class === "service"
+        ) {
+          terrainTypes["Urban Path"] += segmentLength;
+        } else if (feature.properties.class === "track") {
+          terrainTypes["Gravel/Dirt Path"] += segmentLength;
+        } else if (
+          feature.properties.class === "primary" ||
+          feature.properties.class === "secondary" ||
+          feature.properties.class === "tertiary"
+        ) {
+          terrainTypes["Paved Road"] += segmentLength;
+        } else {
+          terrainTypes["Mixed Terrain"] += segmentLength;
+        }
+      } else {
+        terrainTypes["Mixed Terrain"] += segmentLength;
+      }
     } catch (error) {
       console.error("Error fetching terrain data:", error);
-      // If there's an error, default to Mixed Terrain
       terrainTypes["Mixed Terrain"] += segmentLength;
     }
   }
 
-  // Convert distances to percentages
   Object.keys(terrainTypes).forEach((key) => {
     terrainTypes[key] = ((terrainTypes[key] / totalDistance) * 100).toFixed(2);
-  });
-
-  // Remove terrain types with 0%
-  Object.keys(terrainTypes).forEach((key) => {
-    if (parseFloat(terrainTypes[key]) === 0) {
-      delete terrainTypes[key];
-    }
   });
 
   return terrainTypes;
@@ -548,4 +533,10 @@ const determineDetailedTerrainType = (mapboxData, osmData, length) => {
 
   // Default to Mixed Terrain if we can't determine a specific type
   return "Mixed Terrain";
+};
+
+export const getBasicRouteInfo = async (route) => {
+  const distance = calculateRouteDistance(route);
+  const elevationData = await getElevationData(route.geometry.coordinates);
+  return { distance, elevationData };
 };

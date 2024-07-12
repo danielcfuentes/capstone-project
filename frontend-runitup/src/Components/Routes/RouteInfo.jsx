@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Descriptions, Typography, List, Progress } from "antd";
+import { Card, Descriptions, Typography, List, Progress, Spin } from "antd";
 import {
   EnvironmentOutlined,
   CompassOutlined,
@@ -9,19 +9,18 @@ import {
 
 const { Title } = Typography;
 
-const RouteInfo = ({ routeData }) => {
+const RouteInfo = ({ routeData, isLoadingTerrain }) => {
   if (!routeData) return null;
 
-  const {
-    distance,
-    duration,
-    elevationGain,
-    elevationLoss,
-    terrain,
-    directions,
-  } = routeData;
+  const { distance, duration, elevationData, terrain, directions } = routeData;
 
   const renderTerrain = () => {
+    if (isLoadingTerrain) {
+      return <Spin tip="Loading terrain information..." />;
+    }
+
+    if (!terrain) return null;
+
     const terrainColors = {
       "Paved Road": "#1890ff",
       "Urban Path": "#722ed1",
@@ -39,7 +38,7 @@ const RouteInfo = ({ routeData }) => {
             </span>
             <Progress
               percent={parseFloat(percentage)}
-              strokeColor={terrainColors[type]}
+              strokeColor={terrainColors[type] || "#8c8c8c"}
               size="small"
             />
           </div>
@@ -59,7 +58,7 @@ const RouteInfo = ({ routeData }) => {
             </>
           }
         >
-          {distance} miles
+          {distance ? `${distance} miles` : "N/A"}
         </Descriptions.Item>
         <Descriptions.Item
           label={
@@ -68,7 +67,7 @@ const RouteInfo = ({ routeData }) => {
             </>
           }
         >
-          {duration}
+          {duration || "N/A"}
         </Descriptions.Item>
         <Descriptions.Item
           label={
@@ -77,7 +76,7 @@ const RouteInfo = ({ routeData }) => {
             </>
           }
         >
-          {elevationGain} ft
+          {elevationData?.gain ? `${elevationData.gain} ft` : "N/A"}
         </Descriptions.Item>
         <Descriptions.Item
           label={
@@ -86,23 +85,13 @@ const RouteInfo = ({ routeData }) => {
             </>
           }
         >
-          {elevationLoss} ft
+          {elevationData?.loss ? `${elevationData.loss} ft` : "N/A"}
         </Descriptions.Item>
       </Descriptions>
       <Title level={5}>
         <CompassOutlined /> Terrain Breakdown
       </Title>
       {renderTerrain()}
-      <Title level={5}>Turn-by-Turn Directions</Title>
-      <List
-        dataSource={directions}
-        renderItem={(item, index) => (
-          <List.Item>
-            <Typography.Text strong>{index + 1}. </Typography.Text>{" "}
-            {item.instruction} ({item.distance} miles)
-          </List.Item>
-        )}
-      />
     </Card>
   );
 };
