@@ -47,23 +47,21 @@ export const geocodeLocation = async (location) => {
 };
 
 // Function to generate a circular route given a start point and distance
+
 export const generateCircularRouteCoordinates = (
   startLat,
   startLng,
-  desiredDistanceMiles
+  radiusInKm
 ) => {
-  const desiredDistanceKm = desiredDistanceMiles * 1.60934;
-  let radius = desiredDistanceKm / (2 * Math.PI);
-  const numPoints = 16; // Increase number of points for better accuracy
+  const numPoints = 16; // Number of points in the circle
   let coordinates = [];
 
-  // Generate initial circle
   for (let i = 0; i <= numPoints; i++) {
     const angle = (i / numPoints) * 2 * Math.PI;
-    const lat = startLat + (radius / 111.32) * Math.sin(angle);
+    const lat = startLat + (radiusInKm / 111.32) * Math.sin(angle);
     const lng =
       startLng +
-      (radius / (111.32 * Math.cos((startLat * Math.PI) / 180))) *
+      (radiusInKm / (111.32 * Math.cos((startLat * Math.PI) / 180))) *
         Math.cos(angle);
     coordinates.push([lng, lat]);
   }
@@ -110,7 +108,7 @@ export const getRouteFromMapbox = async (coordinates) => {
       }
     }
 
-    return { routes: [fullRoute] };
+    return fullRoute;
   } catch (error) {
     console.error("Error fetching route from Mapbox:", error);
     throw error;
@@ -217,9 +215,6 @@ export const removeCurrentMarker = () => {
 };
 
 //route info
-export const calculateRouteDistance = (route) => {
-  return (route.distance / 1609.34).toFixed(2); // Convert meters to miles and round to 2 decimal places
-};
 
 export const calculateRunningTime = (distanceMiles) => {
   const averagePaceMinPerMile = 9; // Assume 9 minutes per mile for an average runner
@@ -249,4 +244,54 @@ export const estimateElevationChange = (route) => {
   const loss = gain; // Assume the route ends where it starts, so loss should equal gain
 
   return { gain, loss };
+};
+
+export const calculateRouteDistance = (route) => {
+  return (route.distance / 1609.34).toFixed(2); // Convert meters to miles and round to 2 decimal places
+};
+
+export const generateRouteWithinDistance = async (
+  startLat,
+  startLng,
+  desiredDistanceMiles,
+  tolerance = 0.1
+) => {
+  const desiredDistanceKm = desiredDistanceMiles * 1.60934;
+  let minRadius = desiredDistanceKm / (4 * Math.PI);
+  let maxRadius = desiredDistanceKm / Math.PI;
+  let bestRoute = null;
+  let bestDistance = Infinity;
+  const maxAttempts = 10;
+
+  for (let i = 0; i < maxAttempts; i++) {
+    const radius = (minRadius + maxRadius) / 2;
+    const coordinates = generateCircularRouteCoordinates(
+      startLat,
+      startLng,
+      radius
+    );
+    const route = await getRouteFromMapbox(coordinates);
+    const actualDistance = parseFloat(calculateRouteDistance(route));
+
+    if (
+      Math.abs(actualDistance - desiredDistanceMiles) <
+      Math.abs(bestDistance - desiredDistanceMiles)
+    ) {
+      bestRoute = route;
+      bestDistance = actualDistance;
+    }
+
+    if (Math.abs(actualDistance - desiredDistanceMiles) <= tolerance) {
+      return { route: bestRoute, actualDistance: bestDistance };
+    }
+
+    if (actualDistance > desiredDistanceMiles) {
+      maxRadius = radius;
+    } else {
+      minRadius = radius;
+    }
+  }
+
+  // If we couldn't get within tolerance, return the best route we found
+  return { route: bestRoute, actualDistance: bestDistance };
 };

@@ -6,14 +6,12 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import {
   initializeMap,
   geocodeLocation,
-  generateCircularRouteCoordinates,
-  getRouteFromMapbox,
+  generateRouteWithinDistance,
   addRouteToMap,
   addStartMarker,
   fitMapToRouteWithStart,
   removeCurrentMarker,
   clearRoute,
-  calculateRouteDistance,
   estimateElevationChange,
   calculateRunningTime,
   extractDirections,
@@ -30,6 +28,7 @@ const RoutesPage = () => {
   const [form] = Form.useForm();
   const [routeData, setRouteData] = useState(null);
   const [error, setError] = useState(null);
+  const [warning, setWarning] = useState(null);
 
   useEffect(() => {
     const map = initializeMap(mapContainer.current);
@@ -40,6 +39,7 @@ const RoutesPage = () => {
   const handleSubmit = async (values) => {
     const { startLocation, distance } = values;
     setError(null);
+    setWarning(null);
     setRouteData(null);
 
     try {
@@ -50,18 +50,12 @@ const RoutesPage = () => {
 
       const [startLng, startLat] = await geocodeLocation(startLocation);
       const startCoordinates = [startLng, startLat];
-      const routeCoordinates = generateCircularRouteCoordinates(
+
+      const { route, actualDistance } = await generateRouteWithinDistance(
         startLat,
         startLng,
         parseFloat(distance)
       );
-      const routeResponse = await getRouteFromMapbox(routeCoordinates);
-
-      if (!routeResponse.routes || routeResponse.routes.length === 0) {
-        throw new Error("No route found. Please try different parameters.");
-      }
-
-      const route = routeResponse.routes[0];
 
       if (!route.geometry || !route.geometry.coordinates) {
         throw new Error("Invalid route data received. Please try again.");
@@ -71,9 +65,8 @@ const RoutesPage = () => {
       addStartMarker(map, startCoordinates, startLocation);
       fitMapToRouteWithStart(map, route.geometry.coordinates, startCoordinates);
 
-      const actualDistance = calculateRouteDistance(route);
       const { gain, loss } = estimateElevationChange(route);
-      const duration = calculateRunningTime(parseFloat(actualDistance));
+      const duration = calculateRunningTime(actualDistance);
       const directions = extractDirections(route.legs);
 
       setRouteData({
@@ -81,9 +74,15 @@ const RoutesPage = () => {
         duration,
         elevationGain: gain,
         elevationLoss: loss,
-        terrain: "Mixed", // This could be improved with more detailed terrain analysis
+        terrain: "Mixed",
         directions,
       });
+
+      if (Math.abs(actualDistance - distance) > 0.5) {
+        setWarning(
+          `Note: The generated route is ${actualDistance} miles, which differs from your requested ${distance} miles. This is due to the constraints of available roads and paths.`
+        );
+      }
 
       message.success("Route generated successfully!");
     } catch (error) {
@@ -132,6 +131,16 @@ const RoutesPage = () => {
             showIcon
             closable
             onClose={() => setError(null)}
+          />
+        )}
+        {warning && (
+          <Alert
+            message="Warning"
+            description={warning}
+            type="warning"
+            showIcon
+            closable
+            onClose={() => setWarning(null)}
           />
         )}
         <div ref={mapContainer} className="map-container" />
