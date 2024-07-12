@@ -1,4 +1,5 @@
 import mapboxgl from "mapbox-gl";
+import * as turf from "@turf/turf";
 
 // Function to initialize the map with given container, center, and zoom level
 export const initializeMap = (container, center = [-74.5, 40], zoom = 9) => {
@@ -46,27 +47,38 @@ export const geocodeLocation = async (location) => {
 };
 
 // Function to generate a circular route given a start point and distance
-export const generateCircularRoute = (startLat, startLng, distanceMiles) => {
-  const earthRadiusKm = 6371; // Radius of the Earth in kilometers
-  const distanceKm = distanceMiles * 1.60934; // Convert miles to kilometers
-  const radiusKm = distanceKm / (2 * Math.PI); // Calculate radius of the circle
+export const generateCircularRoute = async (
+  startLat,
+  startLng,
+  desiredDistanceMiles
+) => {
+  const startPoint = turf.point([startLng, startLat]);
+  let radius = (desiredDistanceMiles * 1609.34) / (2 * Math.PI); // Initial estimate
+  let route;
+  let actualDistance;
+  let iterations = 0;
+  const maxIterations = 10;
+  const tolerance = 0.1; // 10% tolerance
 
-  const coordinates = []; // Array to store route coordinates
+  do {
+    const options = { steps: 64, units: "meters" };
+    const circle = turf.circle(startPoint, radius, options);
+    route = circle.geometry.coordinates[0];
 
-  // Generate coordinates for the circular route
-  for (let i = 0; i <= 360; i += 45) {
-    const angle = i * (Math.PI / 180); // Convert angle to radians
-    const lat =
-      startLat + (radiusKm / earthRadiusKm) * (180 / Math.PI) * Math.sin(angle); // Calculate latitude
-    const lng =
-      startLng +
-      ((radiusKm / earthRadiusKm) * (180 / Math.PI) * Math.cos(angle)) /
-        Math.cos((startLat * Math.PI) / 180); // Calculate longitude
-    coordinates.push(`${lng},${lat}`); // Add coordinate to the array
-  }
+    const lineString = turf.lineString(route);
+    actualDistance = turf.length(lineString, { units: "miles" });
 
-  coordinates.push(`${startLng},${startLat}`); // Close the loop by adding the start point at the end
-  return coordinates; // Return the array of coordinates
+    const ratio = desiredDistanceMiles / actualDistance;
+    radius *= ratio;
+
+    iterations++;
+  } while (
+    Math.abs(actualDistance - desiredDistanceMiles) / desiredDistanceMiles >
+      tolerance &&
+    iterations < maxIterations
+  );
+
+  return route.map((coord) => coord.join(","));
 };
 
 // Function to get a route from Mapbox API given a set of coordinates
