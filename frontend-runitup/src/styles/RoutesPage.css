@@ -33,3 +33,27 @@
     margin-bottom: 16px;
   }
 }
+
+.mile-marker {
+  background-color: #3887be;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mile-marker span {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.mapboxgl-popup-content {
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+}

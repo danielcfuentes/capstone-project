@@ -15,6 +15,8 @@ import {
   getBasicRouteInfo,
   getDetailedTerrainInfo,
   calculatePersonalizedRunningTime,
+  addMileMarkers,
+  clearMileMarkers,
 } from "../../utils/mapUtils";
 import RouteInfo from "./RouteInfo";
 import { getHeaders } from "../../utils/apiConfig";
@@ -75,6 +77,7 @@ const RoutesPage = () => {
       if (map) {
         clearRoute(map); // Clear existing route from map
         removeCurrentMarker(); // Remove existing marker from map
+        clearMileMarkers(); //  clear existing mile markers
       }
 
       const [startLng, startLat] = await geocodeLocation(startLocation); // Geocode start location
@@ -93,6 +96,7 @@ const RoutesPage = () => {
       addRouteToMap(map, route.geometry); // Add generated route to map
       addStartMarker(map, startCoordinates, startLocation); // Add start marker to map
       fitMapToRouteWithStart(map, route.geometry.coordinates, startCoordinates); // Fit map view to route
+      addMileMarkers(map, route); //  create mile markers
 
       setIsGeneratingRoute(false);
       setIsLoadingBasicInfo(true);
