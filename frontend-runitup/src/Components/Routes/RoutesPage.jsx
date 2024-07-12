@@ -54,11 +54,9 @@ const RoutesPage = () => {
       if (response.ok) {
         const profile = await response.json();
         setUserProfile(profile);
-      } else {
-        console.error("Failed to fetch user profile");
       }
     } catch (error) {
-      console.error("Error fetching user profile:", error);
+      message.error("Error fetching user profile:", error);
     }
   };
 
@@ -142,7 +140,6 @@ const RoutesPage = () => {
 
       message.success("Route generated successfully!");
     } catch (error) {
-      console.error("Error generating route:", error);
       setError(
         error.message ||
           "An error occurred while generating the route. Please try again."

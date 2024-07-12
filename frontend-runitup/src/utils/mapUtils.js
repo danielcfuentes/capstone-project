@@ -111,8 +111,7 @@ export const getRouteFromMapbox = async (coordinates) => {
 
     return fullRoute;
   } catch (error) {
-    console.error("Error fetching route from Mapbox:", error);
-    throw error;
+        return
   }
 };
 
@@ -435,7 +434,6 @@ export const getDetailedTerrainInfo = async (coordinates) => {
         terrainTypes["Mixed Terrain"] += segmentLength;
       }
     } catch (error) {
-      console.error("Error fetching terrain data:", error);
       terrainTypes["Mixed Terrain"] += segmentLength;
     }
   }
