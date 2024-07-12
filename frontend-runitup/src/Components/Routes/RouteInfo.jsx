@@ -37,7 +37,7 @@ const RouteInfo = ({ routeData }) => {
         <Descriptions.Item
           label={
             <>
-              <FieldTimeOutlined /> Estimated Duration
+              <FieldTimeOutlined /> Estimated Duration Based On Your Profile
             </>
           }
         >

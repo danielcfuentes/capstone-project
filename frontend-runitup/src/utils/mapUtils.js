@@ -295,3 +295,92 @@ export const generateRouteWithinDistance = async (
   // If we couldn't get within tolerance, return the best route we found
   return { route: bestRoute, actualDistance: bestDistance };
 };
+
+
+const calculateBMI = (weightPounds, height) => {
+  let heightInches;
+  if (typeof height === "number") {
+    // If height is a number, assume it's in inches
+    heightInches = height;
+  } else if (typeof height === "string") {
+    // If height is a string, try to parse it
+    const parts = height.split("'");
+    if (parts.length === 2) {
+      heightInches = parseInt(parts[0]) * 12 + parseInt(parts[1]);
+    } else {
+      // If we can't parse it, default to average height
+      heightInches = 67; // 5'7" in inches
+    }
+  } else if (typeof height === "object" && height.feet && height.inches) {
+    // If height is an object with feet and inches
+    heightInches = height.feet * 12 + height.inches;
+  } else {
+    // If we can't determine the format, default to average height
+    heightInches = 67; // 5'7" in inches
+  }
+
+  const heightInMeters = (heightInches * 2.54) / 100;
+  const weightInKg = weightPounds * 0.453592;
+  return weightInKg / (heightInMeters * heightInMeters);
+};
+
+export const calculatePersonalizedRunningTime = (
+  distanceMiles,
+  elevationGain,
+  userProfile
+) => {
+  // Base pace in minutes per mile for an intermediate recreational runner
+  let basePace = 10;
+
+  // Adjust for age (younger runners tend to be faster)
+  if (userProfile.age < 30) {
+    basePace -= (30 - userProfile.age) * 0.05;
+  } else if (userProfile.age > 40) {
+    basePace += (userProfile.age - 40) * 0.05;
+  }
+
+  // Adjust for fitness level
+  const fitnessAdjustment = {
+    beginner: 2,
+    intermediate: 0,
+    advanced: -1,
+    expert: -2,
+  };
+  basePace += fitnessAdjustment[userProfile.fitnessLevel] || 0;
+
+  // Adjust for running experience
+  const experienceAdjustment = {
+    beginner: 1,
+    recreational: 0.5,
+    intermediate: 0,
+    advanced: -0.5,
+    expert: -1,
+  };
+  basePace += experienceAdjustment[userProfile.runningExperience] || 0;
+
+  // Adjust for BMI
+  const heightInches = userProfile.height * 12; // Convert feet to inches
+  const bmi = (userProfile.weight / (heightInches * heightInches)) * 703;
+  if (bmi > 25) {
+    basePace += (bmi - 25) * 0.1;
+  }
+
+  // Adjust for health conditions
+  if (
+    userProfile.healthConditions &&
+    userProfile.healthConditions.includes("Knee Issues")
+  ) {
+    basePace += 1; // Add 1 minute per mile for knee issues
+  }
+
+  // Adjust for elevation gain (add 30 seconds per 100ft of elevation gain per mile)
+  const elevationAdjustment = (elevationGain / 100) * 0.5;
+  basePace += elevationAdjustment / distanceMiles;
+
+  // Calculate total time
+  const totalMinutes = basePace * distanceMiles;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = Math.round(totalMinutes % 60);
+
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+};

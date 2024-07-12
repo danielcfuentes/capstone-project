@@ -1,4 +1,4 @@
-import "../../styles/RoutesPage.css";
+import "../../styles/RoutesPage.css"
 import React, { useState, useEffect, useRef } from "react";
 import { Layout, Form, Input, Button, message, Alert } from "antd";
 import mapboxgl from "mapbox-gl";
@@ -13,10 +13,11 @@ import {
   removeCurrentMarker,
   clearRoute,
   estimateElevationChange,
-  calculateRunningTime,
+  calculatePersonalizedRunningTime,
   extractDirections,
 } from "../../utils/mapUtils";
 import RouteInfo from "./RouteInfo";
+import { getHeaders } from "../../utils/apiConfig";
 
 const { Content } = Layout;
 
@@ -29,12 +30,33 @@ const RoutesPage = () => {
   const [routeData, setRouteData] = useState(null);
   const [error, setError] = useState(null);
   const [warning, setWarning] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     const map = initializeMap(mapContainer.current);
     map.on("load", () => setMap(map));
+    fetchUserProfile();
     return () => map.remove();
   }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/profile`,
+        {
+          headers: getHeaders(),
+        }
+      );
+      if (response.ok) {
+        const profile = await response.json();
+        setUserProfile(profile);
+      } else {
+        console.error("Failed to fetch user profile");
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
 
   const handleSubmit = async (values) => {
     const { startLocation, distance } = values;
@@ -66,7 +88,34 @@ const RoutesPage = () => {
       fitMapToRouteWithStart(map, route.geometry.coordinates, startCoordinates);
 
       const { gain, loss } = estimateElevationChange(route);
-      const duration = calculateRunningTime(actualDistance);
+      let duration;
+
+        const profileForCalculation = {
+          age: userProfile.age || 30,
+          gender: userProfile.gender || "male",
+          weight: userProfile.weight || 150,
+          height: userProfile.height || 5.8, // Assuming height is stored in feet
+          fitnessLevel: userProfile.fitnessLevel || "intermediate",
+          runningExperience: userProfile.runningExperience || "recreational",
+          healthConditions: userProfile.healthConditions || [],
+        };
+
+        duration = calculatePersonalizedRunningTime(
+          actualDistance,
+          gain,
+          profileForCalculation
+        );
+
+
+      if (
+        !userProfile ||
+        Object.keys(userProfile).some((key) => !userProfile[key])
+      ) {
+        setWarning(
+          "Your profile is incomplete. Using default values for some fields in time estimation. Please update your profile for more accurate estimates."
+        );
+      }
+
       const directions = extractDirections(route.legs);
 
       setRouteData({
@@ -80,7 +129,10 @@ const RoutesPage = () => {
 
       if (Math.abs(actualDistance - distance) > 0.5) {
         setWarning(
-          `Note: The generated route is ${actualDistance} miles, which differs from your requested ${distance} miles. This is due to the constraints of available roads and paths.`
+          (prevWarning) =>
+            `${
+              prevWarning ? prevWarning + " " : ""
+            }Note: The generated route is ${actualDistance} miles, which differs from your requested ${distance} miles. This is due to the constraints of available roads and paths.`
         );
       }
 
