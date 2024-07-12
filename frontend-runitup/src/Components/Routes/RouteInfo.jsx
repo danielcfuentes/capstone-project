@@ -63,7 +63,7 @@ const RouteInfo = ({ routeData, isLoadingTerrain }) => {
         <Descriptions.Item
           label={
             <>
-              <FieldTimeOutlined /> Estimated Duration
+              <FieldTimeOutlined /> Estimated Duration Based On Your Profile
             </>
           }
         >
