@@ -1,70 +1,216 @@
+import "../../styles/RoutesPage.css";
 import React, { useState, useEffect, useRef } from "react";
-import { Layout, message } from "antd";
+import { Layout, Form, Input, Button, message, Alert, Spin } from "antd";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import RouteForm from "./RouteForm";
 import {
   initializeMap,
   geocodeLocation,
-  generateCircularRoute,
-  getRouteFromMapbox,
+  generateRouteWithinDistance,
   addRouteToMap,
-  fitMapToRoute,
+  addStartMarker,
+  fitMapToRouteWithStart,
+  removeCurrentMarker,
+  clearRoute,
+  getBasicRouteInfo,
+  getDetailedTerrainInfo,
+  calculatePersonalizedRunningTime,
 } from "../../utils/mapUtils";
-import "../../styles/RoutesPage.css";
+import RouteInfo from "./RouteInfo";
+import { getHeaders } from "../../utils/apiConfig";
 
 const { Content } = Layout;
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const RoutesPage = () => {
-  const [map, setMap] = useState(null); // State to store the map instance
-  const mapContainer = useRef(null); // Ref to store the map container DOM element
+  const [map, setMap] = useState(null); // State for the map instance
+  const mapContainer = useRef(null); // Ref for the map container
+  const [form] = Form.useForm(); // Ant Design form instance
+  const [routeData, setRouteData] = useState(null); // State for route data
+  const [error, setError] = useState(null); // State for error messages
+  const [warning, setWarning] = useState(null); // State for warning messages
+  const [userProfile, setUserProfile] = useState(null); // State for user profile
+  const [isGeneratingRoute, setIsGeneratingRoute] = useState(false); // State for route generation status
+  const [isLoadingBasicInfo, setIsLoadingBasicInfo] = useState(false); // State for loading basic info
+  const [isLoadingTerrainInfo, setIsLoadingTerrainInfo] = useState(false); // State for loading terrain info
+  const [basicRouteData, setBasicRouteData] = useState(null); // State for basic route data
 
-  // Initialize the map when the component mounts
+  // Effect to initialize the map and fetch user profile on component mount
   useEffect(() => {
-    const map = initializeMap(mapContainer.current);
-    map.on("load", () => setMap(map)); // Set the map state once it's fully loaded
-    return () => map.remove(); // Clean up the map instance when the component unmounts
+    const map = initializeMap(mapContainer.current); // Initialize the map
+    map.on("load", () => setMap(map)); // Set map instance in state on load
+    fetchUserProfile(); // Fetch user profile
+    return () => map.remove(); // Clean up map instance on unmount
   }, []);
 
-  // Handle form submission to generate a route
+  // Function to fetch user profile from API
+  const fetchUserProfile = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/profile`,
+        {
+          headers: getHeaders(),
+        }
+      );
+      if (response.ok) {
+        const profile = await response.json();
+        setUserProfile(profile); // Set user profile in state
+      }
+    } catch (error) {
+      message.error("Error fetching user profile:", error); // Display error message
+    }
+  };
+
+  // Function to handle form submission
   const handleSubmit = async (values) => {
     const { startLocation, distance } = values;
+    setError(null);
+    setWarning(null);
+    setRouteData(null);
+    setBasicRouteData(null);
+    setIsGeneratingRoute(true);
 
     try {
-      // Geocode the start location to get coordinates
-      const [startLng, startLat] = await geocodeLocation(startLocation);
+      if (map) {
+        clearRoute(map); // Clear existing route from map
+        removeCurrentMarker(); // Remove existing marker from map
+      }
 
-      // Generate a circular route based on start coordinates and distance
-      const coordinates = generateCircularRoute(startLat, startLng, distance);
+      const [startLng, startLat] = await geocodeLocation(startLocation); // Geocode start location
+      const startCoordinates = [startLng, startLat];
 
-      // Fetch the route geometry from Mapbox API
-      const routeGeometry = await getRouteFromMapbox(coordinates);
+      const { route, actualDistance } = await generateRouteWithinDistance(
+        startLat,
+        startLng,
+        parseFloat(distance)
+      );
 
-      // Add the route to the map
-      addRouteToMap(map, routeGeometry);
+      if (!route.geometry || !route.geometry.coordinates) {
+        throw new Error("Invalid route data received. Please try again.");
+      }
 
-      // Adjust the map view to fit the route
-      fitMapToRoute(map, routeGeometry.coordinates);
+      addRouteToMap(map, route.geometry); // Add generated route to map
+      addStartMarker(map, startCoordinates, startLocation); // Add start marker to map
+      fitMapToRouteWithStart(map, route.geometry.coordinates, startCoordinates); // Fit map view to route
 
-      // Display success message
+      setIsGeneratingRoute(false);
+      setIsLoadingBasicInfo(true);
+
+      // Get basic route info
+      const basicInfo = await getBasicRouteInfo(route);
+      const duration = calculatePersonalizedRunningTime(
+        actualDistance,
+        basicInfo.elevationData.gain,
+        userProfile || {
+          age: 30,
+          fitnessLevel: "intermediate",
+          runningExperience: "recreational",
+          weight: 150,
+          height: 5.8,
+          healthConditions: [],
+        }
+      );
+
+      setBasicRouteData({
+        ...basicInfo,
+        duration,
+      });
+
+      setIsLoadingBasicInfo(false);
+      setIsLoadingTerrainInfo(true);
+
+      // Get detailed terrain info
+      const terrainInfo = await getDetailedTerrainInfo(
+        route.geometry.coordinates
+      );
+
+      setRouteData({
+        ...basicInfo,
+        duration,
+        terrain: terrainInfo,
+      });
+
+      setIsLoadingTerrainInfo(false);
+
+      // Display a warning if the generated route distance significantly differs from the requested distance
+      if (Math.abs(actualDistance - distance) > 0.5) {
+        setWarning(
+          `Note: The generated route is ${actualDistance.toFixed(
+            2
+          )} miles, which differs from your requested ${distance} miles. This is due to the constraints of available roads and paths.`
+        );
+      }
+
       message.success("Route generated successfully!");
-
     } catch (error) {
-      // Display error message
-      message.error(
+      setError(
         error.message ||
           "An error occurred while generating the route. Please try again."
       );
+      setIsGeneratingRoute(false);
+      setIsLoadingBasicInfo(false);
+      setIsLoadingTerrainInfo(false);
     }
   };
 
   return (
     <Layout className="routes-page">
       <Content className="routes-content">
-        <RouteForm onSubmit={handleSubmit} />{" "}
-        <div ref={mapContainer} className="map-container" />{" "}
+        <Form
+          form={form}
+          onFinish={handleSubmit}
+          layout="inline"
+          className="route-form"
+        >
+          <Form.Item
+            name="startLocation"
+            rules={[
+              { required: true, message: "Please enter a starting location" },
+            ]}
+          >
+            <Input placeholder="Starting Location" />
+          </Form.Item>
+          <Form.Item
+            name="distance"
+            rules={[{ required: true, message: "Please enter a distance" }]}
+          >
+            <Input type="number" placeholder="Distance (miles)" step="0.1" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Generate Route
+            </Button>
+          </Form.Item>
+        </Form>
+        {error && (
+          <Alert
+            message="Error"
+            description={error}
+            type="error"
+            showIcon
+            closable
+            onClose={() => setError(null)}
+          />
+        )}
+        {warning && (
+          <Alert
+            message="Warning"
+            description={warning}
+            type="warning"
+            showIcon
+            closable
+            onClose={() => setWarning(null)}
+          />
+        )}
+        <div ref={mapContainer} className="map-container" />
+        {isGeneratingRoute && <Spin tip="Generating route..." />}
+        {(basicRouteData || routeData) && (
+          <RouteInfo
+            routeData={routeData || basicRouteData}
+            isLoadingTerrain={isLoadingTerrainInfo}
+          />
+        )}
       </Content>
     </Layout>
   );
