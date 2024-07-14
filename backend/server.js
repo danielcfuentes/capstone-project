@@ -12,14 +12,33 @@ app.use(express.json());
 app.use(cors());
 
 // Middleware to authenticate token
+// function authenticateToken(req, res, next) {
+//   const authHeader = req.headers["authorization"];
+//   const token = authHeader && authHeader.split(" ")[1];
+//   if (token == null) return res.sendStatus(401);
+
+//   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+//     if (err) return res.sendStatus(403);
+//     req.user = user;
+//     next();
+//   });
+// }
+
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (token == null) return res.sendStatus(401);
 
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, user) => {
     if (err) return res.sendStatus(403);
-    req.user = user;
+
+    // Fetch the user from the database to get the ID
+    const dbUser = await prisma.user.findUnique({
+      where: { username: user.name },
+    });
+    if (!dbUser) return res.sendStatus(403);
+
+    req.user = { id: dbUser.id, name: user.name };
     next();
   });
 }
@@ -267,20 +286,52 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
   }
 });
 
+
+// Fetch an active run
+app.get("/active-run/:runId", authenticateToken, async (req, res) => {
+  try {
+    const runId = parseInt(req.params.runId);
+    const activeRun = await prisma.activeRun.findUnique({
+      where: { id: runId },
+    });
+
+    if (!activeRun) {
+      return res.status(404).json({ message: "Active run not found" });
+    }
+
+    // Check if the active run belongs to the authenticated user
+    if (activeRun.userId !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized access to this run" });
+    }
+
+    res.json(activeRun);
+  } catch (error) {
+    console.error("Error fetching active run:", error);
+    res.status(500).json({ message: "Error fetching active run", error: error.message });
+  }
+});
+
+// Start a new run
 app.post("/start-run", authenticateToken, async (req, res) => {
   try {
-    console.log("Received start run data:", req.body);
+    console.log("Received start run request:", req.body);
     const { distance, elevationData, routeCoordinates, startLocation } =
       req.body;
 
-    const user = await prisma.user.findUnique({
-      where: { username: req.user.name },
-    });
+    console.log("Authenticated user:", req.user);
+
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
 
     if (!user) {
+      console.log("User not found:", req.user.id);
       return res.status(404).json({ message: "User not found" });
     }
 
+    console.log("Creating active run for user:", user.id);
     const activeRun = await prisma.activeRun.create({
       data: {
         userId: user.id,
@@ -300,7 +351,7 @@ app.post("/start-run", authenticateToken, async (req, res) => {
     console.log("Created active run:", activeRun);
     res.json(activeRun);
   } catch (error) {
-    console.error("Error in /start-run:", error);
+    console.error("Error starting run:", error);
     res
       .status(500)
       .json({
@@ -308,6 +359,36 @@ app.post("/start-run", authenticateToken, async (req, res) => {
         error: error.message,
         stack: error.stack,
       });
+  }
+});
+
+// Complete a run
+app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
+  try {
+    const runId = parseInt(req.params.runId);
+    const activeRun = await prisma.activeRun.findUnique({
+      where: { id: runId },
+    });
+
+    if (!activeRun) {
+      return res.status(404).json({ message: "Active run not found" });
+    }
+
+    if (activeRun.userId !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized access to this run" });
+    }
+
+    const completedRun = await prisma.activeRun.update({
+      where: { id: runId },
+      data: { isCompleted: true },
+    });
+
+    // Here you could also create a UserActivity from the completed run data
+
+    res.json(completedRun);
+  } catch (error) {
+    console.error("Error completing run:", error);
+    res.status(500).json({ message: "Error completing run", error: error.message });
   }
 });
 

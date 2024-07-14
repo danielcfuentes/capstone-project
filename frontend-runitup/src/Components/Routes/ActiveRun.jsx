@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, Button, Statistic, Row, Col, message } from "antd";
 import {
   ClockCircleOutlined,
@@ -8,7 +9,9 @@ import {
 } from "@ant-design/icons";
 import { getHeaders } from "../../utils/apiConfig";
 
-const ActiveRun = ({ activeRunId, onRunComplete }) => {
+const ActiveRun = () => {
+  const { runId } = useParams();
+  const navigate = useNavigate();
   const [runData, setRunData] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
 
@@ -19,12 +22,12 @@ const ActiveRun = ({ activeRunId, onRunComplete }) => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [activeRunId]);
+  }, [runId]);
 
   const fetchRunData = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_POST_ADDRESS}/active-run/${activeRunId}`,
+        `${import.meta.env.VITE_POST_ADDRESS}/active-run/${runId}`,
         {
           headers: getHeaders(),
         }
@@ -42,7 +45,7 @@ const ActiveRun = ({ activeRunId, onRunComplete }) => {
   const handleCompleteRun = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_POST_ADDRESS}/complete-run/${activeRunId}`,
+        `${import.meta.env.VITE_POST_ADDRESS}/complete-run/${runId}`,
         {
           method: "POST",
           headers: getHeaders(),
@@ -52,7 +55,8 @@ const ActiveRun = ({ activeRunId, onRunComplete }) => {
         throw new Error("Failed to complete run");
       }
       message.success("Run completed successfully!");
-      onRunComplete();
+      // Navigate back to the routes page or to a run summary page
+      navigate("/routes");
     } catch (error) {
       message.error(`Error completing run: ${error.message}`);
     }
