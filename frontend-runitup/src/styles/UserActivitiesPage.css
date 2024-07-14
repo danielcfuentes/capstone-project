@@ -42,9 +42,18 @@
 
 .activity-details .ant-typography {
   margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .activity-details .anticon {
   margin-right: 8px;
   color: #1890ff;
+}
+
+/* New styles for the starting location */
+.activity-details .ant-typography:first-child {
+  font-weight: bold;
+  margin-bottom: 12px;
 }

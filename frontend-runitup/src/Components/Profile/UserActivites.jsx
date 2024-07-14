@@ -5,6 +5,7 @@ import {
   CalendarOutlined,
   FieldTimeOutlined,
   FireOutlined,
+  EnvironmentOutlined,
 } from "@ant-design/icons";
 import { getHeaders } from "../../utils/apiConfig";
 import "../../styles/UserActivitiesPage.css";
@@ -78,6 +79,10 @@ const UserActivitiesPage = () => {
                   }
                 >
                   <div className="activity-details">
+                    <Text>
+                      <EnvironmentOutlined /> Start:{" "}
+                      {activity.startLocation || "N/A"}
+                    </Text>
                     <Text>
                       <CalendarOutlined /> Distance:{" "}
                       {activity.distance.toFixed(2)} miles
