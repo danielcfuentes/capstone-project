@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, Button, Statistic, Row, Col, Typography } from "antd";
+import { Card, Button, Statistic, Row, Col, Typography, message } from "antd";
 import {
   AimOutlined,
   ClockCircleOutlined,
@@ -106,8 +106,10 @@ const ActiveRun = () => {
       if (!response.ok) {
         throw new Error("Failed to complete run");
       }
+      const data = await response.json();
       message.success("Run completed successfully!");
-      navigate("/routes");
+      // Redirect to the profile page
+      navigate("/profile");
     } catch (error) {
       message.error(`Error completing run: ${error.message}`);
     }

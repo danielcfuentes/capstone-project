@@ -373,6 +373,7 @@ app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
     const runId = parseInt(req.params.runId);
     const activeRun = await prisma.activeRun.findUnique({
       where: { id: runId },
+      include: { user: true },
     });
 
     if (!activeRun) {
@@ -385,14 +386,39 @@ app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
         .json({ message: "Unauthorized access to this run" });
     }
 
-    const completedRun = await prisma.activeRun.update({
+    // Calculate actual duration
+    const actualDuration = Math.round(
+      (new Date() - activeRun.startDateTime) / 1000
+    ); // in seconds
+
+    // Create UserActivity from completed run
+    const userActivity = await prisma.userActivity.create({
+      data: {
+        userId: activeRun.userId,
+        activityType: "Run",
+        startDateTime: activeRun.startDateTime,
+        duration: actualDuration,
+        distance: activeRun.distance,
+        averagePace: activeRun.averagePace,
+        elevationGain: activeRun.elevationGain,
+        elevationLoss: activeRun.elevationLoss,
+        caloriesBurned: activeRun.estimatedCaloriesBurned,
+        startLatitude: activeRun.startLatitude,
+        startLongitude: activeRun.startLongitude,
+        endLatitude: activeRun.endLatitude,
+        endLongitude: activeRun.endLongitude,
+        routeCoordinates: activeRun.routeCoordinates,
+        startLocation: activeRun.startLocation,
+      },
+    });
+
+    // Mark the ActiveRun as completed
+    await prisma.activeRun.update({
       where: { id: runId },
       data: { isCompleted: true },
     });
 
-    // Here you could also create a UserActivity from the completed run data
-
-    res.json(completedRun);
+    res.json({ message: "Run completed successfully", userActivity });
   } catch (error) {
     console.error("Error completing run:", error);
     res
