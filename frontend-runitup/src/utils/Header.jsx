@@ -7,7 +7,7 @@ import {
   CompassOutlined,
   LogoutOutlined,
   UserOutlined,
-  SettingOutlined,
+  HistoryOutlined,
 } from "@ant-design/icons";
 import "../styles/Header.css";
 import { generateColor } from "./apiConfig";
@@ -18,7 +18,7 @@ const { Title } = Typography;
 const Header = ({ onLogout, user }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const avatarColor = generateColor(user.name)
+  const avatarColor = generateColor(user.name);
   const menuItems = [
     { key: "feed", label: "Feed", icon: <HomeOutlined />, link: "/feed" },
     {
@@ -44,6 +44,13 @@ const Header = ({ onLogout, user }) => {
         onClick={() => navigate("/profile")}
       >
         Profile
+      </Menu.Item>
+      <Menu.Item
+        key="activities"
+        icon={<HistoryOutlined />}
+        onClick={() => navigate("/activities")}
+      >
+        My Activities
       </Menu.Item>
       <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={onLogout}>
         Logout
