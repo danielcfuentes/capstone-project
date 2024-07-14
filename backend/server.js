@@ -181,6 +181,18 @@ app.get("/profile", authenticateToken, async (req, res) => {
   }
 });
 
-
+// New endpoint to fetch user activities
+app.get("/user-activities", authenticateToken, async (req, res) => {
+  try {
+    const activities = await prisma.userActivity.findMany({
+      where: { userId: req.user.id },
+      orderBy: { startDateTime: 'desc' },
+      take: 10 // Limit to 10 most recent activities
+    });
+    res.json(activities);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching activities", error: error.message });
+  }
+});
 
 app.listen(PORT, () => {});
