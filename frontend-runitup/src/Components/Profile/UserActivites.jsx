@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Layout, Typography, List, Card, Tag, Spin, message } from "antd";
 import {
-  RunningOutlined,
+  TrophyOutlined,
   CalendarOutlined,
   FieldTimeOutlined,
   FireOutlined,
 } from "@ant-design/icons";
 import { getHeaders } from "../../utils/apiConfig";
-import "./UserActivitiesPage.css";
+import "../../styles/UserActivitiesPage.css";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -70,7 +70,7 @@ const UserActivitiesPage = () => {
                   className="activity-card"
                   title={
                     <div className="activity-card-title">
-                      <RunningOutlined /> {activity.activityType}
+                      <TrophyOutlined /> {activity.activityType}
                     </div>
                   }
                   extra={

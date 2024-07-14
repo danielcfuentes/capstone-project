@@ -11,6 +11,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Header from "./utils/Header";
 import Footer from "./utils/Footer";
 import ActiveRun from "./Components/Routes/ActiveRun";
+import UserActivitiesPage from "./Components/Profile/UserActivites";
 
 // Protected route wrapper component
 const ProtectedRoute = ({ children, isLoggedIn, isProfileComplete }) => {
@@ -223,6 +224,17 @@ function App() {
                 isProfileComplete={isProfileComplete}
               >
                 <ActiveRun />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/activities"
+            element={
+              <ProtectedRoute
+                isLoggedIn={isLoggedIn}
+                isProfileComplete={isProfileComplete}
+              >
+                <UserActivitiesPage />
               </ProtectedRoute>
             }
           />
