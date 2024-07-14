@@ -267,4 +267,49 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
   }
 });
 
+app.post("/start-run", authenticateToken, async (req, res) => {
+  try {
+    console.log("Received start run data:", req.body);
+    const { distance, elevationData, routeCoordinates, startLocation } =
+      req.body;
+
+    const user = await prisma.user.findUnique({
+      where: { username: req.user.name },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const activeRun = await prisma.activeRun.create({
+      data: {
+        userId: user.id,
+        startDateTime: new Date(),
+        distance: parseFloat(distance),
+        elevationGain: elevationData.gain,
+        elevationLoss: elevationData.loss,
+        startLatitude: routeCoordinates[0][1],
+        startLongitude: routeCoordinates[0][0],
+        endLatitude: routeCoordinates[routeCoordinates.length - 1][1],
+        endLongitude: routeCoordinates[routeCoordinates.length - 1][0],
+        routeCoordinates: JSON.stringify(routeCoordinates),
+        startLocation,
+      },
+    });
+
+    console.log("Created active run:", activeRun);
+    res.json(activeRun);
+  } catch (error) {
+    console.error("Error in /start-run:", error);
+    res
+      .status(500)
+      .json({
+        message: "Error starting run",
+        error: error.message,
+        stack: error.stack,
+      });
+  }
+});
+
+
 app.listen(PORT, () => {});
