@@ -195,4 +195,50 @@ app.get("/user-activities", authenticateToken, async (req, res) => {
   }
 });
 
+// Function to calculate calories burned based on user profile and route
+const calculateCaloriesBurned = (user, distance, elevationGain) => {
+  // This is a simplified calculation and should be refined for more accuracy
+  const weight = user.weight * 0.453592; // Convert lbs to kg
+  const duration = distance * 10; // Assume 10 minutes per mile
+  const caloriesPerMinute = 0.0175 * 8 * weight; // MET value of 8 for running
+  return Math.round(caloriesPerMinute * duration);
+};
+
+// New endpoint to save a route as a user activity
+app.post("/save-route-activity", authenticateToken, async (req, res) => {
+  try {
+    const { distance, duration, elevationData, terrain, routeCoordinates, startLocation } = req.body;
+    const user = await prisma.user.findUnique({ where: { username: req.user.name } });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const activity = await prisma.userActivity.create({
+      data: {
+        userId: user.id,
+        activityType: 'Run',
+        startDateTime: new Date(),
+        duration: Math.round(duration * 60), // Convert to seconds
+        distance: parseFloat(distance),
+        averagePace: duration / distance, // minutes per mile
+        elevationGain: elevationData.gain,
+        elevationLoss: elevationData.loss,
+        caloriesBurned: calculateCaloriesBurned(user, distance, elevationData.gain),
+        startLatitude: routeCoordinates[0][1],
+        startLongitude: routeCoordinates[0][0],
+        endLatitude: routeCoordinates[routeCoordinates.length - 1][1],
+        endLongitude: routeCoordinates[routeCoordinates.length - 1][0],
+        routeCoordinates: JSON.stringify(routeCoordinates),
+        startLocation,
+      },
+    });
+
+    res.json(activity);
+  } catch (error) {
+    res.status(500).json({ message: "Error saving activity", error: error.message });
+  }
+});
+
+
 app.listen(PORT, () => {});
