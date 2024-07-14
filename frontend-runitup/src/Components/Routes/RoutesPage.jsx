@@ -223,57 +223,53 @@ const RoutesPage = () => {
     }
   };
 
-  const handleStartRun = async () => {
-    if (!selectedRoute) {
-      message.error("No route generated to start a run.");
-      return;
-    }
+const handleStartRun = async () => {
+  if (!selectedRoute) {
+    message.error("No route generated to start a run.");
+    return;
+  }
 
-    setIsStartingRun(true);
+  setIsStartingRun(true);
 
-    try {
-      const runData = {
-        ...selectedRoute,
-        distance: parseFloat(selectedRoute.distance),
-        elevationData: {
-          gain: parseFloat(selectedRoute.elevationData.gain),
-          loss: parseFloat(selectedRoute.elevationData.loss),
-        },
-        terrain: Object.fromEntries(
-          Object.entries(selectedRoute.terrain).map(([key, value]) => [
-            key,
-            parseFloat(value),
-          ])
-        ),
-      };
-
-      console.log("Sending run data:", runData);
-
-      const response = await fetch(
-        `${import.meta.env.VITE_POST_ADDRESS}/start-run`,
-        {
-          method: "POST",
-          headers: getHeaders(),
-          body: JSON.stringify(runData),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to start run");
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_POST_ADDRESS}/start-run`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          ...selectedRoute,
+          distance: parseFloat(selectedRoute.distance),
+          duration: selectedRoute.duration, // Make sure this is included
+          elevationData: {
+            gain: parseFloat(selectedRoute.elevationData.gain),
+            loss: parseFloat(selectedRoute.elevationData.loss),
+          },
+          terrain: Object.fromEntries(
+            Object.entries(selectedRoute.terrain).map(([key, value]) => [
+              key,
+              parseFloat(value),
+            ])
+          ),
+        }),
       }
+    );
 
-      console.log("Received response:", data);
-      message.success("Run started successfully!");
-      navigate(`/active-run/${data.id}`);
-    } catch (error) {
-      console.error("Error starting run:", error);
-      message.error(`Error starting run: ${error.message}`);
-    } finally {
-      setIsStartingRun(false);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to start run");
     }
-  };
+
+    message.success("Run started successfully!");
+    navigate(`/active-run/${data.id}`);
+  } catch (error) {
+    console.error("Error starting run:", error);
+    message.error(`Error starting run: ${error.message}`);
+  } finally {
+    setIsStartingRun(false);
+  }
+};
 
 
   return (

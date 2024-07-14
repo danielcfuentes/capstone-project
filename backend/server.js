@@ -304,8 +304,13 @@ app.get("/active-run/:runId", authenticateToken, async (req, res) => {
 app.post("/start-run", authenticateToken, async (req, res) => {
   try {
     console.log("Received start run request:", req.body);
-    const { distance, elevationData, routeCoordinates, startLocation } =
-      req.body;
+    const {
+      distance,
+      elevationData,
+      routeCoordinates,
+      startLocation,
+      duration,
+    } = req.body;
 
     console.log("Authenticated user:", req.user);
 
@@ -319,6 +324,17 @@ app.post("/start-run", authenticateToken, async (req, res) => {
       console.log("User not found:", req.user.id);
       return res.status(404).json({ message: "User not found" });
     }
+
+    // Calculate average pace (minutes per mile)
+    const durationMinutes = parseFloat(duration.split("m")[0]);
+    const averagePace = durationMinutes / parseFloat(distance);
+
+    // Calculate estimated calories burned
+    const caloriesBurned = calculateCaloriesBurned(
+      user,
+      parseFloat(distance),
+      elevationData.gain
+    );
 
     console.log("Creating active run for user:", user.id);
     const activeRun = await prisma.activeRun.create({
@@ -334,6 +350,8 @@ app.post("/start-run", authenticateToken, async (req, res) => {
         endLongitude: routeCoordinates[routeCoordinates.length - 1][0],
         routeCoordinates: JSON.stringify(routeCoordinates),
         startLocation,
+        averagePace,
+        estimatedCaloriesBurned: caloriesBurned,
       },
     });
 

@@ -1,22 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  Card,
-  Button,
-  Statistic,
-  Row,
-  Col,
-  Typography,
-  Space,
-  Progress,
-  Tag,
-} from "antd";
+import { Card, Button, Statistic, Row, Col, Typography } from "antd";
 import {
   AimOutlined,
   ClockCircleOutlined,
+  DashboardOutlined,
   RiseOutlined,
   FallOutlined,
-  EnvironmentOutlined,
+  FireOutlined,
 } from "@ant-design/icons";
 import { getHeaders } from "../../utils/apiConfig";
 import mapboxgl from "mapbox-gl";
@@ -30,6 +21,7 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 const ActiveRun = () => {
   const { runId } = useParams();
   const navigate = useNavigate();
+  const mapContainer = useRef(null);
   const [runData, setRunData] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [map, setMap] = useState(null);
@@ -44,9 +36,9 @@ const ActiveRun = () => {
   }, [runId]);
 
   useEffect(() => {
-    if (runData && !map) {
+    if (runData && !map && mapContainer.current) {
       const newMap = new mapboxgl.Map({
-        container: "map",
+        container: mapContainer.current,
         style: "mapbox://styles/mapbox/streets-v11",
         center: [runData.startLongitude, runData.startLatitude],
         zoom: 13,
@@ -125,18 +117,13 @@ const ActiveRun = () => {
     return <div>Loading...</div>;
   }
 
-  const estimatedDuration = runData.distance * 10 * 60; // Assuming 10 min/mile pace
-  const progressPercentage = (elapsedTime / estimatedDuration) * 100;
-  const currentPace = elapsedTime > 0 ? elapsedTime / 60 / runData.distance : 0;
-  const targetPace = 10; // 10 min/mile
-
   return (
     <div className="active-run-container">
       <Title level={2} className="run-title">
         Active Run
       </Title>
       <Row gutter={[16, 16]} className="stats-row">
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={8}>
           <Card className="stat-card">
             <Statistic
               title="Distance"
@@ -147,12 +134,22 @@ const ActiveRun = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={8}>
           <Card className="stat-card">
             <Statistic
               title="Elapsed Time"
               value={formatTime(elapsedTime)}
               prefix={<ClockCircleOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={8}>
+          <Card className="stat-card">
+            <Statistic
+              title="Target Pace"
+              value={formatPace(runData.averagePace)}
+              suffix="/mile"
+              prefix={<DashboardOutlined />}
             />
           </Card>
         </Col>
@@ -176,37 +173,31 @@ const ActiveRun = () => {
             />
           </Card>
         </Col>
+        <Col xs={24} sm={12} md={12}>
+          <Card className="stat-card">
+            <Statistic
+              title="Est. Calories Burned"
+              value={runData.estimatedCaloriesBurned}
+              suffix="cal"
+              prefix={<FireOutlined />}
+            />
+          </Card>
+        </Col>
       </Row>
-      <Card className="progress-card">
-        <Progress
-          percent={Math.min(progressPercentage, 100)}
-          status="active"
-          showInfo={false}
-        />
-        <div className="pace-indicator">
-          <Tag color={currentPace <= targetPace ? "success" : "warning"}>
-            {currentPace <= targetPace ? "On Pace" : "Behind Pace"}
-          </Tag>
-          <span>Current Pace: {formatPace(currentPace)}/mile</span>
-        </div>
-      </Card>
       <Card className="map-card">
-        <div id="map" style={{ width: "100%", height: "300px" }}></div>
+        <div
+          ref={mapContainer}
+          style={{ width: "100%", height: "300px" }}
+        ></div>
       </Card>
-      <Space
-        direction="vertical"
+      <Button
+        type="primary"
         size="large"
-        style={{ width: "100%", marginTop: "24px" }}
+        onClick={handleCompleteRun}
+        className="complete-run-btn"
       >
-        <Button
-          type="primary"
-          size="large"
-          onClick={handleCompleteRun}
-          className="complete-run-btn"
-        >
-          Complete Run
-        </Button>
-      </Space>
+        Complete Run
+      </Button>
     </div>
   );
 };
@@ -221,6 +212,7 @@ const formatTime = (seconds) => {
 };
 
 const formatPace = (pace) => {
+  if (pace === null || isNaN(pace)) return "Calculating...";
   const minutes = Math.floor(pace);
   const seconds = Math.round((pace - minutes) * 60);
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;

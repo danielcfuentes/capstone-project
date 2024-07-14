@@ -126,18 +126,20 @@ model UserActivity {
 }
 
 model ActiveRun {
-  id               Int      @id @default(autoincrement())
-  user             User     @relation(fields: [userId], references: [id])
-  userId           Int
-  startDateTime    DateTime
-  distance         Float // in miles
-  elevationGain    Float? // in feet
-  elevationLoss    Float? // in feet
-  startLatitude    Float
-  startLongitude   Float
-  endLatitude      Float
-  endLongitude     Float
-  routeCoordinates String // JSON string of coordinate pairs
-  startLocation    String
-  isCompleted      Boolean  @default(false)
+  id                      Int      @id @default(autoincrement())
+  user                    User     @relation(fields: [userId], references: [id])
+  userId                  Int
+  startDateTime           DateTime
+  distance                Float
+  elevationGain           Float
+  elevationLoss           Float
+  startLatitude           Float
+  startLongitude          Float
+  endLatitude             Float
+  endLongitude            Float
+  routeCoordinates        String
+  startLocation           String
+  isCompleted             Boolean  @default(false)
+  averagePace             Float? // New field
+  estimatedCaloriesBurned Int? // New field
 }
