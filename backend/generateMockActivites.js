@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
@@ -46,7 +47,7 @@ async function generateMockActivities(userId, count) {
 
 async function main() {
   try {
-    const user = await prisma.user.findFirst(); // Get the first user
+    const user = await prisma.user.findFirst();
     if (!user) {
       console.log("No user found. Please create a user first.");
       return;
@@ -65,5 +66,6 @@ async function main() {
     await prisma.$disconnect();
   }
 }
+
 
 main();
