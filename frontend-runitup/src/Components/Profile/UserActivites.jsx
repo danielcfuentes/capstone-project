@@ -56,19 +56,33 @@ const UserActivities = () => {
                 {formatDuration(activity.duration)}
               </p>
               <p>
-                <Text strong>Distance:</Text>{" "}
-                {(activity.distance / 1000).toFixed(2)} km
+                <Text strong>Distance:</Text> {activity.distance.toFixed(2)}{" "}
+                miles
               </p>
               <p>
                 <Text strong>Average Pace:</Text>{" "}
-                {activity.averagePace.toFixed(2)} min/km
+                {activity.averagePace.toFixed(2)} min/mile
               </p>
               <p>
                 <Text strong>Calories Burned:</Text> {activity.caloriesBurned}
               </p>
               <p>
                 <Text strong>Elevation Gain:</Text>{" "}
-                {activity.elevationGain?.toFixed(2)} m
+                {activity.elevationGain?.toFixed(2)} ft
+              </p>
+              <p>
+                <Text strong>Elevation Loss:</Text>{" "}
+                {activity.elevationLoss?.toFixed(2)} ft
+              </p>
+              <p>
+                <Text strong>Start Coordinates:</Text>{" "}
+                {activity.startLatitude.toFixed(4)},{" "}
+                {activity.startLongitude.toFixed(4)}
+              </p>
+              <p>
+                <Text strong>End Coordinates:</Text>{" "}
+                {activity.endLatitude.toFixed(4)},{" "}
+                {activity.endLongitude.toFixed(4)}
               </p>
             </Card>
           </List.Item>

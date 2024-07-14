@@ -107,17 +107,18 @@ model UserActivity {
   userId           Int
   activityType     String
   startDateTime    DateTime
-  duration         Int // in seconds
-  distance         Float // in meters
-  averagePace      Float // in minutes per kilometer
+  duration         Int      // in seconds
+  distance         Float    // in miles
+  averagePace      Float    // in minutes per mile
   averageHeartRate Int?
   maxHeartRate     Int?
   caloriesBurned   Int?
-  elevationGain    Float? // in meters
-  elevationLoss    Float? // in meters
+  elevationGain    Float?   // in feet
+  elevationLoss    Float?   // in feet
   startLatitude    Float?
   startLongitude   Float?
   endLatitude      Float?
   endLongitude     Float?
+  routeCoordinates String?  // JSON string of coordinate pairs
   createdAt        DateTime @default(now())
 }
