@@ -50,7 +50,6 @@ function ProfileSetupPage({ user, onProfileComplete }) {
       message.success("Profile updated successfully");
       onProfileComplete();
     } catch (error) {
-      console.error("Error updating profile:", error);
       message.error(`Error updating profile: ${error.message}`);
     }
   };

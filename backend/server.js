@@ -293,7 +293,6 @@ app.get("/active-run/:runId", authenticateToken, async (req, res) => {
 
     res.json(activeRun);
   } catch (error) {
-    console.error("Error fetching active run:", error);
     res
       .status(500)
       .json({ message: "Error fetching active run", error: error.message });
@@ -303,7 +302,6 @@ app.get("/active-run/:runId", authenticateToken, async (req, res) => {
 // Start a new run
 app.post("/start-run", authenticateToken, async (req, res) => {
   try {
-    console.log("Received start run request:", req.body);
     const {
       distance,
       elevationData,
@@ -312,8 +310,6 @@ app.post("/start-run", authenticateToken, async (req, res) => {
       duration,
     } = req.body;
 
-    console.log("Authenticated user:", req.user);
-
     if (!req.user || !req.user.id) {
       return res.status(401).json({ message: "User not authenticated" });
     }
@@ -321,7 +317,6 @@ app.post("/start-run", authenticateToken, async (req, res) => {
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
 
     if (!user) {
-      console.log("User not found:", req.user.id);
       return res.status(404).json({ message: "User not found" });
     }
 
@@ -336,7 +331,6 @@ app.post("/start-run", authenticateToken, async (req, res) => {
       elevationData.gain
     );
 
-    console.log("Creating active run for user:", user.id);
     const activeRun = await prisma.activeRun.create({
       data: {
         userId: user.id,
@@ -355,10 +349,8 @@ app.post("/start-run", authenticateToken, async (req, res) => {
       },
     });
 
-    console.log("Created active run:", activeRun);
     res.json(activeRun);
   } catch (error) {
-    console.error("Error starting run:", error);
     res.status(500).json({
       message: "Error starting run",
       error: error.message,
@@ -420,7 +412,6 @@ app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
 
     res.json({ message: "Run completed successfully", userActivity });
   } catch (error) {
-    console.error("Error completing run:", error);
     res
       .status(500)
       .json({ message: "Error completing run", error: error.message });
