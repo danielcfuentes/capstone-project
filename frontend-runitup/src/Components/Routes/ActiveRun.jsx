@@ -1,19 +1,38 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, Button, Statistic, Row, Col, message } from "antd";
 import {
-  ClockCircleOutlined,
+  Card,
+  Button,
+  Statistic,
+  Row,
+  Col,
+  Typography,
+  Space,
+  Progress,
+  Tag,
+} from "antd";
+import {
   AimOutlined,
+  ClockCircleOutlined,
   RiseOutlined,
   FallOutlined,
+  EnvironmentOutlined,
 } from "@ant-design/icons";
 import { getHeaders } from "../../utils/apiConfig";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import "../../styles/ActiveRun.css";
+
+const { Title } = Typography;
+
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const ActiveRun = () => {
   const { runId } = useParams();
   const navigate = useNavigate();
   const [runData, setRunData] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [map, setMap] = useState(null);
 
   useEffect(() => {
     fetchRunData();
@@ -23,6 +42,47 @@ const ActiveRun = () => {
 
     return () => clearInterval(timer);
   }, [runId]);
+
+  useEffect(() => {
+    if (runData && !map) {
+      const newMap = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/streets-v11",
+        center: [runData.startLongitude, runData.startLatitude],
+        zoom: 13,
+      });
+
+      newMap.on("load", () => {
+        newMap.addSource("route", {
+          type: "geojson",
+          data: {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "LineString",
+              coordinates: JSON.parse(runData.routeCoordinates),
+            },
+          },
+        });
+
+        newMap.addLayer({
+          id: "route",
+          type: "line",
+          source: "route",
+          layout: {
+            "line-join": "round",
+            "line-cap": "round",
+          },
+          paint: {
+            "line-color": "#1890ff",
+            "line-width": 8,
+          },
+        });
+      });
+
+      setMap(newMap);
+    }
+  }, [runData]);
 
   const fetchRunData = async () => {
     try {
@@ -55,7 +115,6 @@ const ActiveRun = () => {
         throw new Error("Failed to complete run");
       }
       message.success("Run completed successfully!");
-      // Navigate back to the routes page or to a run summary page
       navigate("/routes");
     } catch (error) {
       message.error(`Error completing run: ${error.message}`);
@@ -66,49 +125,89 @@ const ActiveRun = () => {
     return <div>Loading...</div>;
   }
 
+  const estimatedDuration = runData.distance * 10 * 60; // Assuming 10 min/mile pace
+  const progressPercentage = (elapsedTime / estimatedDuration) * 100;
+  const currentPace = elapsedTime > 0 ? elapsedTime / 60 / runData.distance : 0;
+  const targetPace = 10; // 10 min/mile
+
   return (
-    <Card title="Active Run">
-      <Row gutter={16}>
-        <Col span={6}>
-          <Statistic
-            title="Distance"
-            value={runData.distance}
-            suffix="miles"
-            prefix={<AimOutlined />}
-          />
+    <div className="active-run-container">
+      <Title level={2} className="run-title">
+        Active Run
+      </Title>
+      <Row gutter={[16, 16]} className="stats-row">
+        <Col xs={24} sm={12} md={6}>
+          <Card className="stat-card">
+            <Statistic
+              title="Distance"
+              value={runData.distance}
+              precision={2}
+              suffix="miles"
+              prefix={<AimOutlined />}
+            />
+          </Card>
         </Col>
-        <Col span={6}>
-          <Statistic
-            title="Elapsed Time"
-            value={formatTime(elapsedTime)}
-            prefix={<ClockCircleOutlined />}
-          />
+        <Col xs={24} sm={12} md={6}>
+          <Card className="stat-card">
+            <Statistic
+              title="Elapsed Time"
+              value={formatTime(elapsedTime)}
+              prefix={<ClockCircleOutlined />}
+            />
+          </Card>
         </Col>
-        <Col span={6}>
-          <Statistic
-            title="Elevation Gain"
-            value={runData.elevationGain}
-            suffix="ft"
-            prefix={<RiseOutlined />}
-          />
+        <Col xs={24} sm={12} md={6}>
+          <Card className="stat-card">
+            <Statistic
+              title="Elevation Gain"
+              value={runData.elevationGain}
+              suffix="ft"
+              prefix={<RiseOutlined />}
+            />
+          </Card>
         </Col>
-        <Col span={6}>
-          <Statistic
-            title="Elevation Loss"
-            value={runData.elevationLoss}
-            suffix="ft"
-            prefix={<FallOutlined />}
-          />
+        <Col xs={24} sm={12} md={6}>
+          <Card className="stat-card">
+            <Statistic
+              title="Elevation Loss"
+              value={runData.elevationLoss}
+              suffix="ft"
+              prefix={<FallOutlined />}
+            />
+          </Card>
         </Col>
       </Row>
-      <Button
-        type="primary"
-        onClick={handleCompleteRun}
-        style={{ marginTop: 16 }}
+      <Card className="progress-card">
+        <Progress
+          percent={Math.min(progressPercentage, 100)}
+          status="active"
+          showInfo={false}
+        />
+        <div className="pace-indicator">
+          <Tag color={currentPace <= targetPace ? "success" : "warning"}>
+            {currentPace <= targetPace ? "On Pace" : "Behind Pace"}
+          </Tag>
+          <span>Current Pace: {formatPace(currentPace)}/mile</span>
+        </div>
+      </Card>
+      <Card className="map-card">
+        <div id="map" style={{ width: "100%", height: "300px" }}></div>
+      </Card>
+      <Space
+        direction="vertical"
+        size="large"
+        style={{ width: "100%", marginTop: "24px" }}
       >
-        Complete Run
-      </Button>
-    </Card>
+        <Button
+          type="primary"
+          size="large"
+          onClick={handleCompleteRun}
+          className="complete-run-btn"
+        >
+          Complete Run
+        </Button>
+      </Space>
+    </div>
   );
 };
 
@@ -119,6 +218,12 @@ const formatTime = (seconds) => {
   return `${hours.toString().padStart(2, "0")}:${minutes
     .toString()
     .padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+};
+
+const formatPace = (pace) => {
+  const minutes = Math.floor(pace);
+  const seconds = Math.round((pace - minutes) * 60);
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
 
 export default ActiveRun;

@@ -11,19 +11,6 @@ const multer = require("multer");
 app.use(express.json());
 app.use(cors());
 
-// Middleware to authenticate token
-// function authenticateToken(req, res, next) {
-//   const authHeader = req.headers["authorization"];
-//   const token = authHeader && authHeader.split(" ")[1];
-//   if (token == null) return res.sendStatus(401);
-
-//   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-//     if (err) return res.sendStatus(403);
-//     req.user = user;
-//     next();
-//   });
-// }
-
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
@@ -275,7 +262,6 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
       },
     });
 
-
     res.json(activity);
   } catch (error) {
     res.status(500).json({
@@ -285,7 +271,6 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
     });
   }
 });
-
 
 // Fetch an active run
 app.get("/active-run/:runId", authenticateToken, async (req, res) => {
@@ -301,13 +286,17 @@ app.get("/active-run/:runId", authenticateToken, async (req, res) => {
 
     // Check if the active run belongs to the authenticated user
     if (activeRun.userId !== req.user.id) {
-      return res.status(403).json({ message: "Unauthorized access to this run" });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized access to this run" });
     }
 
     res.json(activeRun);
   } catch (error) {
     console.error("Error fetching active run:", error);
-    res.status(500).json({ message: "Error fetching active run", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching active run", error: error.message });
   }
 });
 
@@ -352,13 +341,11 @@ app.post("/start-run", authenticateToken, async (req, res) => {
     res.json(activeRun);
   } catch (error) {
     console.error("Error starting run:", error);
-    res
-      .status(500)
-      .json({
-        message: "Error starting run",
-        error: error.message,
-        stack: error.stack,
-      });
+    res.status(500).json({
+      message: "Error starting run",
+      error: error.message,
+      stack: error.stack,
+    });
   }
 });
 
@@ -375,7 +362,9 @@ app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
     }
 
     if (activeRun.userId !== req.user.id) {
-      return res.status(403).json({ message: "Unauthorized access to this run" });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized access to this run" });
     }
 
     const completedRun = await prisma.activeRun.update({
@@ -388,9 +377,10 @@ app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
     res.json(completedRun);
   } catch (error) {
     console.error("Error completing run:", error);
-    res.status(500).json({ message: "Error completing run", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error completing run", error: error.message });
   }
 });
-
 
 app.listen(PORT, () => {});
