@@ -68,15 +68,30 @@ const RoutesPage = () => {
         {
           method: "POST",
           headers: getHeaders(),
-          body: JSON.stringify(selectedRoute),
+          body: JSON.stringify({
+            ...selectedRoute,
+            distance: parseFloat(selectedRoute.distance),
+            duration: selectedRoute.duration,
+            elevationData: {
+              gain: parseFloat(selectedRoute.elevationData.gain),
+              loss: parseFloat(selectedRoute.elevationData.loss),
+            },
+            terrain: Object.fromEntries(
+              Object.entries(selectedRoute.terrain).map(([key, value]) => [
+                key,
+                parseFloat(value),
+              ])
+            ),
+          }),
         }
       );
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to save route as activity");
+        throw new Error(data.message || "Failed to save route as activity");
       }
 
-      const data = await response.json();
       message.success("Route saved as activity successfully!");
       // Optionally, you can update the UI or redirect the user
     } catch (error) {
@@ -233,6 +248,7 @@ const RoutesPage = () => {
             </Button>
           </Form.Item>
         </Form>
+
         {error && (
           <Alert
             message="Error"
@@ -255,6 +271,11 @@ const RoutesPage = () => {
         )}
         <div ref={mapContainer} className="map-container" />
         {isGeneratingRoute && <Spin tip="Generating route..." />}
+        {selectedRoute && (
+          <Button onClick={handleSelectRoute} type="primary">
+            Select This Route
+          </Button>
+        )}
         {(basicRouteData || routeData) && (
           <RouteInfo
             routeData={routeData || basicRouteData}
