@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { List, Card, Typography, Spin, message } from "antd";
+import { Layout, Typography, List, Card, Tag, Spin, message } from "antd";
+import {
+  RunningOutlined,
+  CalendarOutlined,
+  FieldTimeOutlined,
+  FireOutlined,
+} from "@ant-design/icons";
 import { getHeaders } from "../../utils/apiConfig";
+import "./UserActivitiesPage.css";
 
+const { Content } = Layout;
 const { Title, Text } = Typography;
 
-const UserActivities = () => {
+const UserActivitiesPage = () => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,11 +33,19 @@ const UserActivities = () => {
       }
       const data = await response.json();
       setActivities(data);
+      setLoading(false);
     } catch (error) {
-      message.error("Error fetching activities:", error);
-    } finally {
+      message.error(`Error fetching activities: ${error.message}`);
       setLoading(false);
     }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
   const formatDuration = (seconds) => {
@@ -39,61 +55,49 @@ const UserActivities = () => {
   };
 
   return (
-    <Spin spinning={loading}>
-      <Title level={3}>Recent Activities</Title>
-      <List
-        grid={{ gutter: 16, column: 1 }}
-        dataSource={activities}
-        renderItem={(activity) => (
-          <List.Item>
-            <Card
-              title={`${activity.activityType} on ${new Date(
-                activity.startDateTime
-              ).toLocaleDateString()}`}
-            >
-              <p>
-                <Text strong>Start Location:</Text>{" "}
-                {activity.startLocation || "N/A"}
-              </p>
-              <p>
-                <Text strong>Duration:</Text>{" "}
-                {formatDuration(activity.duration)}
-              </p>
-              <p>
-                <Text strong>Distance:</Text> {activity.distance.toFixed(2)}{" "}
-                miles
-              </p>
-              <p>
-                <Text strong>Average Pace:</Text>{" "}
-                {activity.averagePace.toFixed(2)} min/mile
-              </p>
-              <p>
-                <Text strong>Calories Burned:</Text> {activity.caloriesBurned}
-              </p>
-              <p>
-                <Text strong>Elevation Gain:</Text>{" "}
-                {activity.elevationGain?.toFixed(2)} ft
-              </p>
-              <p>
-                <Text strong>Elevation Loss:</Text>{" "}
-                {activity.elevationLoss?.toFixed(2)} ft
-              </p>
-              <p>
-                <Text strong>Start Coordinates:</Text>{" "}
-                {activity.startLatitude.toFixed(4)},{" "}
-                {activity.startLongitude.toFixed(4)}
-              </p>
-              <p>
-                <Text strong>End Coordinates:</Text>{" "}
-                {activity.endLatitude.toFixed(4)},{" "}
-                {activity.endLongitude.toFixed(4)}
-              </p>
-            </Card>
-          </List.Item>
-        )}
-      />
-    </Spin>
+    <Layout className="user-activities-page">
+      <Content className="user-activities-content">
+        <Title level={2} className="page-title">
+          Your Running Activities
+        </Title>
+        <Spin spinning={loading}>
+          <List
+            grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 3 }}
+            dataSource={activities}
+            renderItem={(activity) => (
+              <List.Item>
+                <Card
+                  className="activity-card"
+                  title={
+                    <div className="activity-card-title">
+                      <RunningOutlined /> {activity.activityType}
+                    </div>
+                  }
+                  extra={
+                    <Tag color="blue">{formatDate(activity.startDateTime)}</Tag>
+                  }
+                >
+                  <div className="activity-details">
+                    <Text>
+                      <CalendarOutlined /> Distance:{" "}
+                      {activity.distance.toFixed(2)} miles
+                    </Text>
+                    <Text>
+                      <FieldTimeOutlined /> Duration:{" "}
+                      {formatDuration(activity.duration)}
+                    </Text>
+                    <Text>
+                      <FireOutlined /> Calories: {activity.caloriesBurned}
+                    </Text>
+                  </div>
+                </Card>
+              </List.Item>
+            )}
+          />
+        </Spin>
+      </Content>
+    </Layout>
   );
 };
 
-export default UserActivities;
+export default UserActivitiesPage;
