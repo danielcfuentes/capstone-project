@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Layout, Typography, List, message } from "antd";
 import { getHeaders } from "../../utils/apiConfig";
 import ChallengeCard from "./ChallengeCard";
+import "../../styles/RecommendationPage.css";
 
 const { Content } = Layout;
 const { Title } = Typography;
+
 
 const RecommendationPage = () => {
   const [activeChallenges, setActiveChallenges] = useState([]);
@@ -50,34 +52,37 @@ const RecommendationPage = () => {
   };
 
   return (
-    <Layout>
-      <Content style={{ padding: "50px" }}>
-        <Title level={2}>Your Active Challenges</Title>
-        <List
-          grid={{ gutter: 16, column: 3 }}
-          dataSource={activeChallenges}
-          renderItem={(challenge) => (
-            <List.Item>
+    <Layout className="recommendation-page">
+      <Content className="recommendation-content">
+        <div className="challenge-section">
+          <Title level={2} className="challenge-section-title">
+            Your Active Challenges
+          </Title>
+          <div className="challenge-list">
+            {activeChallenges.map((challenge) => (
               <ChallengeCard
+                key={challenge.id}
                 challenge={challenge}
                 onComplete={handleChallengeComplete}
               />
-            </List.Item>
-          )}
-        />
+            ))}
+          </div>
+        </div>
 
-        <Title level={2} style={{ marginTop: "50px" }}>
-          Completed Challenges
-        </Title>
-        <List
-          grid={{ gutter: 16, column: 3 }}
-          dataSource={completedChallenges}
-          renderItem={(challenge) => (
-            <List.Item>
-              <ChallengeCard challenge={challenge} completed />
-            </List.Item>
-          )}
-        />
+        <div className="challenge-section">
+          <Title level={2} className="challenge-section-title">
+            Completed Challenges
+          </Title>
+          <div className="challenge-list">
+            {completedChallenges.map((challenge) => (
+              <ChallengeCard
+                key={challenge.id}
+                challenge={challenge}
+                completed
+              />
+            ))}
+          </div>
+        </div>
       </Content>
     </Layout>
   );
