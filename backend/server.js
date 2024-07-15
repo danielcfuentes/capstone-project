@@ -542,67 +542,61 @@ app.put("/challenges/:id", authenticateToken, async (req, res) => {
 // Challenge generation function
 const generateChallenge = async (userId) => {
   try {
-    // Use a transaction to ensure atomicity
-    return await prisma.$transaction(async (prisma) => {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: {
-          activities: {
-            orderBy: { startDateTime: "desc" },
-            take: 5,
-          },
-          challenges: {
-            where: {
-              isCompleted: false,
-              endDate: { gt: new Date() },
-            },
-          },
-        },
-      });
-
-      if (!user || user.activities.length === 0) {
-        console.log(
-          `No recent activities found for user ${userId}. Skipping challenge generation.`
-        );
-        return null;
-      }
-
-      // Check if user already has an active challenge
-      if (user.challenges.length > 0) {
-        console.log(
-          `User ${userId} already has an active challenge. Skipping generation.`
-        );
-        return null;
-      }
-
-      const recentActivities = user.activities;
-      const avgDistance =
-        recentActivities.reduce((sum, activity) => sum + activity.distance, 0) /
-        recentActivities.length;
-
-      // Set a minimum challenge distance of 0.1 miles
-      const challengeTarget = Math.max(
-        Math.round(avgDistance * 0.2 * 10) / 10,
-        0.1
-      );
-      const endDate = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
-
-      const challenge = await prisma.challenge.create({
-        data: {
-          userId,
-          description: `Quick challenge: Run ${challengeTarget.toFixed(
-            1
-          )} miles in the next 10 minutes`,
-          target: challengeTarget,
-          endDate,
-        },
-      });
-
-      console.log(
-        `Generated challenge for user ${userId}: ${challenge.description}`
-      );
-      return challenge;
+    // Check for existing active challenges
+    const existingChallenge = await prisma.challenge.findFirst({
+      where: {
+        userId: userId,
+        isCompleted: false,
+        endDate: { gt: new Date() },
+      },
     });
+
+    if (existingChallenge) {
+      console.log(
+        `User ${userId} already has an active challenge. Skipping generation.`
+      );
+      return null;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { activities: { orderBy: { startDateTime: "desc" }, take: 5 } },
+    });
+
+    if (!user || user.activities.length === 0) {
+      console.log(
+        `No recent activities found for user ${userId}. Skipping challenge generation.`
+      );
+      return null;
+    }
+
+    const recentActivities = user.activities;
+    const avgDistance =
+      recentActivities.reduce((sum, activity) => sum + activity.distance, 0) /
+      recentActivities.length;
+
+    // Set a minimum challenge distance of 0.1 miles
+    const challengeTarget = Math.max(
+      Math.round(avgDistance * 0.2 * 10) / 10,
+      0.1
+    );
+    const endDate = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+    const challenge = await prisma.challenge.create({
+      data: {
+        userId,
+        description: `Quick challenge: Run ${challengeTarget.toFixed(
+          1
+        )} miles in the next 10 minutes`,
+        target: challengeTarget,
+        endDate,
+      },
+    });
+
+    console.log(
+      `Generated challenge for user ${userId}: ${challenge.description}`
+    );
+    return challenge;
   } catch (error) {
     console.error(`Error generating challenge for user ${userId}:`, error);
     return null;
@@ -616,6 +610,7 @@ const generateChallenge = async (userId) => {
 // Cron job to generate challenges every 2 minutes
 // In your cron job, you might want to clean up old, uncompleted challenges
 let isJobRunning = false;
+
 
 cron.schedule("*/2 * * * *", async () => {
   if (isJobRunning) {
@@ -647,6 +642,7 @@ cron.schedule("*/2 * * * *", async () => {
     isJobRunning = false;
   }
 });
+
 // Cron job to generate challenges every 2 minutes
 const challengeGenerationJob = cron.schedule('*/2 * * * *', async () => {
   console.log('Running challenge generation job');
