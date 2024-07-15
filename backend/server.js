@@ -450,4 +450,44 @@ app.get("/challenges", authenticateToken, async (req, res) => {
   }
 });
 
+
+// Update challenge progress
+app.put("/challenges/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { currentProgress, isCompleted } = req.body;
+    const updatedChallenge = await prisma.challenge.update({
+      where: { id: parseInt(id) },
+      data: { currentProgress, isCompleted },
+    });
+    res.json(updatedChallenge);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update challenge" });
+  }
+});
+
+// 3. Implement challenge generation function
+const generateChallenge = async (userId) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { activities: true },
+  });
+
+  const recentActivities = user.activities.slice(-5);
+  const avgDistance = recentActivities.reduce((sum, activity) => sum + activity.distance, 0) / recentActivities.length;
+
+  const challengeTarget = Math.round(avgDistance * 1.2 * 4); // 20% more than average, for 4 weeks
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + 28); // 4 weeks from now
+
+  return prisma.challenge.create({
+    data: {
+      userId,
+      description: `Run ${challengeTarget} miles in the next 4 weeks`,
+      target: challengeTarget,
+      endDate,
+    },
+  });
+};
+
 app.listen(PORT, () => {});
