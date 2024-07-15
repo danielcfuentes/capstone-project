@@ -262,10 +262,34 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
       },
     });
 
-    res.json(activity);
+    // Update relevant challenges
+    const activeChallenges = await prisma.challenge.findMany({
+      where: {
+        userId: user.id,
+        isCompleted: false,
+        endDate: { gte: new Date() },
+      },
+    });
+
+    for (const challenge of activeChallenges) {
+      const newProgress = challenge.currentProgress + parseFloat(distance);
+      const isCompleted = newProgress >= challenge.target;
+      await prisma.challenge.update({
+        where: { id: challenge.id },
+        data: {
+          currentProgress: newProgress,
+          isCompleted: isCompleted,
+        },
+      });
+    }
+
+    res.json({
+      activity,
+      message: "Activity saved and challenges updated successfully",
+    });
   } catch (error) {
     res.status(500).json({
-      message: "Error saving activity",
+      message: "Error saving activity and updating challenges",
       error: error.message,
       stack: error.stack,
     });
@@ -489,5 +513,16 @@ const generateChallenge = async (userId) => {
     },
   });
 };
+
+// 4. Add a cron job to generate challenges weekly (you'll need to install a cron library)
+const cron = require('node-cron');
+
+cron.schedule('0 0 * * 0', async () => {
+  const users = await prisma.user.findMany();
+  for (const user of users) {
+    await generateChallenge(user.id);
+  }
+});
+
 
 app.listen(PORT, () => {});
