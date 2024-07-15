@@ -418,4 +418,23 @@ app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
   }
 });
 
+
+// Create a new challenge
+app.post("/challenges", authenticateToken, async (req, res) => {
+  try {
+    const { description, target, endDate } = req.body;
+    const challenge = await prisma.challenge.create({
+      data: {
+        userId: req.user.id,
+        description,
+        target,
+        endDate: new Date(endDate),
+      },
+    });
+    res.json(challenge);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create challenge" });
+  }
+});
+
 app.listen(PORT, () => {});
