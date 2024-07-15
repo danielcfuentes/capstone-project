@@ -83,7 +83,6 @@ const RoutesPage = () => {
       setActiveChallenges(challenges.filter((c) => !c.isCompleted));
       setCompletedChallenges(challenges.filter((c) => c.isCompleted));
     } catch (error) {
-      console.error("Error fetching challenges:", error);
       message.error("Failed to fetch challenges");
     }
   };
@@ -289,46 +288,9 @@ const RoutesPage = () => {
       // Navigate to the active run page
       navigate(`/active-run/${data.id}`);
     } catch (error) {
-      console.error("Error starting run:", error);
       message.error(`Error starting run: ${error.message}`);
     } finally {
       setIsStartingRun(false);
-    }
-  };
-
-  const handleRunCompletion = async (runData) => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_POST_ADDRESS}/save-route-activity`,
-        {
-          method: "POST",
-          headers: getHeaders(),
-          body: JSON.stringify(runData),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to save activity");
-      }
-
-      const result = await response.json();
-
-      if (result.challengeUpdated) {
-        if (result.challengeCompleted) {
-          Modal.success({
-            title: "Challenge Completed!",
-            content: 'Congratulations! You"ve completed a challenge.',
-          });
-        } else {
-          message.info("Your challenge progress has been updated.");
-        }
-        // Fetch updated challenges
-        await fetchChallenges();
-      }
-
-      message.success("Activity saved successfully");
-    } catch (error) {
-      message.error("Failed to save activity: " + error.message);
     }
   };
 

@@ -116,7 +116,6 @@ const ActiveRun = ({ handleRunCompletion }) => {
         ),
       };
 
-      console.log("Data to be saved:", activityData);
 
       // Save the activity
       const saveResponse = await fetch(
@@ -130,7 +129,7 @@ const ActiveRun = ({ handleRunCompletion }) => {
 
       if (!saveResponse.ok) {
         const errorData = await saveResponse.json();
-        console.error("Error response:", errorData);
+
         throw new Error(errorData.message || "Failed to save activity");
       }
 
@@ -143,7 +142,6 @@ const ActiveRun = ({ handleRunCompletion }) => {
       // Redirect to the activities page
       navigate("/activities");
     } catch (error) {
-      console.error("Error in handleCompleteRun:", error);
       message.error(`Error completing run: ${error.message}`);
     }
   };

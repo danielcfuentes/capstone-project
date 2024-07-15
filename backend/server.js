@@ -11,7 +11,7 @@ const multer = require("multer");
 app.use(express.json());
 app.use(cors());
 // 4. Add a cron job to generate challenges weekly (you'll need to install a cron library)
-const cron = require('node-cron');
+const cron = require("node-cron");
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -217,8 +217,6 @@ const calculateCaloriesBurned = (user, distance, elevationGain) => {
 
 app.post("/save-route-activity", authenticateToken, async (req, res) => {
   try {
-    console.log("Received activity data:", req.body);
-
     const {
       distance,
       duration,
@@ -248,7 +246,6 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
           ? JSON.parse(routeCoordinates)
           : routeCoordinates;
     } catch (error) {
-      console.error("Error parsing routeCoordinates:", error);
       return res
         .status(400)
         .json({ message: "Invalid routeCoordinates format" });
@@ -297,8 +294,6 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
       },
     });
 
-    console.log("Activity created:", activity);
-
     // Find and update the active challenge
     const activeChallenge = await prisma.challenge.findFirst({
       where: {
@@ -334,7 +329,6 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
       challengeCompleted,
     });
   } catch (error) {
-    console.error("Error saving activity:", error);
     res.status(500).json({
       message: "Error saving activity",
       error: error.message,
@@ -489,7 +483,6 @@ app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
   }
 });
 
-
 // Create a new challenge
 app.post("/challenges", authenticateToken, async (req, res) => {
   try {
@@ -521,7 +514,6 @@ app.get("/challenges", authenticateToken, async (req, res) => {
   }
 });
 
-
 // Update challenge progress
 app.put("/challenges/:id", authenticateToken, async (req, res) => {
   try {
@@ -552,9 +544,6 @@ const generateChallenge = async (userId) => {
     });
 
     if (existingChallenge) {
-      console.log(
-        `User ${userId} already has an active challenge. Skipping generation.`
-      );
       return null;
     }
 
@@ -564,9 +553,6 @@ const generateChallenge = async (userId) => {
     });
 
     if (!user || user.activities.length === 0) {
-      console.log(
-        `No recent activities found for user ${userId}. Skipping challenge generation.`
-      );
       return null;
     }
 
@@ -593,16 +579,11 @@ const generateChallenge = async (userId) => {
       },
     });
 
-    console.log(
-      `Generated challenge for user ${userId}: ${challenge.description}`
-    );
     return challenge;
   } catch (error) {
-    console.error(`Error generating challenge for user ${userId}:`, error);
     return null;
   }
 };
-
 
 // 4. Add a cron job to generate challenges weekly (you'll need to install a cron library)
 
@@ -611,15 +592,12 @@ const generateChallenge = async (userId) => {
 // In your cron job, you might want to clean up old, uncompleted challenges
 let isJobRunning = false;
 
-
 cron.schedule("*/2 * * * *", async () => {
   if (isJobRunning) {
-    console.log("Previous job still running. Skipping this execution.");
     return;
   }
 
   isJobRunning = true;
-  console.log("Running challenge generation job");
 
   try {
     // Clean up old, uncompleted challenges
@@ -643,27 +621,15 @@ cron.schedule("*/2 * * * *", async () => {
       if (!existingChallenge) {
         await generateChallenge(user.id);
       } else {
-        console.log(
-          `User ${user.id} already has an active challenge. Skipping generation.`
-        );
       }
 
       // Add a small delay between users to prevent race conditions
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
   } catch (error) {
-    console.error("Error in challenge generation job:", error);
   } finally {
     isJobRunning = false;
   }
 });
 
-
-
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(
-    "Challenge generation cron job is set up and will run every 2 minutes"
-  );
-});
+app.listen(PORT, () => {});
