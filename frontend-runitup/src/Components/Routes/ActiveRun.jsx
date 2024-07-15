@@ -106,7 +106,12 @@ const ActiveRun = () => {
       if (!response.ok) {
         throw new Error("Failed to complete run");
       }
+      const data = await response.json();
       message.success("Run completed successfully!");
+
+      // Call handleRunCompletion from RoutesPage
+      await handleRunCompletion(data.userActivity);
+
       // Redirect to the activities page
       navigate("/activities");
     } catch (error) {

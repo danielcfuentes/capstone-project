@@ -226,72 +226,86 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
       startLocation,
     } = req.body;
 
-    const user = await prisma.user.findUnique({
-      where: { username: req.user.name },
-    });
+    const result = await prisma.$transaction(async (prisma) => {
+      const user = await prisma.user.findUnique({
+        where: { username: req.user.name },
+      });
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+      if (!user) {
+        throw new Error("User not found");
+      }
 
-    // Convert duration from string to number of seconds
-    const durationInSeconds = duration.split("m")[0] * 60;
+      // Convert duration from string to number of seconds
+      const durationInSeconds = duration.split("m")[0] * 60;
 
-    // Calculate average pace
-    const averagePace = durationInSeconds / 60 / parseFloat(distance);
+      // Calculate average pace
+      const averagePace = durationInSeconds / 60 / parseFloat(distance);
 
-    const activity = await prisma.userActivity.create({
-      data: {
-        userId: user.id,
-        activityType: "Run",
-        startDateTime: new Date(),
-        duration: durationInSeconds,
-        distance: parseFloat(distance),
-        averagePace: averagePace,
-        elevationGain: elevationData.gain,
-        elevationLoss: elevationData.loss,
-        caloriesBurned: calculateCaloriesBurned(
-          user,
-          distance,
-          elevationData.gain
-        ),
-        startLatitude: routeCoordinates[0][1],
-        startLongitude: routeCoordinates[0][0],
-        endLatitude: routeCoordinates[routeCoordinates.length - 1][1],
-        endLongitude: routeCoordinates[routeCoordinates.length - 1][0],
-        routeCoordinates: JSON.stringify(routeCoordinates),
-        startLocation,
-      },
-    });
-
-    // Update relevant challenges
-    const activeChallenges = await prisma.challenge.findMany({
-      where: {
-        userId: user.id,
-        isCompleted: false,
-        endDate: { gte: new Date() },
-      },
-    });
-
-    for (const challenge of activeChallenges) {
-      const newProgress = challenge.currentProgress + parseFloat(distance);
-      const isCompleted = newProgress >= challenge.target;
-      await prisma.challenge.update({
-        where: { id: challenge.id },
+      const activity = await prisma.userActivity.create({
         data: {
-          currentProgress: newProgress,
-          isCompleted: isCompleted,
+          userId: user.id,
+          activityType: "Run",
+          startDateTime: new Date(),
+          duration: durationInSeconds,
+          distance: parseFloat(distance),
+          averagePace: averagePace,
+          elevationGain: elevationData.gain,
+          elevationLoss: elevationData.loss,
+          caloriesBurned: calculateCaloriesBurned(
+            user,
+            distance,
+            elevationData.gain
+          ),
+          startLatitude: routeCoordinates[0][1],
+          startLongitude: routeCoordinates[0][0],
+          endLatitude: routeCoordinates[routeCoordinates.length - 1][1],
+          endLongitude: routeCoordinates[routeCoordinates.length - 1][0],
+          routeCoordinates: JSON.stringify(routeCoordinates),
+          startLocation,
         },
       });
-    }
+
+      // Find and update the active challenge
+      const activeChallenge = await prisma.challenge.findFirst({
+        where: {
+          userId: user.id,
+          isCompleted: false,
+          endDate: { gt: new Date() },
+        },
+      });
+
+      if (activeChallenge) {
+        const newProgress =
+          activeChallenge.currentProgress + parseFloat(distance);
+        const isCompleted = newProgress >= activeChallenge.target;
+
+        await prisma.challenge.update({
+          where: { id: activeChallenge.id },
+          data: {
+            currentProgress: newProgress,
+            isCompleted: isCompleted,
+          },
+        });
+
+        return {
+          activity,
+          challengeUpdated: true,
+          challengeCompleted: isCompleted,
+        };
+      }
+
+      return { activity, challengeUpdated: false };
+    });
 
     res.json({
-      activity,
-      message: "Activity saved and challenges updated successfully",
+      message: "Activity saved successfully",
+      activity: result.activity,
+      challengeUpdated: result.challengeUpdated,
+      challengeCompleted: result.challengeCompleted,
     });
   } catch (error) {
     res.status(500).json({
-      message: "Error saving activity and updating challenges",
+      message: "Error saving activity",
       error: error.message,
       stack: error.stack,
     });

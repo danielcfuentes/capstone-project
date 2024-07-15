@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Layout, Form, Input, Button, message, Alert, Spin } from "antd";
+import { Layout, Form, Input, Button, message, Alert, Spin, Modal } from "antd";
 import { PlayCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import mapboxgl from "mapbox-gl";
@@ -42,13 +42,19 @@ const RoutesPage = () => {
   const [basicRouteData, setBasicRouteData] = useState(null); // State for basic route data
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [isStartingRun, setIsStartingRun] = useState(false);
+    const [activeChallenges, setActiveChallenges] = useState([]);
+    const [completedChallenges, setCompletedChallenges] = useState([]);
+
 
   // Effect to initialize the map and fetch user profile on component mount
   useEffect(() => {
+
     const map = initializeMap(mapContainer.current); // Initialize the map
     map.on("load", () => setMap(map)); // Set map instance in state on load
     fetchUserProfile(); // Fetch user profile
+    fetchChallenges();
     return () => map.remove(); // Clean up map instance on unmount
+
   }, []);
 
   const handleSelectRoute = () => {
@@ -63,6 +69,26 @@ const RoutesPage = () => {
       onOk: saveRouteAsActivity,
       onCancel: () => {},
     });
+  };
+
+  const fetchChallenges = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/challenges`,
+        {
+          headers: getHeaders(),
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch challenges");
+      }
+      const challenges = await response.json();
+      setActiveChallenges(challenges.filter((c) => !c.isCompleted));
+      setCompletedChallenges(challenges.filter((c) => c.isCompleted));
+    } catch (error) {
+      console.error("Error fetching challenges:", error);
+      message.error("Failed to fetch challenges");
+    }
   };
 
   const saveRouteAsActivity = async () => {
@@ -223,54 +249,88 @@ const RoutesPage = () => {
     }
   };
 
-const handleStartRun = async () => {
-  if (!selectedRoute) {
-    message.error("No route generated to start a run.");
-    return;
-  }
-
-  setIsStartingRun(true);
-
-  try {
-    const response = await fetch(
-      `${import.meta.env.VITE_POST_ADDRESS}/start-run`,
-      {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify({
-          ...selectedRoute,
-          distance: parseFloat(selectedRoute.distance),
-          duration: selectedRoute.duration, // Make sure this is included
-          elevationData: {
-            gain: parseFloat(selectedRoute.elevationData.gain),
-            loss: parseFloat(selectedRoute.elevationData.loss),
-          },
-          terrain: Object.fromEntries(
-            Object.entries(selectedRoute.terrain).map(([key, value]) => [
-              key,
-              parseFloat(value),
-            ])
-          ),
-        }),
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to start run");
+  const handleStartRun = async () => {
+    if (!selectedRoute) {
+      message.error("No route generated to start a run.");
+      return;
     }
 
-    message.success("Run started successfully!");
-    navigate(`/active-run/${data.id}`);
-  } catch (error) {
-    console.error("Error starting run:", error);
-    message.error(`Error starting run: ${error.message}`);
-  } finally {
-    setIsStartingRun(false);
-  }
-};
+    setIsStartingRun(true);
 
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/start-run`,
+        {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify({
+            ...selectedRoute,
+            distance: parseFloat(selectedRoute.distance),
+            duration: selectedRoute.duration,
+            elevationData: {
+              gain: parseFloat(selectedRoute.elevationData.gain),
+              loss: parseFloat(selectedRoute.elevationData.loss),
+            },
+            terrain: Object.fromEntries(
+              Object.entries(selectedRoute.terrain).map(([key, value]) => [
+                key,
+                parseFloat(value),
+              ])
+            ),
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to start run");
+      }
+
+      message.success("Run started successfully!");
+
+      // Navigate to the active run page
+      navigate(`/active-run/${data.id}`);
+    } catch (error) {
+      console.error("Error starting run:", error);
+      message.error(`Error starting run: ${error.message}`);
+    } finally {
+      setIsStartingRun(false);
+    }
+  };
+
+  const handleRunCompletion = async (runData) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_POST_ADDRESS}/save-route-activity`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(runData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save activity');
+      }
+
+      const result = await response.json();
+
+      if (result.challengeUpdated) {
+        if (result.challengeCompleted) {
+          Modal.success({
+            title: 'Challenge Completed!',
+            content: 'Congratulations! You"ve completed a challenge.',
+          });
+        } else {
+          message.info('Your challenge progress has been updated.');
+        }
+        // Fetch updated challenges
+        await fetchChallenges();
+      }
+
+      message.success('Activity saved successfully');
+    } catch (error) {
+      message.error('Failed to save activity: ' + error.message);
+    }
+  };
 
   return (
     <Layout className="routes-page">
