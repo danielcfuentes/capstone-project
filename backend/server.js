@@ -437,4 +437,17 @@ app.post("/challenges", authenticateToken, async (req, res) => {
   }
 });
 
+// Get user's challenges
+app.get("/challenges", authenticateToken, async (req, res) => {
+  try {
+    const challenges = await prisma.challenge.findMany({
+      where: { userId: req.user.id },
+      orderBy: { endDate: "asc" },
+    });
+    res.json(challenges);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch challenges" });
+  }
+});
+
 app.listen(PORT, () => {});
