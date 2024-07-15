@@ -42,19 +42,16 @@ const RoutesPage = () => {
   const [basicRouteData, setBasicRouteData] = useState(null); // State for basic route data
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [isStartingRun, setIsStartingRun] = useState(false);
-    const [activeChallenges, setActiveChallenges] = useState([]);
-    const [completedChallenges, setCompletedChallenges] = useState([]);
-
+  const [activeChallenges, setActiveChallenges] = useState([]);
+  const [completedChallenges, setCompletedChallenges] = useState([]);
 
   // Effect to initialize the map and fetch user profile on component mount
   useEffect(() => {
-
     const map = initializeMap(mapContainer.current); // Initialize the map
     map.on("load", () => setMap(map)); // Set map instance in state on load
     fetchUserProfile(); // Fetch user profile
     fetchChallenges();
     return () => map.remove(); // Clean up map instance on unmount
-
   }, []);
 
   const handleSelectRoute = () => {
@@ -301,14 +298,17 @@ const RoutesPage = () => {
 
   const handleRunCompletion = async (runData) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_POST_ADDRESS}/save-route-activity`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(runData),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/save-route-activity`,
+        {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify(runData),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to save activity');
+        throw new Error("Failed to save activity");
       }
 
       const result = await response.json();
@@ -316,19 +316,19 @@ const RoutesPage = () => {
       if (result.challengeUpdated) {
         if (result.challengeCompleted) {
           Modal.success({
-            title: 'Challenge Completed!',
+            title: "Challenge Completed!",
             content: 'Congratulations! You"ve completed a challenge.',
           });
         } else {
-          message.info('Your challenge progress has been updated.');
+          message.info("Your challenge progress has been updated.");
         }
         // Fetch updated challenges
         await fetchChallenges();
       }
 
-      message.success('Activity saved successfully');
+      message.success("Activity saved successfully");
     } catch (error) {
-      message.error('Failed to save activity: ' + error.message);
+      message.error("Failed to save activity: " + error.message);
     }
   };
 

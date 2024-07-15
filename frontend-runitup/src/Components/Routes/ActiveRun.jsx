@@ -18,7 +18,7 @@ const { Title } = Typography;
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
-const ActiveRun = () => {
+const ActiveRun = ({ handleRunCompletion }) => {
   const { runId } = useParams();
   const navigate = useNavigate();
   const mapContainer = useRef(null);
@@ -96,25 +96,54 @@ const ActiveRun = () => {
 
   const handleCompleteRun = async () => {
     try {
-      const response = await fetch(
+      const completeResponse = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/complete-run/${runId}`,
         {
           method: "POST",
           headers: getHeaders(),
         }
       );
-      if (!response.ok) {
+      if (!completeResponse.ok) {
         throw new Error("Failed to complete run");
       }
-      const data = await response.json();
-      message.success("Run completed successfully!");
+      const completeData = await completeResponse.json();
 
-      // Call handleRunCompletion from RoutesPage
-      await handleRunCompletion(data.userActivity);
+      // Ensure routeCoordinates is an array of coordinates
+      const activityData = {
+        ...completeData.userActivity,
+        routeCoordinates: JSON.parse(
+          completeData.userActivity.routeCoordinates
+        ),
+      };
 
+      console.log("Data to be saved:", activityData);
+
+      // Save the activity
+      const saveResponse = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/save-route-activity`,
+        {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify(activityData),
+        }
+      );
+
+      if (!saveResponse.ok) {
+        const errorData = await saveResponse.json();
+        console.error("Error response:", errorData);
+        throw new Error(errorData.message || "Failed to save activity");
+      }
+
+      const saveResult = await saveResponse.json();
+
+      // Call handleRunCompletion passed as prop for challenge updates
+      await handleRunCompletion(saveResult);
+
+      message.success("Run completed and saved successfully!");
       // Redirect to the activities page
       navigate("/activities");
     } catch (error) {
+      console.error("Error in handleCompleteRun:", error);
       message.error(`Error completing run: ${error.message}`);
     }
   };

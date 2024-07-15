@@ -217,93 +217,124 @@ const calculateCaloriesBurned = (user, distance, elevationGain) => {
 
 app.post("/save-route-activity", authenticateToken, async (req, res) => {
   try {
+    console.log("Received activity data:", req.body);
+
     const {
       distance,
       duration,
       elevationData,
-      terrain,
       routeCoordinates,
       startLocation,
     } = req.body;
 
-    const result = await prisma.$transaction(async (prisma) => {
-      const user = await prisma.user.findUnique({
-        where: { username: req.user.name },
-      });
+    // Validate required fields
+    if (!distance || !duration || !routeCoordinates || !startLocation) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
-      if (!user) {
-        throw new Error("User not found");
-      }
-
-      // Convert duration from string to number of seconds
-      const durationInSeconds = duration.split("m")[0] * 60;
-
-      // Calculate average pace
-      const averagePace = durationInSeconds / 60 / parseFloat(distance);
-
-      const activity = await prisma.userActivity.create({
-        data: {
-          userId: user.id,
-          activityType: "Run",
-          startDateTime: new Date(),
-          duration: durationInSeconds,
-          distance: parseFloat(distance),
-          averagePace: averagePace,
-          elevationGain: elevationData.gain,
-          elevationLoss: elevationData.loss,
-          caloriesBurned: calculateCaloriesBurned(
-            user,
-            distance,
-            elevationData.gain
-          ),
-          startLatitude: routeCoordinates[0][1],
-          startLongitude: routeCoordinates[0][0],
-          endLatitude: routeCoordinates[routeCoordinates.length - 1][1],
-          endLongitude: routeCoordinates[routeCoordinates.length - 1][0],
-          routeCoordinates: JSON.stringify(routeCoordinates),
-          startLocation,
-        },
-      });
-
-      // Find and update the active challenge
-      const activeChallenge = await prisma.challenge.findFirst({
-        where: {
-          userId: user.id,
-          isCompleted: false,
-          endDate: { gt: new Date() },
-        },
-      });
-
-      if (activeChallenge) {
-        const newProgress =
-          activeChallenge.currentProgress + parseFloat(distance);
-        const isCompleted = newProgress >= activeChallenge.target;
-
-        await prisma.challenge.update({
-          where: { id: activeChallenge.id },
-          data: {
-            currentProgress: newProgress,
-            isCompleted: isCompleted,
-          },
-        });
-
-        return {
-          activity,
-          challengeUpdated: true,
-          challengeCompleted: isCompleted,
-        };
-      }
-
-      return { activity, challengeUpdated: false };
+    const user = await prisma.user.findUnique({
+      where: { username: req.user.name },
     });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Parse routeCoordinates if it's a string
+    let parsedRouteCoordinates;
+    try {
+      parsedRouteCoordinates =
+        typeof routeCoordinates === "string"
+          ? JSON.parse(routeCoordinates)
+          : routeCoordinates;
+    } catch (error) {
+      console.error("Error parsing routeCoordinates:", error);
+      return res
+        .status(400)
+        .json({ message: "Invalid routeCoordinates format" });
+    }
+
+    // Ensure parsedRouteCoordinates is an array and has at least one coordinate
+    if (
+      !Array.isArray(parsedRouteCoordinates) ||
+      parsedRouteCoordinates.length === 0
+    ) {
+      return res.status(400).json({ message: "Invalid routeCoordinates data" });
+    }
+
+    const startCoordinate = parsedRouteCoordinates[0];
+    const endCoordinate =
+      parsedRouteCoordinates[parsedRouteCoordinates.length - 1];
+
+    // Convert duration to seconds if it's not already
+    const durationInSeconds =
+      typeof duration === "string" ? parseInt(duration) : duration;
+
+    // Calculate average pace
+    const averagePace = durationInSeconds / 60 / parseFloat(distance);
+
+    const activity = await prisma.userActivity.create({
+      data: {
+        userId: user.id,
+        activityType: "Run",
+        startDateTime: new Date(),
+        duration: durationInSeconds,
+        distance: parseFloat(distance),
+        averagePace: averagePace,
+        elevationGain: elevationData?.gain || 0,
+        elevationLoss: elevationData?.loss || 0,
+        caloriesBurned: calculateCaloriesBurned(
+          user,
+          distance,
+          elevationData?.gain || 0
+        ),
+        startLatitude: startCoordinate[1],
+        startLongitude: startCoordinate[0],
+        endLatitude: endCoordinate[1],
+        endLongitude: endCoordinate[0],
+        routeCoordinates: JSON.stringify(parsedRouteCoordinates),
+        startLocation,
+      },
+    });
+
+    console.log("Activity created:", activity);
+
+    // Find and update the active challenge
+    const activeChallenge = await prisma.challenge.findFirst({
+      where: {
+        userId: user.id,
+        isCompleted: false,
+        endDate: { gt: new Date() },
+      },
+    });
+
+    let challengeUpdated = false;
+    let challengeCompleted = false;
+
+    if (activeChallenge) {
+      const newProgress =
+        activeChallenge.currentProgress + parseFloat(distance);
+      challengeCompleted = newProgress >= activeChallenge.target;
+
+      await prisma.challenge.update({
+        where: { id: activeChallenge.id },
+        data: {
+          currentProgress: newProgress,
+          isCompleted: challengeCompleted,
+        },
+      });
+
+      challengeUpdated = true;
+    }
 
     res.json({
       message: "Activity saved successfully",
-      activity: result.activity,
-      challengeUpdated: result.challengeUpdated,
-      challengeCompleted: result.challengeCompleted,
+      activity,
+      challengeUpdated,
+      challengeCompleted,
     });
   } catch (error) {
+    console.error("Error saving activity:", error);
     res.status(500).json({
       message: "Error saving activity",
       error: error.message,

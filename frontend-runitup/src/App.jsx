@@ -12,6 +12,8 @@ import Header from "./utils/Header";
 import Footer from "./utils/Footer";
 import ActiveRun from "./Components/Routes/ActiveRun";
 import UserActivitiesPage from "./Components/Profile/UserActivites";
+import { getHeaders } from "./utils/apiConfig";
+import { message } from "antd";
 
 // Protected route wrapper component
 const ProtectedRoute = ({ children, isLoggedIn, isProfileComplete }) => {
@@ -86,6 +88,21 @@ function App() {
     localStorage.removeItem("user");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+  };
+
+  const handleRunCompletion = async (result) => {
+    try {
+      if (result.challengeUpdated) {
+        if (result.challengeCompleted) {
+          message.success("Congratulations! You completed a challenge!");
+        } else {
+          message.info("Your challenge progress has been updated.");
+        }
+        // You might want to trigger a re-fetch of challenges here
+      }
+    } catch (error) {
+      message.error("Failed to update challenge: " + error.message);
+    }
   };
 
   useEffect(() => {
@@ -223,7 +240,7 @@ function App() {
                 isLoggedIn={isLoggedIn}
                 isProfileComplete={isProfileComplete}
               >
-                <ActiveRun />
+                <ActiveRun handleRunCompletion={handleRunCompletion} />
               </ProtectedRoute>
             }
           />
