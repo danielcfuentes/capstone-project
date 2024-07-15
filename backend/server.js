@@ -542,7 +542,7 @@ app.put("/challenges/:id", authenticateToken, async (req, res) => {
 // Challenge generation function
 const generateChallenge = async (userId) => {
   try {
-    // Check for existing active challenges
+    // Double-check for existing active challenges
     const existingChallenge = await prisma.challenge.findFirst({
       where: {
         userId: userId,
@@ -632,7 +632,22 @@ cron.schedule("*/2 * * * *", async () => {
 
     const users = await prisma.user.findMany();
     for (const user of users) {
-      await generateChallenge(user.id);
+      const existingChallenge = await prisma.challenge.findFirst({
+        where: {
+          userId: user.id,
+          isCompleted: false,
+          endDate: { gt: new Date() },
+        },
+      });
+
+      if (!existingChallenge) {
+        await generateChallenge(user.id);
+      } else {
+        console.log(
+          `User ${user.id} already has an active challenge. Skipping generation.`
+        );
+      }
+
       // Add a small delay between users to prevent race conditions
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
@@ -643,18 +658,7 @@ cron.schedule("*/2 * * * *", async () => {
   }
 });
 
-// Cron job to generate challenges every 2 minutes
-const challengeGenerationJob = cron.schedule('*/2 * * * *', async () => {
-  console.log('Running challenge generation job');
-  try {
-    const users = await prisma.user.findMany();
-    for (const user of users) {
-      await generateChallenge(user.id);
-    }
-  } catch (error) {
-    console.error('Error generating challenges:', error);
-  }
-});
+
 
 
 app.listen(PORT, () => {
