@@ -10,6 +10,8 @@ const multer = require("multer");
 
 app.use(express.json());
 app.use(cors());
+// 4. Add a cron job to generate challenges weekly (you'll need to install a cron library)
+const cron = require('node-cron');
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -491,38 +493,110 @@ app.put("/challenges/:id", authenticateToken, async (req, res) => {
 });
 
 // 3. Implement challenge generation function
+// Updated challenge generation function
+// Challenge generation function
 const generateChallenge = async (userId) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: { activities: true },
-  });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        activities: { orderBy: { startDateTime: "desc" }, take: 5 },
+        challenges: {
+          where: { isCompleted: false },
+          orderBy: { createdAt: "desc" },
+        },
+      },
+    });
 
-  const recentActivities = user.activities.slice(-5);
-  const avgDistance = recentActivities.reduce((sum, activity) => sum + activity.distance, 0) / recentActivities.length;
+    if (!user || user.activities.length === 0) {
+      console.log(
+        `No recent activities found for user ${userId}. Skipping challenge generation.`
+      );
+      return;
+    }
 
-  const challengeTarget = Math.round(avgDistance * 1.2 * 4); // 20% more than average, for 4 weeks
-  const endDate = new Date();
-  endDate.setDate(endDate.getDate() + 28); // 4 weeks from now
+    // Check if user already has an active challenge
+    if (user.challenges.length > 0) {
+      console.log(
+        `User ${userId} already has an active challenge. Skipping generation.`
+      );
+      return;
+    }
 
-  return prisma.challenge.create({
-    data: {
-      userId,
-      description: `Run ${challengeTarget} miles in the next 4 weeks`,
-      target: challengeTarget,
-      endDate,
-    },
-  });
+    const recentActivities = user.activities;
+    const avgDistance =
+      recentActivities.reduce((sum, activity) => sum + activity.distance, 0) /
+      recentActivities.length;
+
+    // Set a minimum challenge distance of 0.1 miles
+    const challengeTarget = Math.max(
+      Math.round(avgDistance * 0.2 * 10) / 10,
+      0.1
+    );
+    const endDate = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+    const challenge = await prisma.challenge.create({
+      data: {
+        userId,
+        description: `Quick challenge: Run ${challengeTarget.toFixed(
+          1
+        )} miles in the next 10 minutes`,
+        target: challengeTarget,
+        endDate,
+      },
+    });
+
+    console.log(
+      `Generated challenge for user ${userId}: ${challenge.description}`
+    );
+  } catch (error) {
+    console.error(`Error generating challenge for user ${userId}:`, error);
+  }
 };
 
-// 4. Add a cron job to generate challenges weekly (you'll need to install a cron library)
-const cron = require('node-cron');
 
-cron.schedule('0 0 * * 0', async () => {
-  const users = await prisma.user.findMany();
-  for (const user of users) {
-    await generateChallenge(user.id);
+// 4. Add a cron job to generate challenges weekly (you'll need to install a cron library)
+
+// Updated cron job to run every 2 minutes
+// Cron job to generate challenges every 2 minutes
+// In your cron job, you might want to clean up old, uncompleted challenges
+cron.schedule('*/2 * * * *', async () => {
+  console.log('Running challenge generation job');
+  try {
+    // Clean up old, uncompleted challenges
+    await prisma.challenge.deleteMany({
+      where: {
+        isCompleted: false,
+        endDate: { lt: new Date() }
+      }
+    });
+
+    const users = await prisma.user.findMany();
+    for (const user of users) {
+      await generateChallenge(user.id);
+    }
+  } catch (error) {
+    console.error('Error in challenge generation job:', error);
+  }
+});
+
+// Cron job to generate challenges every 2 minutes
+const challengeGenerationJob = cron.schedule('*/2 * * * *', async () => {
+  console.log('Running challenge generation job');
+  try {
+    const users = await prisma.user.findMany();
+    for (const user of users) {
+      await generateChallenge(user.id);
+    }
+  } catch (error) {
+    console.error('Error generating challenges:', error);
   }
 });
 
 
-app.listen(PORT, () => {});
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(
+    "Challenge generation cron job is set up and will run every 2 minutes"
+  );
+});

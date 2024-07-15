@@ -35,7 +35,7 @@ model User {
   isProfileComplete Boolean           @default(false)
   activities        UserActivity[]
   activeRuns        ActiveRun[]
-  Challenge         Challenge[]
+  challenges        Challenge[]
 }
 
 model Token {
