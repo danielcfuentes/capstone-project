@@ -33,6 +33,7 @@ model User {
   runningGoals      UserRunningGoal[]
   completedRuns     CompletedRun[]
   isProfileComplete Boolean           @default(false)
+  activities      UserActivity[]
 }
 
 model Token {
@@ -98,4 +99,26 @@ model CompletedRun {
   weather  String?
   feedback String?
   rating   Int?
+}
+
+model UserActivity {
+  id               Int      @id @default(autoincrement())
+  user             User     @relation(fields: [userId], references: [id])
+  userId           Int
+  activityType     String
+  startDateTime    DateTime
+  duration         Int      // in seconds
+  distance         Float    // in miles
+  averagePace      Float    // in minutes per mile
+  averageHeartRate Int?
+  maxHeartRate     Int?
+  caloriesBurned   Int?
+  elevationGain    Float?   // in feet
+  elevationLoss    Float?   // in feet
+  startLatitude    Float?
+  startLongitude   Float?
+  endLatitude      Float?
+  endLongitude     Float?
+  routeCoordinates String?  // JSON string of coordinate pairs
+  createdAt        DateTime @default(now())
 }
