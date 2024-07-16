@@ -294,39 +294,41 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
       },
     });
 
-    // Find and update the active challenge
-    const activeChallenge = await prisma.challenge.findFirst({
+    // Update relevant challenges
+    const activeChallenges = await prisma.challenge.findMany({
       where: {
         userId: user.id,
-        isCompleted: false,
-        endDate: { gt: new Date() },
+        status: "active",
       },
     });
 
-    let challengeUpdated = false;
-    let challengeCompleted = false;
+    for (const challenge of activeChallenges) {
+      let newProgress = challenge.currentProgress;
+      switch (challenge.type) {
+        case "distance":
+          newProgress += activity.distance;
+          break;
+        case "calories":
+          newProgress += activity.caloriesBurned;
+          break;
+        case "elevation":
+          newProgress += activity.elevationGain;
+          break;
+      }
 
-    if (activeChallenge) {
-      const newProgress =
-        activeChallenge.currentProgress + parseFloat(distance);
-      challengeCompleted = newProgress >= activeChallenge.target;
-
+      const isCompleted = newProgress >= challenge.target;
       await prisma.challenge.update({
-        where: { id: activeChallenge.id },
+        where: { id: challenge.id },
         data: {
           currentProgress: newProgress,
-          isCompleted: challengeCompleted,
+          status: isCompleted ? "completed" : "active",
         },
       });
-
-      challengeUpdated = true;
     }
 
     res.json({
-      message: "Activity saved successfully",
+      message: "Activity saved and challenges updated successfully",
       activity,
-      challengeUpdated,
-      challengeCompleted,
     });
   } catch (error) {
     res.status(500).json({
@@ -529,8 +531,7 @@ app.put("/challenges/:id", authenticateToken, async (req, res) => {
   }
 });
 
-// 3. Implement challenge generation function
-// Updated challenge generation function
+
 // Challenge generation function
 const generateChallenges = async (userId) => {
   try {
@@ -605,11 +606,7 @@ const generateChallenges = async (userId) => {
   }
 };
 
-// 4. Add a cron job to generate challenges weekly (you'll need to install a cron library)
-
-// Updated cron job to run every 2 minutes
-// Cron job to generate challenges every 2 minutes
-// In your cron job, you might want to clean up old, uncompleted challenges
+// Add a cron job to generate challenges on a certain time
 let isJobRunning = false;
 
 cron.schedule("0 * * * *", async () => {
@@ -646,6 +643,22 @@ cron.schedule("0 * * * *", async () => {
     );
   } catch (error) {
     console.error("Error in hourly challenge update:", error);
+  }
+});
+
+//new endpoint to fetch all past challenges:
+app.get("/past-challenges", authenticateToken, async (req, res) => {
+  try {
+    const pastChallenges = await prisma.challenge.findMany({
+      where: {
+        userId: req.user.id,
+        status: { in: ["completed", "failed"] },
+      },
+      orderBy: { endDate: "desc" },
+    });
+    res.json(pastChallenges);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch past challenges" });
   }
 });
 
