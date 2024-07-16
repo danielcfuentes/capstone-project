@@ -218,6 +218,7 @@ const calculateCaloriesBurned = (user, distance, elevationGain) => {
 app.post("/save-route-activity", authenticateToken, async (req, res) => {
   try {
     const {
+      runId,
       distance,
       duration,
       elevationData,
@@ -226,7 +227,13 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!distance || !duration || !routeCoordinates || !startLocation) {
+    if (
+      !runId ||
+      !distance ||
+      !duration ||
+      !routeCoordinates ||
+      !startLocation
+    ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -236,6 +243,17 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check for existing activity with the same runId
+    const existingActivity = await prisma.userActivity.findUnique({
+      where: { runId: runId },
+    });
+
+    if (existingActivity) {
+      return res
+        .status(409)
+        .json({ message: "Activity already saved for this run" });
     }
 
     // Parse routeCoordinates if it's a string
@@ -272,6 +290,7 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
 
     const activity = await prisma.userActivity.create({
       data: {
+        runId,
         userId: user.id,
         activityType: "Run",
         startDateTime: new Date(),
@@ -318,7 +337,7 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
           isCompleted = newProgress >= challenge.target;
           break;
         case "elevation":
-          newProgress += activity.elevationGain; // Use the elevation gain directly from the activity
+          newProgress += activity.elevationGain;
           isCompleted = newProgress >= challenge.target;
           break;
       }
