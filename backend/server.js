@@ -532,27 +532,17 @@ app.put("/challenges/:id", authenticateToken, async (req, res) => {
 // 3. Implement challenge generation function
 // Updated challenge generation function
 // Challenge generation function
-const generateChallenge = async (userId) => {
+const generateChallenges = async (userId) => {
   try {
-    // Double-check for existing active challenges
-    const existingChallenge = await prisma.challenge.findFirst({
-      where: {
-        userId: userId,
-        isCompleted: false,
-        endDate: { gt: new Date() },
-      },
-    });
-
-    if (existingChallenge) {
-      return null;
-    }
-
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { activities: { orderBy: { startDateTime: "desc" }, take: 5 } },
     });
 
     if (!user || user.activities.length === 0) {
+      console.log(
+        `No recent activities found for user ${userId}. Skipping challenge generation.`
+      );
       return null;
     }
 
@@ -560,27 +550,57 @@ const generateChallenge = async (userId) => {
     const avgDistance =
       recentActivities.reduce((sum, activity) => sum + activity.distance, 0) /
       recentActivities.length;
+    const avgCalories =
+      recentActivities.reduce(
+        (sum, activity) => sum + activity.caloriesBurned,
+        0
+      ) / recentActivities.length;
+    const avgElevation =
+      recentActivities.reduce(
+        (sum, activity) => sum + activity.elevationGain,
+        0
+      ) / recentActivities.length;
 
-    // Set a minimum challenge distance of 0.1 miles
-    const challengeTarget = Math.max(
-      Math.round(avgDistance * 0.2 * 10) / 10,
-      0.1
-    );
-    const endDate = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+    const challengeTypes = ["distance", "calories", "elevation"];
+    const challenges = [];
 
-    const challenge = await prisma.challenge.create({
-      data: {
-        userId,
-        description: `Quick challenge: Run ${challengeTarget.toFixed(
-          1
-        )} miles in the next 10 minutes`,
-        target: challengeTarget,
-        endDate,
-      },
-    });
+    for (const type of challengeTypes) {
+      let target, description;
+      switch (type) {
+        case "distance":
+          target = Math.max(Math.round(avgDistance * 1.2 * 10) / 10, 0.5);
+          description = `Run ${target.toFixed(1)} miles in the next hour`;
+          break;
+        case "calories":
+          target = Math.round(avgCalories * 1.2);
+          description = `Burn ${target} calories in the next hour`;
+          break;
+        case "elevation":
+          target = Math.round(avgElevation * 1.2);
+          description = `Gain ${target} feet of elevation in the next hour`;
+          break;
+      }
 
-    return challenge;
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+      const challenge = await prisma.challenge.create({
+        data: {
+          userId,
+          type,
+          description,
+          target,
+          endDate: expiresAt,
+          expiresAt,
+        },
+      });
+
+      challenges.push(challenge);
+    }
+
+    console.log(`Generated ${challenges.length} challenges for user ${userId}`);
+    return challenges;
   } catch (error) {
+    console.error(`Error generating challenges for user ${userId}:`, error);
     return null;
   }
 };
