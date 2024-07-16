@@ -124,6 +124,7 @@ model UserActivity {
   routeCoordinates String? // JSON string of coordinate pairs
   startLocation    String? // New field for the starting location name
   createdAt        DateTime @default(now())
+  runId            String   @unique
 }
 
 model ActiveRun {
