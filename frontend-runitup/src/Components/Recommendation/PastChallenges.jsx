@@ -1,13 +1,16 @@
 import React from "react";
-import { List, Typography } from "antd";
+import { List, Typography, Empty } from "antd";
 import ChallengeCard from "./ChallengeCard";
 
 const { Title } = Typography;
 
 const PastChallenges = ({ challenges }) => {
+  if (!challenges || challenges.length === 0) {
+    return <Empty description="No past challenges found" />;
+  }
+
   return (
     <div>
-      <Title level={3}>Completed and Failed Challenges</Title>
       <List
         grid={{ gutter: 16, column: 3 }}
         dataSource={challenges}

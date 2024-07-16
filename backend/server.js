@@ -294,7 +294,6 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
       },
     });
 
-    // Update relevant challenges
     const activeChallenges = await prisma.challenge.findMany({
       where: {
         userId: user.id,
@@ -304,19 +303,26 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
 
     for (const challenge of activeChallenges) {
       let newProgress = challenge.currentProgress;
+      let isCompleted = false;
+
       switch (challenge.type) {
+        case "first_run":
+          isCompleted = true;
+          break;
         case "distance":
           newProgress += activity.distance;
+          isCompleted = newProgress >= challenge.target;
           break;
         case "calories":
           newProgress += activity.caloriesBurned;
+          isCompleted = newProgress >= challenge.target;
           break;
         case "elevation":
-          newProgress += activity.elevationGain;
+          newProgress += activity.elevationGain; // Use the elevation gain directly from the activity
+          isCompleted = newProgress >= challenge.target;
           break;
       }
 
-      const isCompleted = newProgress >= challenge.target;
       await prisma.challenge.update({
         where: { id: challenge.id },
         data: {
@@ -331,10 +337,10 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
       activity,
     });
   } catch (error) {
+    console.error("Error saving activity:", error);
     res.status(500).json({
       message: "Error saving activity",
       error: error.message,
-      stack: error.stack,
     });
   }
 });
@@ -540,11 +546,24 @@ const generateChallenges = async (userId) => {
       include: { activities: { orderBy: { startDateTime: "desc" }, take: 5 } },
     });
 
-    if (!user || user.activities.length === 0) {
-      console.log(
-        `No recent activities found for user ${userId}. Skipping challenge generation.`
-      );
+    if (!user) {
+      console.log(`User ${userId} not found. Skipping challenge generation.`);
       return null;
+    }
+
+    if (user.activities.length === 0) {
+      // Create a "Start your first run" challenge for new users
+      const firstRunChallenge = await prisma.challenge.create({
+        data: {
+          userId,
+          type: "first_run",
+          description: "Start your first run",
+          target: 1,
+          endDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      });
+      return [firstRunChallenge];
     }
 
     const recentActivities = user.activities;
@@ -563,9 +582,10 @@ const generateChallenges = async (userId) => {
       ) / recentActivities.length;
 
     const challengeTypes = ["distance", "calories", "elevation"];
+    const shuffledTypes = challengeTypes.sort(() => Math.random() - 0.5);
     const challenges = [];
 
-    for (const type of challengeTypes) {
+    for (const type of shuffledTypes.slice(0, 3)) {
       let target, description;
       switch (type) {
         case "distance":
@@ -606,46 +626,6 @@ const generateChallenges = async (userId) => {
   }
 };
 
-// Add a cron job to generate challenges on a certain time
-let isJobRunning = false;
-
-cron.schedule("0 * * * *", async () => {
-  console.log("Running hourly challenge status update");
-  try {
-    // Mark expired challenges as failed
-    await prisma.challenge.updateMany({
-      where: {
-        status: "active",
-        expiresAt: { lt: new Date() },
-      },
-      data: {
-        status: "failed",
-      },
-    });
-
-    // Find users with no active challenges and generate new ones
-    const usersNeedingChallenges = await prisma.user.findMany({
-      where: {
-        challenges: {
-          none: {
-            status: "active",
-          },
-        },
-      },
-    });
-
-    for (const user of usersNeedingChallenges) {
-      await generateChallenges(user.id);
-    }
-
-    console.log(
-      `Updated challenges for ${usersNeedingChallenges.length} users`
-    );
-  } catch (error) {
-    console.error("Error in hourly challenge update:", error);
-  }
-});
-
 //new endpoint to fetch all past challenges:
 app.get("/past-challenges", authenticateToken, async (req, res) => {
   try {
@@ -661,5 +641,73 @@ app.get("/past-challenges", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch past challenges" });
   }
 });
+
+app.post("/generate-challenges", authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { challenges: { where: { status: "active" } } },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.challenges.length > 0) {
+      return res.json({
+        message: "User already has active challenges",
+        challenges: user.challenges,
+      });
+    }
+
+    const newChallenges = await generateChallenges(user.id);
+    res.json({
+      message: "New challenges generated",
+      challenges: newChallenges,
+    });
+  } catch (error) {
+    console.error("Error generating challenges:", error);
+    res.status(500).json({ message: "Failed to generate challenges" });
+  }
+});
+
+
+cron.schedule("0 * * * *", async () => {
+  console.log("Running hourly challenge update");
+  try {
+    // Mark expired challenges as failed
+    await prisma.challenge.updateMany({
+      where: {
+        status: "active",
+        expiresAt: { lt: new Date() },
+      },
+      data: {
+        status: "failed",
+      },
+    });
+
+    // Find users who need new challenges
+    const users = await prisma.user.findMany({
+      include: {
+        challenges: {
+          where: {
+            status: "active",
+          },
+        },
+      },
+    });
+
+    for (const user of users) {
+      if (user.challenges.length === 0) {
+        await generateChallenges(user.id);
+      }
+    }
+
+    console.log(`Updated challenges for ${users.length} users`);
+  } catch (error) {
+    console.error("Error in hourly challenge update:", error);
+  }
+});
+
 
 app.listen(PORT, () => {});
