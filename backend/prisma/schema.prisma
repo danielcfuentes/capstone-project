@@ -33,7 +33,7 @@ model User {
   runningGoals      UserRunningGoal[]
   completedRuns     CompletedRun[]
   isProfileComplete Boolean           @default(false)
-  activities      UserActivity[]
+  activities        UserActivity[]
 }
 
 model Token {
@@ -107,18 +107,19 @@ model UserActivity {
   userId           Int
   activityType     String
   startDateTime    DateTime
-  duration         Int      // in seconds
-  distance         Float    // in miles
-  averagePace      Float    // in minutes per mile
+  duration         Int // in seconds
+  distance         Float // in miles
+  averagePace      Float // in minutes per mile
   averageHeartRate Int?
   maxHeartRate     Int?
   caloriesBurned   Int?
-  elevationGain    Float?   // in feet
-  elevationLoss    Float?   // in feet
+  elevationGain    Float? // in feet
+  elevationLoss    Float? // in feet
   startLatitude    Float?
   startLongitude   Float?
   endLatitude      Float?
   endLongitude     Float?
-  routeCoordinates String?  // JSON string of coordinate pairs
+  routeCoordinates String? // JSON string of coordinate pairs
+  startLocation    String? // New field for the starting location name
   createdAt        DateTime @default(now())
 }

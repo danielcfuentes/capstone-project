@@ -186,12 +186,84 @@ app.get("/user-activities", authenticateToken, async (req, res) => {
   try {
     const activities = await prisma.userActivity.findMany({
       where: { userId: req.user.id },
-      orderBy: { startDateTime: 'desc' },
-      take: 10 // Limit to 10 most recent activities
+      orderBy: { startDateTime: "desc" },
+      take: 10, // Limit to 10 most recent activities
     });
     res.json(activities);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching activities", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching activities", error: error.message });
+  }
+});
+
+// Function to calculate calories burned based on user profile and route
+
+const calculateCaloriesBurned = (user, distance, elevationGain) => {
+  // This is a simplified calculation and should be refined for more accuracy
+  const weight = user.weight * 0.453592; // Convert lbs to kg
+  const duration = parseFloat(distance) * 10; // Assume 10 minutes per mile
+  const caloriesPerMinute = 0.0175 * 8 * weight; // MET value of 8 for running
+  return Math.round(caloriesPerMinute * duration);
+};
+
+app.post("/save-route-activity", authenticateToken, async (req, res) => {
+  try {
+    const {
+      distance,
+      duration,
+      elevationData,
+      terrain,
+      routeCoordinates,
+      startLocation,
+    } = req.body;
+
+    const user = await prisma.user.findUnique({
+      where: { username: req.user.name },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Convert duration from string to number of seconds
+    const durationInSeconds = duration.split("m")[0] * 60;
+
+    // Calculate average pace
+    const averagePace = durationInSeconds / 60 / parseFloat(distance);
+
+    const activity = await prisma.userActivity.create({
+      data: {
+        userId: user.id,
+        activityType: "Run",
+        startDateTime: new Date(),
+        duration: durationInSeconds,
+        distance: parseFloat(distance),
+        averagePace: averagePace,
+        elevationGain: elevationData.gain,
+        elevationLoss: elevationData.loss,
+        caloriesBurned: calculateCaloriesBurned(
+          user,
+          distance,
+          elevationData.gain
+        ),
+        startLatitude: routeCoordinates[0][1],
+        startLongitude: routeCoordinates[0][0],
+        endLatitude: routeCoordinates[routeCoordinates.length - 1][1],
+        endLongitude: routeCoordinates[routeCoordinates.length - 1][0],
+        routeCoordinates: JSON.stringify(routeCoordinates),
+        startLocation,
+      },
+    });
+
+
+    res.json(activity);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error saving activity",
+      error: error.message,
+      stack: error.stack,
+    });
   }
 });
 

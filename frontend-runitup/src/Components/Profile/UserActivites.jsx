@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { List, Card, Typography, Spin } from "antd";
+import { List, Card, Typography, Spin, message } from "antd";
 import { getHeaders } from "../../utils/apiConfig";
 
 const { Title, Text } = Typography;
@@ -26,7 +26,7 @@ const UserActivities = () => {
       const data = await response.json();
       setActivities(data);
     } catch (error) {
-      console.error("Error fetching activities:", error);
+      message.error("Error fetching activities:", error);
     } finally {
       setLoading(false);
     }
@@ -51,6 +51,10 @@ const UserActivities = () => {
                 activity.startDateTime
               ).toLocaleDateString()}`}
             >
+              <p>
+                <Text strong>Start Location:</Text>{" "}
+                {activity.startLocation || "N/A"}
+              </p>
               <p>
                 <Text strong>Duration:</Text>{" "}
                 {formatDuration(activity.duration)}

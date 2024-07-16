@@ -1,6 +1,5 @@
-import "../../styles/RoutesPage.css";
 import React, { useState, useEffect, useRef } from "react";
-import { Layout, Form, Input, Button, message, Alert, Spin } from "antd";
+import { Layout, Form, Input, Button, message, Alert, Spin, Modal } from "antd";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {
@@ -20,6 +19,7 @@ import {
 } from "../../utils/mapUtils";
 import RouteInfo from "./RouteInfo";
 import { getHeaders } from "../../utils/apiConfig";
+import "../../styles/RoutesPage.css";
 
 const { Content } = Layout;
 
@@ -37,6 +37,7 @@ const RoutesPage = () => {
   const [isLoadingBasicInfo, setIsLoadingBasicInfo] = useState(false); // State for loading basic info
   const [isLoadingTerrainInfo, setIsLoadingTerrainInfo] = useState(false); // State for loading terrain info
   const [basicRouteData, setBasicRouteData] = useState(null); // State for basic route data
+  const [selectedRoute, setSelectedRoute] = useState(null);
 
   // Effect to initialize the map and fetch user profile on component mount
   useEffect(() => {
@@ -45,6 +46,58 @@ const RoutesPage = () => {
     fetchUserProfile(); // Fetch user profile
     return () => map.remove(); // Clean up map instance on unmount
   }, []);
+
+  const handleSelectRoute = () => {
+    if (!selectedRoute) {
+      message.error("No route generated to select.");
+      return;
+    }
+
+    Modal.confirm({
+      title: "Select this route?",
+      content: "Do you want to save this route as an activity?",
+      onOk: saveRouteAsActivity,
+      onCancel: () => {},
+    });
+  };
+
+  const saveRouteAsActivity = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/save-route-activity`,
+        {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify({
+            ...selectedRoute,
+            distance: parseFloat(selectedRoute.distance),
+            duration: selectedRoute.duration,
+            elevationData: {
+              gain: parseFloat(selectedRoute.elevationData.gain),
+              loss: parseFloat(selectedRoute.elevationData.loss),
+            },
+            terrain: Object.fromEntries(
+              Object.entries(selectedRoute.terrain).map(([key, value]) => [
+                key,
+                parseFloat(value),
+              ])
+            ),
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to save route as activity");
+      }
+
+      message.success("Route saved as activity successfully!");
+      // Optionally, you can update the UI or redirect the user
+    } catch (error) {
+      message.error(`Error saving route as activity: ${error.message}`);
+    }
+  };
 
   // Function to fetch user profile from API
   const fetchUserProfile = async () => {
@@ -146,6 +199,14 @@ const RoutesPage = () => {
         );
       }
 
+      setSelectedRoute({
+        ...basicInfo,
+        duration,
+        terrain: terrainInfo,
+        routeCoordinates: route.geometry.coordinates,
+        startLocation: values.startLocation,
+      });
+
       message.success("Route generated successfully!");
     } catch (error) {
       setError(
@@ -187,6 +248,7 @@ const RoutesPage = () => {
             </Button>
           </Form.Item>
         </Form>
+
         {error && (
           <Alert
             message="Error"
@@ -209,6 +271,11 @@ const RoutesPage = () => {
         )}
         <div ref={mapContainer} className="map-container" />
         {isGeneratingRoute && <Spin tip="Generating route..." />}
+        {selectedRoute && (
+          <Button onClick={handleSelectRoute} type="primary">
+            Select This Route
+          </Button>
+        )}
         {(basicRouteData || routeData) && (
           <RouteInfo
             routeData={routeData || basicRouteData}
