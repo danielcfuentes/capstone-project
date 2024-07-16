@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, Button, Statistic, Row, Col, Typography, message } from "antd";
+import {
+  Card,
+  Button,
+  Statistic,
+  Row,
+  Col,
+  Typography,
+  message,
+  Spin,
+} from "antd";
 import {
   AimOutlined,
   ClockCircleOutlined,
@@ -25,6 +34,8 @@ const ActiveRun = ({ handleRunCompletion }) => {
   const [runData, setRunData] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [map, setMap] = useState(null);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchRunData();
@@ -91,10 +102,15 @@ const ActiveRun = ({ handleRunCompletion }) => {
       setRunData(data);
     } catch (error) {
       message.error(`Error fetching run data: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCompleteRun = async () => {
+    if (isCompleting) return;
+    setIsCompleting(true);
+
     try {
       const completeResponse = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/complete-run/${runId}`,
@@ -108,16 +124,14 @@ const ActiveRun = ({ handleRunCompletion }) => {
       }
       const completeData = await completeResponse.json();
 
-      // Ensure routeCoordinates is an array of coordinates
       const activityData = {
         ...completeData.userActivity,
+        runId: runId,
         routeCoordinates: JSON.parse(
           completeData.userActivity.routeCoordinates
         ),
       };
 
-
-      // Save the activity
       const saveResponse = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/save-route-activity`,
         {
@@ -129,25 +143,28 @@ const ActiveRun = ({ handleRunCompletion }) => {
 
       if (!saveResponse.ok) {
         const errorData = await saveResponse.json();
-
         throw new Error(errorData.message || "Failed to save activity");
       }
 
       const saveResult = await saveResponse.json();
 
-      // Call handleRunCompletion passed as prop for challenge updates
       await handleRunCompletion(saveResult);
 
       message.success("Run completed and saved successfully!");
-      // Redirect to the activities page
       navigate("/activities");
     } catch (error) {
       message.error(`Error completing run: ${error.message}`);
+    } finally {
+      setIsCompleting(false);
     }
   };
 
+  if (loading) {
+    return <Spin size="large" />;
+  }
+
   if (!runData) {
-    return <div>Loading...</div>;
+    return <div>No run data available.</div>;
   }
 
   return (
@@ -227,9 +244,11 @@ const ActiveRun = ({ handleRunCompletion }) => {
         type="primary"
         size="large"
         onClick={handleCompleteRun}
+        disabled={isCompleting}
+        loading={isCompleting}
         className="complete-run-btn"
       >
-        Complete Run
+        {isCompleting ? "Completing Run..." : "Complete Run"}
       </Button>
     </div>
   );
