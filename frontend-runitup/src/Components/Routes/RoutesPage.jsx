@@ -264,7 +264,6 @@ const handleStartRun = async () => {
     message.success("Run started successfully!");
     navigate(`/active-run/${data.id}`);
   } catch (error) {
-    console.error("Error starting run:", error);
     message.error(`Error starting run: ${error.message}`);
   } finally {
     setIsStartingRun(false);
