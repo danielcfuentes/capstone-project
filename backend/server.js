@@ -612,43 +612,40 @@ const generateChallenges = async (userId) => {
 // In your cron job, you might want to clean up old, uncompleted challenges
 let isJobRunning = false;
 
-cron.schedule("*/2 * * * *", async () => {
-  if (isJobRunning) {
-    return;
-  }
-
-  isJobRunning = true;
-
+cron.schedule("0 * * * *", async () => {
+  console.log("Running hourly challenge status update");
   try {
-    // Clean up old, uncompleted challenges
-    await prisma.challenge.deleteMany({
+    // Mark expired challenges as failed
+    await prisma.challenge.updateMany({
       where: {
-        isCompleted: false,
-        endDate: { lt: new Date() },
+        status: "active",
+        expiresAt: { lt: new Date() },
+      },
+      data: {
+        status: "failed",
       },
     });
 
-    const users = await prisma.user.findMany();
-    for (const user of users) {
-      const existingChallenge = await prisma.challenge.findFirst({
-        where: {
-          userId: user.id,
-          isCompleted: false,
-          endDate: { gt: new Date() },
+    // Find users with no active challenges and generate new ones
+    const usersNeedingChallenges = await prisma.user.findMany({
+      where: {
+        challenges: {
+          none: {
+            status: "active",
+          },
         },
-      });
+      },
+    });
 
-      if (!existingChallenge) {
-        await generateChallenge(user.id);
-      } else {
-      }
-
-      // Add a small delay between users to prevent race conditions
-      await new Promise((resolve) => setTimeout(resolve, 100));
+    for (const user of usersNeedingChallenges) {
+      await generateChallenges(user.id);
     }
+
+    console.log(
+      `Updated challenges for ${usersNeedingChallenges.length} users`
+    );
   } catch (error) {
-  } finally {
-    isJobRunning = false;
+    console.error("Error in hourly challenge update:", error);
   }
 });
 
