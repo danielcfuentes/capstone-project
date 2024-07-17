@@ -58,7 +58,6 @@ const RecommendationPage = () => {
         )
       );
     } catch (error) {
-      console.error("Failed to fetch challenges:", error);
       message.error("Failed to fetch challenges");
     } finally {
       setLoading(false);
@@ -79,7 +78,6 @@ const RecommendationPage = () => {
       message.success("Challenge updated successfully");
       fetchChallenges();
     } catch (error) {
-      console.error("Failed to update challenge:", error);
       message.error("Failed to update challenge");
     }
   };

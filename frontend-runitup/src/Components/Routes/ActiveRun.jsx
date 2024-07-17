@@ -139,7 +139,6 @@ const ActiveRun = ({ handleRunCompletion }) => {
       message.success("Run completed and challenges updated successfully!");
       navigate("/recommendations"); // Navigate to recommendations page to show updated challenges
     } catch (error) {
-      console.error("Error in handleCompleteRun:", error);
       message.error(`Error completing run: ${error.message}`);
     } finally {
       setIsCompleting(false);

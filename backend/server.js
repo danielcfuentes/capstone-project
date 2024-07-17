@@ -356,7 +356,6 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
       activity,
     });
   } catch (error) {
-    console.error("Error saving activity:", error);
     res.status(500).json({
       message: "Error saving activity",
       error: error.message,
@@ -549,7 +548,6 @@ app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
       updatedChallenges: result.updatedChallenges,
     });
   } catch (error) {
-    console.error(`Error completing run: ${error.message}`);
     res
       .status(500)
       .json({ message: "Error completing run", error: error.message });
@@ -602,7 +600,6 @@ app.put("/challenges/:id", authenticateToken, async (req, res) => {
   }
 });
 
-
 // Challenge generation function
 const generateChallenges = async (userId) => {
   try {
@@ -612,9 +609,6 @@ const generateChallenges = async (userId) => {
     });
 
     if (!user || user.activities.length === 0) {
-      console.log(
-        `No recent activities found for user ${userId}. Skipping challenge generation.`
-      );
       return null;
     }
 
@@ -672,12 +666,8 @@ const generateChallenges = async (userId) => {
       challenges.push(challenge);
     }
 
-    console.log(
-      `Generated ${challenges.length} daily challenges for user ${userId}`
-    );
     return challenges;
   } catch (error) {
-    console.error(`Error generating challenges for user ${userId}:`, error);
     return null;
   }
 };
@@ -722,24 +712,21 @@ app.post("/generate-challenges", authenticateToken, async (req, res) => {
       challenges: newChallenges,
     });
   } catch (error) {
-    console.error("Error generating challenges:", error);
     res.status(500).json({ message: "Failed to generate challenges" });
   }
 });
 
-
 /// Update cron job to run once a day at midnight
-cron.schedule('0 0 * * *', async () => {
-  console.log('Running daily challenge generation');
+cron.schedule("0 0 * * *", async () => {
   try {
     // Mark expired challenges as failed
     await prisma.challenge.updateMany({
       where: {
-        status: 'active',
+        status: "active",
         expiresAt: { lt: new Date() },
       },
       data: {
-        status: 'failed',
+        status: "failed",
       },
     });
 
@@ -748,15 +735,8 @@ cron.schedule('0 0 * * *', async () => {
     for (const user of users) {
       await generateChallenges(user.id);
     }
-
-    console.log(`Generated daily challenges for ${users.length} users`);
-  } catch (error) {
-    console.error('Error in daily challenge generation:', error);
-  }
+  } catch (error) {}
 });
 
 // Start the server and log that the cron job is set up
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log('Challenge update cron job is set up and will run every minute');
-});
+app.listen(PORT, () => {});
