@@ -564,3 +564,44 @@ const getColorForElevation = (elevation, minElevation, maxElevation) => {
     return `rgb(255, ${Math.floor((1 - normalizedElevation) * 2 * 255)}, 0)`;
   }
 };
+
+export const addElevationLegend = (map) => {
+  const legend = document.createElement("div");
+  legend.className = "elevation-legend";
+  legend.style.position = "absolute";
+  legend.style.bottom = "30px";
+  legend.style.right = "10px";
+  legend.style.background = "white";
+  legend.style.padding = "10px";
+  legend.style.borderRadius = "5px";
+  legend.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.1)";
+
+  const title = document.createElement("h4");
+  title.textContent = "Elevation";
+  title.style.marginBottom = "5px";
+  legend.appendChild(title);
+
+  const gradientBar = document.createElement("div");
+  gradientBar.style.width = "20px";
+  gradientBar.style.height = "100px";
+  gradientBar.style.background = "linear-gradient(to top, green, yellow, red)";
+  gradientBar.style.marginRight = "10px";
+  legend.appendChild(gradientBar);
+
+  const labels = document.createElement("div");
+  labels.style.display = "flex";
+  labels.style.flexDirection = "column";
+  labels.style.justifyContent = "space-between";
+  labels.style.height = "100px";
+
+  const highLabel = document.createElement("div");
+  highLabel.textContent = "High";
+  const lowLabel = document.createElement("div");
+  lowLabel.textContent = "Low";
+
+  labels.appendChild(highLabel);
+  labels.appendChild(lowLabel);
+  legend.appendChild(labels);
+
+  map.getContainer().appendChild(legend);
+};
