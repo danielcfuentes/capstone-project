@@ -126,23 +126,33 @@ const chunkArray = (array, chunkSize) => {
 };
 
 // Function to add a route to the map
-export const addRouteToMap = (map, routeGeometry) => {
+
+export const addRouteToMap = (map, routeGeometry, elevationData) => {
   if (map.getSource("route")) {
     map.removeLayer("route");
     map.removeSource("route");
   }
 
-  map.addSource("route", {
+  const minElevation = Math.min(...elevationData.map((d) => d.elevation));
+  const maxElevation = Math.max(...elevationData.map((d) => d.elevation));
+
+  const routeSource = {
     type: "geojson",
     data: {
       type: "Feature",
       properties: {},
-      geometry: routeGeometry,
+      geometry: {
+        type: "LineString",
+        coordinates: routeGeometry.coordinates,
+      },
     },
-  });
+  };
 
+  map.addSource("route", routeSource);
+
+  // Add a background line for consistent width
   map.addLayer({
-    id: "route",
+    id: "route-background",
     type: "line",
     source: "route",
     layout: {
@@ -150,10 +160,39 @@ export const addRouteToMap = (map, routeGeometry) => {
       "line-cap": "round",
     },
     paint: {
-      "line-color": "#3887be",
-      "line-width": 5,
-      "line-opacity": 0.75,
+      "line-color": "#000",
+      "line-width": 6,
     },
+  });
+
+  // Add the colored line segments
+  elevationData.forEach((data, index) => {
+    if (index < elevationData.length - 1) {
+      const color = getColorForElevation(
+        data.elevation,
+        minElevation,
+        maxElevation
+      );
+      map.addLayer({
+        id: `route-segment-${index}`,
+        type: "line",
+        source: "route",
+        layout: {
+          "line-join": "round",
+          "line-cap": "round",
+        },
+        paint: {
+          "line-color": color,
+          "line-width": 4,
+        },
+        filter: [
+          "all",
+          ["==", "$type", "LineString"],
+          [">=", "index", index],
+          ["<", "index", index + 1],
+        ],
+      });
+    }
   });
 };
 
