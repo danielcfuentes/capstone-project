@@ -665,28 +665,53 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
   elevationProfile.style.padding = "10px";
   elevationProfile.style.width = "300px";
   elevationProfile.style.height = "200px";
+  elevationProfile.style.display = "none"; // Initially hidden
 
   // Create canvas for Chart.js
   const canvas = document.createElement("canvas");
   canvas.id = "elevation-chart";
   elevationProfile.appendChild(canvas);
 
+  // Create toggle button
+  const toggleButton = document.createElement("button");
+  toggleButton.textContent = "Toggle Elevation Profile";
+  toggleButton.style.position = "absolute";
+  toggleButton.style.bottom = "220px";
+  toggleButton.style.left = "10px";
+  toggleButton.onclick = () => {
+    elevationProfile.style.display =
+      elevationProfile.style.display === "none" ? "block" : "none";
+  };
+
   map.getContainer().appendChild(elevationProfile);
+  map.getContainer().appendChild(toggleButton);
+
+  // Calculate distances
+  let distances = [0];
+  for (let i = 1; i < routeGeometry.coordinates.length; i++) {
+    const from = turf.point(routeGeometry.coordinates[i - 1]);
+    const to = turf.point(routeGeometry.coordinates[i]);
+    const distance = turf.distance(from, to, { units: "miles" });
+    distances.push(distances[i - 1] + distance);
+  }
 
   // Prepare data for the chart
-  const labels = elevationData.map((_, index) => index);
-  const data = elevationData.map((d) => d.elevation);
+  const data = elevationData.map((d, i) => ({
+    x: distances[i],
+    y: d.elevation,
+  }));
 
   // Create the chart
-  new Chart(canvas, {
+  const chart = new Chart(canvas, {
     type: "line",
     data: {
-      labels: labels,
       datasets: [
         {
           label: "Elevation",
           data: data,
           borderColor: "rgb(75, 192, 192)",
+          backgroundColor: "rgba(75, 192, 192, 0.2)",
+          fill: true,
           tension: 0.1,
         },
       ],
@@ -703,16 +728,28 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
           },
         },
         x: {
+          type: "linear",
           title: {
             display: true,
-            text: "Distance",
+            text: "Distance (miles)",
+          },
+        },
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              return `Elevation: ${context.parsed.y.toFixed(
+                1
+              )}m, Distance: ${context.parsed.x.toFixed(2)} miles`;
+            },
           },
         },
       },
     },
   });
 
-  console.log("Elevation profile graph added");
+  console.log("Enhanced elevation profile graph added");
 };
 
 export const runElevationTests = (elevationData, routeGeometry) => {
