@@ -106,10 +106,9 @@ const ActiveRun = () => {
       if (!response.ok) {
         throw new Error("Failed to complete run");
       }
-      const data = await response.json();
       message.success("Run completed successfully!");
-      // Redirect to the profile page
-      navigate("/profile");
+      // Redirect to the activities page
+      navigate("/activities");
     } catch (error) {
       message.error(`Error completing run: ${error.message}`);
     }
