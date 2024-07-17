@@ -87,6 +87,13 @@ const ActiveRun = ({ handleRunCompletion }) => {
     }
   }, [runData]);
 
+  useEffect(() => {
+    return () => {
+      // Cleanup function
+      if (map) map.remove();
+    };
+  }, [map]);
+
   const fetchRunData = async () => {
     try {
       const response = await fetch(
@@ -112,6 +119,7 @@ const ActiveRun = ({ handleRunCompletion }) => {
     setIsCompleting(true);
 
     try {
+      // Step 1: Complete the run and create the activity in a single server operation
       const completeResponse = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/complete-run/${runId}`,
         {
@@ -119,40 +127,23 @@ const ActiveRun = ({ handleRunCompletion }) => {
           headers: getHeaders(),
         }
       );
+
       if (!completeResponse.ok) {
-        throw new Error("Failed to complete run");
+        const errorData = await completeResponse.json();
+        throw new Error(errorData.message || "Failed to complete run");
       }
+
       const completeData = await completeResponse.json();
 
-      const activityData = {
-        ...completeData.userActivity,
-        runId: runId,
-        routeCoordinates: JSON.parse(
-          completeData.userActivity.routeCoordinates
-        ),
-      };
-
-      const saveResponse = await fetch(
-        `${import.meta.env.VITE_POST_ADDRESS}/save-route-activity`,
-        {
-          method: "POST",
-          headers: getHeaders(),
-          body: JSON.stringify(activityData),
-        }
-      );
-
-      if (!saveResponse.ok) {
-        const errorData = await saveResponse.json();
-        throw new Error(errorData.message || "Failed to save activity");
-      }
-
-      const saveResult = await saveResponse.json();
-
-      await handleRunCompletion(saveResult);
+      // Step 2: Update challenges
+      await handleRunCompletion(completeData.userActivity);
 
       message.success("Run completed and saved successfully!");
+
+      // Step 3: Navigate to activities page
       navigate("/activities");
     } catch (error) {
+      console.error("Error in handleCompleteRun:", error);
       message.error(`Error completing run: ${error.message}`);
     } finally {
       setIsCompleting(false);

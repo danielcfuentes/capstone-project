@@ -455,6 +455,7 @@ app.post("/start-run", authenticateToken, async (req, res) => {
 app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
   try {
     const runId = parseInt(req.params.runId);
+
     const activeRun = await prisma.activeRun.findUnique({
       where: { id: runId },
       include: { user: true },
@@ -470,10 +471,20 @@ app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
         .json({ message: "Unauthorized access to this run" });
     }
 
-    // Calculate actual duration
+    // Check if an activity already exists for this run
+    const existingActivity = await prisma.userActivity.findUnique({
+      where: { runId: runId.toString() },
+    });
+
+    if (existingActivity) {
+      return res
+        .status(409)
+        .json({ message: "Activity already saved for this run" });
+    }
+
     const actualDuration = Math.round(
       (new Date() - activeRun.startDateTime) / 1000
-    ); // in seconds
+    );
 
     // Create UserActivity from completed run
     const userActivity = await prisma.userActivity.create({
@@ -493,6 +504,7 @@ app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
         endLongitude: activeRun.endLongitude,
         routeCoordinates: activeRun.routeCoordinates,
         startLocation: activeRun.startLocation,
+        runId: runId.toString(),
       },
     });
 
@@ -504,6 +516,7 @@ app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
 
     res.json({ message: "Run completed successfully", userActivity });
   } catch (error) {
+    console.error(`Error completing run: ${error.message}`);
     res
       .status(500)
       .json({ message: "Error completing run", error: error.message });
