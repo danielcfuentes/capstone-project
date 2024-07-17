@@ -128,25 +128,48 @@ const chunkArray = (array, chunkSize) => {
 // Function to add a route to the map
 
 export const addRouteToMap = (map, routeGeometry, elevationData) => {
+  console.log("Adding route to map");
+  console.log("Route geometry:", routeGeometry);
+  console.log("Elevation data:", elevationData);
+
   clearRoute(map);
 
   const minElevation = Math.min(...elevationData.map((d) => d.elevation));
   const maxElevation = Math.max(...elevationData.map((d) => d.elevation));
 
-  const routeSource = {
+  console.log("Min elevation:", minElevation);
+  console.log("Max elevation:", maxElevation);
+
+  // Create a new array of coordinates with elevation data
+  const coordinatesWithElevation = routeGeometry.coordinates.map(
+    (coord, index) => ({
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: coord,
+      },
+      properties: {
+        elevation: elevationData[index]
+          ? elevationData[index].elevation
+          : (minElevation + maxElevation) / 2,
+      },
+    })
+  );
+
+  map.addSource("route", {
     type: "geojson",
     data: {
       type: "Feature",
       properties: {},
-      geometry: routeGeometry,
+      geometry: {
+        type: "LineString",
+        coordinates: routeGeometry.coordinates,
+      },
     },
-  };
+  });
 
-  map.addSource("route", routeSource);
-
-  // Add a background line for consistent width
   map.addLayer({
-    id: "route-background",
+    id: "route-line",
     type: "line",
     source: "route",
     layout: {
@@ -154,40 +177,50 @@ export const addRouteToMap = (map, routeGeometry, elevationData) => {
       "line-cap": "round",
     },
     paint: {
-      "line-color": "#000",
-      "line-width": 6,
+      "line-color": [
+        "interpolate",
+        ["linear"],
+        ["get", "elevation"],
+        minElevation,
+        "green",
+        (minElevation + maxElevation) / 2,
+        "yellow",
+        maxElevation,
+        "red",
+      ],
+      "line-width": 4,
     },
   });
 
-  // Add the colored line segments
-  elevationData.forEach((data, index) => {
-    if (index < elevationData.length - 1) {
-      const color = getColorForElevation(
-        data.elevation,
-        minElevation,
-        maxElevation
-      );
-      map.addLayer({
-        id: `route-segment-${index}`,
-        type: "line",
-        source: "route",
-        layout: {
-          "line-join": "round",
-          "line-cap": "round",
-        },
-        paint: {
-          "line-color": color,
-          "line-width": 4,
-        },
-        filter: [
-          "all",
-          ["==", "$type", "LineString"],
-          [">=", "index", index],
-          ["<", "index", index + 1],
-        ],
-      });
-    }
+  map.addSource("elevation-points", {
+    type: "geojson",
+    data: {
+      type: "FeatureCollection",
+      features: coordinatesWithElevation,
+    },
   });
+
+  map.addLayer({
+    id: "elevation-points",
+    type: "circle",
+    source: "elevation-points",
+    paint: {
+      "circle-radius": 3,
+      "circle-color": [
+        "interpolate",
+        ["linear"],
+        ["get", "elevation"],
+        minElevation,
+        "green",
+        (minElevation + maxElevation) / 2,
+        "yellow",
+        maxElevation,
+        "red",
+      ],
+    },
+  });
+
+  console.log("Route layers added");
 };
 
 // Function to fit the map view to the given route coordinates
@@ -276,6 +309,7 @@ export const calculateRunningTime = (distanceMiles) => {
 
 // Function to get elevation data for a set of coordinates
 export const getElevationData = async (coordinates) => {
+  console.log("Fetching elevation data for coordinates:", coordinates);
   const chunkSize = 50;
   let elevationData = [];
 
@@ -293,12 +327,27 @@ export const getElevationData = async (coordinates) => {
 
     const data = await response.json();
 
-    data.features.forEach((feature, index) => {
+    // Ensure we have elevation data for each coordinate
+    chunk.forEach((coord, index) => {
+      const feature = data.features[index];
       elevationData.push({
-        coordinate: chunk[index],
-        elevation: feature.properties.ele,
+        coordinate: coord,
+        elevation: feature ? feature.properties.ele : 0, // Use 0 if no elevation data
       });
     });
+  }
+
+  // Interpolate missing elevation data
+  for (let i = 0; i < elevationData.length; i++) {
+    if (
+      elevationData[i].elevation === 0 &&
+      i > 0 &&
+      i < elevationData.length - 1
+    ) {
+      const prev = elevationData[i - 1].elevation;
+      const next = elevationData[i + 1].elevation;
+      elevationData[i].elevation = (prev + next) / 2;
+    }
   }
 
   // Calculate total elevation gain and loss
@@ -316,11 +365,14 @@ export const getElevationData = async (coordinates) => {
     prevElevation = elevationData[i].elevation;
   }
 
-  return {
+  const result = {
     elevationProfile: elevationData,
     gain: Math.round(elevationGain),
     loss: Math.round(elevationLoss),
   };
+
+  console.log("Elevation data result:", result);
+  return result;
 };
 
 // Function to calculate the distance of a route
@@ -557,7 +609,6 @@ export const clearMileMarkers = () => {
   mileMarkers.forEach((marker) => marker.remove());
   mileMarkers = [];
 };
-
 
 //colors for elveation
 
