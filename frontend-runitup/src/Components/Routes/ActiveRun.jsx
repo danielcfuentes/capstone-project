@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, Button, Statistic, Row, Col, Typography, message } from "antd";
+import {
+  Card,
+  Button,
+  Statistic,
+  Row,
+  Col,
+  Typography,
+  message,
+  Spin,
+} from "antd";
 import {
   AimOutlined,
   ClockCircleOutlined,
@@ -18,13 +27,15 @@ const { Title } = Typography;
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
-const ActiveRun = () => {
+const ActiveRun = ({ handleRunCompletion }) => {
   const { runId } = useParams();
   const navigate = useNavigate();
   const mapContainer = useRef(null);
   const [runData, setRunData] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [map, setMap] = useState(null);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchRunData();
@@ -76,6 +87,13 @@ const ActiveRun = () => {
     }
   }, [runData]);
 
+  useEffect(() => {
+    return () => {
+      // Cleanup function
+      if (map) map.remove();
+    };
+  }, [map]);
+
   const fetchRunData = async () => {
     try {
       const response = await fetch(
@@ -91,31 +109,48 @@ const ActiveRun = () => {
       setRunData(data);
     } catch (error) {
       message.error(`Error fetching run data: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCompleteRun = async () => {
+    if (isCompleting) return;
+    setIsCompleting(true);
+
     try {
-      const response = await fetch(
+      const completeResponse = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/complete-run/${runId}`,
         {
           method: "POST",
           headers: getHeaders(),
         }
       );
-      if (!response.ok) {
+
+      if (!completeResponse.ok) {
         throw new Error("Failed to complete run");
       }
-      message.success("Run completed successfully!");
-      // Redirect to the activities page
-      navigate("/activities");
+
+      const completeData = await completeResponse.json();
+
+      // Call handleRunCompletion to update challenges
+      await handleRunCompletion(completeData.userActivity);
+
+      message.success("Run completed and challenges updated successfully!");
+      navigate("/recommendations"); // Navigate to recommendations page to show updated challenges
     } catch (error) {
       message.error(`Error completing run: ${error.message}`);
+    } finally {
+      setIsCompleting(false);
     }
   };
 
+  if (loading) {
+    return <Spin size="large" />;
+  }
+
   if (!runData) {
-    return <div>Loading...</div>;
+    return <div>No run data available.</div>;
   }
 
   return (
@@ -195,9 +230,11 @@ const ActiveRun = () => {
         type="primary"
         size="large"
         onClick={handleCompleteRun}
+        disabled={isCompleting}
+        loading={isCompleting}
         className="complete-run-btn"
       >
-        Complete Run
+        {isCompleting ? "Completing Run..." : "Complete Run"}
       </Button>
     </div>
   );

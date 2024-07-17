@@ -10,6 +10,8 @@ const multer = require("multer");
 
 app.use(express.json());
 app.use(cors());
+// 4. Add a cron job to generate challenges weekly (you'll need to install a cron library)
+const cron = require("node-cron");
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -216,13 +218,24 @@ const calculateCaloriesBurned = (user, distance, elevationGain) => {
 app.post("/save-route-activity", authenticateToken, async (req, res) => {
   try {
     const {
+      runId,
       distance,
       duration,
       elevationData,
-      terrain,
       routeCoordinates,
       startLocation,
     } = req.body;
+
+    // Validate required fields
+    if (
+      !runId ||
+      !distance ||
+      !duration ||
+      !routeCoordinates ||
+      !startLocation
+    ) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
     const user = await prisma.user.findUnique({
       where: { username: req.user.name },
@@ -232,42 +245,120 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Convert duration from string to number of seconds
-    const durationInSeconds = duration.split("m")[0] * 60;
+    // Check for existing activity with the same runId
+    const existingActivity = await prisma.userActivity.findUnique({
+      where: { runId: runId },
+    });
+
+    if (existingActivity) {
+      return res
+        .status(409)
+        .json({ message: "Activity already saved for this run" });
+    }
+
+    // Parse routeCoordinates if it's a string
+    let parsedRouteCoordinates;
+    try {
+      parsedRouteCoordinates =
+        typeof routeCoordinates === "string"
+          ? JSON.parse(routeCoordinates)
+          : routeCoordinates;
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: "Invalid routeCoordinates format" });
+    }
+
+    // Ensure parsedRouteCoordinates is an array and has at least one coordinate
+    if (
+      !Array.isArray(parsedRouteCoordinates) ||
+      parsedRouteCoordinates.length === 0
+    ) {
+      return res.status(400).json({ message: "Invalid routeCoordinates data" });
+    }
+
+    const startCoordinate = parsedRouteCoordinates[0];
+    const endCoordinate =
+      parsedRouteCoordinates[parsedRouteCoordinates.length - 1];
+
+    // Convert duration to seconds if it's not already
+    const durationInSeconds =
+      typeof duration === "string" ? parseInt(duration) : duration;
 
     // Calculate average pace
     const averagePace = durationInSeconds / 60 / parseFloat(distance);
 
     const activity = await prisma.userActivity.create({
       data: {
+        runId,
         userId: user.id,
         activityType: "Run",
         startDateTime: new Date(),
         duration: durationInSeconds,
         distance: parseFloat(distance),
         averagePace: averagePace,
-        elevationGain: elevationData.gain,
-        elevationLoss: elevationData.loss,
+        elevationGain: elevationData?.gain || 0,
+        elevationLoss: elevationData?.loss || 0,
         caloriesBurned: calculateCaloriesBurned(
           user,
           distance,
-          elevationData.gain
+          elevationData?.gain || 0
         ),
-        startLatitude: routeCoordinates[0][1],
-        startLongitude: routeCoordinates[0][0],
-        endLatitude: routeCoordinates[routeCoordinates.length - 1][1],
-        endLongitude: routeCoordinates[routeCoordinates.length - 1][0],
-        routeCoordinates: JSON.stringify(routeCoordinates),
+        startLatitude: startCoordinate[1],
+        startLongitude: startCoordinate[0],
+        endLatitude: endCoordinate[1],
+        endLongitude: endCoordinate[0],
+        routeCoordinates: JSON.stringify(parsedRouteCoordinates),
         startLocation,
       },
     });
 
-    res.json(activity);
+    const activeChallenges = await prisma.challenge.findMany({
+      where: {
+        userId: user.id,
+        status: "active",
+      },
+    });
+
+    for (const challenge of activeChallenges) {
+      let newProgress = challenge.currentProgress;
+      let isCompleted = false;
+
+      switch (challenge.type) {
+        case "first_run":
+          isCompleted = true;
+          break;
+        case "distance":
+          newProgress += activity.distance;
+          isCompleted = newProgress >= challenge.target;
+          break;
+        case "calories":
+          newProgress += activity.caloriesBurned;
+          isCompleted = newProgress >= challenge.target;
+          break;
+        case "elevation":
+          newProgress += activity.elevationGain;
+          isCompleted = newProgress >= challenge.target;
+          break;
+      }
+
+      await prisma.challenge.update({
+        where: { id: challenge.id },
+        data: {
+          currentProgress: newProgress,
+          status: isCompleted ? "completed" : "active",
+        },
+      });
+    }
+
+    res.json({
+      message: "Activity saved and challenges updated successfully",
+      activity,
+    });
   } catch (error) {
     res.status(500).json({
       message: "Error saving activity",
       error: error.message,
-      stack: error.stack,
     });
   }
 });
@@ -363,6 +454,7 @@ app.post("/start-run", authenticateToken, async (req, res) => {
 app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
   try {
     const runId = parseInt(req.params.runId);
+
     const activeRun = await prisma.activeRun.findUnique({
       where: { id: runId },
       include: { user: true },
@@ -378,39 +470,83 @@ app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
         .json({ message: "Unauthorized access to this run" });
     }
 
-    // Calculate actual duration
     const actualDuration = Math.round(
       (new Date() - activeRun.startDateTime) / 1000
-    ); // in seconds
+    );
 
-    // Create UserActivity from completed run
-    const userActivity = await prisma.userActivity.create({
-      data: {
-        userId: activeRun.userId,
-        activityType: "Run",
-        startDateTime: activeRun.startDateTime,
-        duration: actualDuration,
-        distance: activeRun.distance,
-        averagePace: activeRun.averagePace,
-        elevationGain: activeRun.elevationGain,
-        elevationLoss: activeRun.elevationLoss,
-        caloriesBurned: activeRun.estimatedCaloriesBurned,
-        startLatitude: activeRun.startLatitude,
-        startLongitude: activeRun.startLongitude,
-        endLatitude: activeRun.endLatitude,
-        endLongitude: activeRun.endLongitude,
-        routeCoordinates: activeRun.routeCoordinates,
-        startLocation: activeRun.startLocation,
-      },
+    // Use a transaction to ensure all operations succeed or fail together
+    const result = await prisma.$transaction(async (prisma) => {
+      // Create UserActivity from completed run
+      const userActivity = await prisma.userActivity.create({
+        data: {
+          userId: activeRun.userId,
+          activityType: "Run",
+          startDateTime: activeRun.startDateTime,
+          duration: actualDuration,
+          distance: activeRun.distance,
+          averagePace: activeRun.averagePace,
+          elevationGain: activeRun.elevationGain,
+          elevationLoss: activeRun.elevationLoss,
+          caloriesBurned: activeRun.estimatedCaloriesBurned,
+          startLatitude: activeRun.startLatitude,
+          startLongitude: activeRun.startLongitude,
+          endLatitude: activeRun.endLatitude,
+          endLongitude: activeRun.endLongitude,
+          routeCoordinates: activeRun.routeCoordinates,
+          startLocation: activeRun.startLocation,
+          runId: runId.toString(),
+        },
+      });
+
+      // Update active challenges
+      const activeChallenges = await prisma.challenge.findMany({
+        where: {
+          userId: activeRun.userId,
+          status: "active",
+        },
+      });
+
+      for (const challenge of activeChallenges) {
+        let newProgress = challenge.currentProgress;
+        let isCompleted = false;
+
+        switch (challenge.type) {
+          case "distance":
+            newProgress += activeRun.distance;
+            break;
+          case "calories":
+            newProgress += activeRun.estimatedCaloriesBurned;
+            break;
+          case "elevation":
+            newProgress += activeRun.elevationGain;
+            break;
+        }
+
+        isCompleted = newProgress >= challenge.target;
+
+        await prisma.challenge.update({
+          where: { id: challenge.id },
+          data: {
+            currentProgress: newProgress,
+            status: isCompleted ? "completed" : "active",
+          },
+        });
+      }
+
+      // Mark the ActiveRun as completed
+      await prisma.activeRun.update({
+        where: { id: runId },
+        data: { isCompleted: true },
+      });
+
+      return { userActivity, updatedChallenges: activeChallenges.length };
     });
 
-    // Mark the ActiveRun as completed
-    await prisma.activeRun.update({
-      where: { id: runId },
-      data: { isCompleted: true },
+    res.json({
+      message: "Run completed successfully",
+      userActivity: result.userActivity,
+      updatedChallenges: result.updatedChallenges,
     });
-
-    res.json({ message: "Run completed successfully", userActivity });
   } catch (error) {
     res
       .status(500)
@@ -418,4 +554,189 @@ app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
   }
 });
 
+// Create a new challenge
+app.post("/challenges", authenticateToken, async (req, res) => {
+  try {
+    const { description, target, endDate } = req.body;
+    const challenge = await prisma.challenge.create({
+      data: {
+        userId: req.user.id,
+        description,
+        target,
+        endDate: new Date(endDate),
+      },
+    });
+    res.json(challenge);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create challenge" });
+  }
+});
+
+// Get user's challenges
+app.get("/challenges", authenticateToken, async (req, res) => {
+  try {
+    const challenges = await prisma.challenge.findMany({
+      where: { userId: req.user.id },
+      orderBy: { endDate: "asc" },
+    });
+    res.json(challenges);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch challenges" });
+  }
+});
+
+// Update challenge progress
+app.put("/challenges/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { currentProgress, isCompleted } = req.body;
+    const updatedChallenge = await prisma.challenge.update({
+      where: { id: parseInt(id) },
+      data: { currentProgress, isCompleted },
+    });
+    res.json(updatedChallenge);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update challenge" });
+  }
+});
+
+// Challenge generation function
+const generateChallenges = async (userId) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { activities: { orderBy: { startDateTime: "desc" }, take: 5 } },
+    });
+
+    if (!user || user.activities.length === 0) {
+      return null;
+    }
+
+    const recentActivities = user.activities;
+    const avgDistance =
+      recentActivities.reduce((sum, activity) => sum + activity.distance, 0) /
+      recentActivities.length;
+    const avgCalories =
+      recentActivities.reduce(
+        (sum, activity) => sum + activity.caloriesBurned,
+        0
+      ) / recentActivities.length;
+    const avgElevation =
+      recentActivities.reduce(
+        (sum, activity) => sum + activity.elevationGain,
+        0
+      ) / recentActivities.length;
+
+    const challengeTypes = ["distance", "calories", "elevation"];
+    const shuffledTypes = challengeTypes.sort(() => Math.random() - 0.5);
+    const challenges = [];
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(23, 59, 59, 999); // Set to end of next day
+
+    for (const type of shuffledTypes.slice(0, 3)) {
+      let target, description;
+      switch (type) {
+        case "distance":
+          target = Math.max(Math.round(avgDistance * 1.2 * 10) / 10, 1); // At least 1 mile
+          description = `Run ${target.toFixed(1)} miles today`;
+          break;
+        case "calories":
+          target = Math.round(avgCalories * 1.2);
+          description = `Burn ${target} calories today`;
+          break;
+        case "elevation":
+          target = Math.round(avgElevation * 1.2);
+          description = `Gain ${target} feet of elevation today`;
+          break;
+      }
+
+      const challenge = await prisma.challenge.create({
+        data: {
+          userId,
+          type,
+          description,
+          target,
+          endDate: tomorrow,
+          expiresAt: tomorrow,
+        },
+      });
+
+      challenges.push(challenge);
+    }
+
+    return challenges;
+  } catch (error) {
+    return null;
+  }
+};
+
+//new endpoint to fetch all past challenges:
+app.get("/past-challenges", authenticateToken, async (req, res) => {
+  try {
+    const pastChallenges = await prisma.challenge.findMany({
+      where: {
+        userId: req.user.id,
+        status: { in: ["completed", "failed"] },
+      },
+      orderBy: { endDate: "desc" },
+    });
+    res.json(pastChallenges);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch past challenges" });
+  }
+});
+
+app.post("/generate-challenges", authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { challenges: { where: { status: "active" } } },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.challenges.length > 0) {
+      return res.json({
+        message: "User already has active challenges",
+        challenges: user.challenges,
+      });
+    }
+
+    const newChallenges = await generateChallenges(user.id);
+    res.json({
+      message: "New challenges generated",
+      challenges: newChallenges,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to generate challenges" });
+  }
+});
+
+/// Update cron job to run once a day at midnight
+cron.schedule("0 0 * * *", async () => {
+  try {
+    // Mark expired challenges as failed
+    await prisma.challenge.updateMany({
+      where: {
+        status: "active",
+        expiresAt: { lt: new Date() },
+      },
+      data: {
+        status: "failed",
+      },
+    });
+
+    // Generate new challenges for all users
+    const users = await prisma.user.findMany();
+    for (const user of users) {
+      await generateChallenges(user.id);
+    }
+  } catch (error) {}
+});
+
+// Start the server and log that the cron job is set up
 app.listen(PORT, () => {});

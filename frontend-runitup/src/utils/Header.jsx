@@ -8,6 +8,7 @@ import {
   LogoutOutlined,
   UserOutlined,
   HistoryOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
 import "../styles/Header.css";
 import { generateColor } from "./apiConfig";
@@ -30,8 +31,8 @@ const Header = ({ onLogout, user }) => {
 
     {
       key: "recommendations",
-      label: "Recommendations",
-      icon: <CompassOutlined />,
+      label: "Challenges",
+      icon: <TrophyOutlined />,
       link: "/recommendations",
     },
   ];
