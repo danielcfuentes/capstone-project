@@ -511,3 +511,17 @@ export const clearMileMarkers = () => {
   mileMarkers.forEach((marker) => marker.remove());
   mileMarkers = [];
 };
+
+
+//colors for elveation
+
+const getColorForElevation = (elevation, minElevation, maxElevation) => {
+  const normalizedElevation =
+    (elevation - minElevation) / (maxElevation - minElevation);
+  // Use a gradient from green to yellow to red
+  if (normalizedElevation < 0.5) {
+    return `rgb(${Math.floor(normalizedElevation * 2 * 255)}, 255, 0)`;
+  } else {
+    return `rgb(255, ${Math.floor((1 - normalizedElevation) * 2 * 255)}, 0)`;
+  }
+};
