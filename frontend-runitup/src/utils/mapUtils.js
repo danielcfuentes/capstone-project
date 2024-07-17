@@ -238,16 +238,15 @@ export const addStartMarker = (map, coordinates, locationName) => {
 
 // Function to clear the route from the map
 export const clearRoute = (map) => {
-  // Remove all route-related layers
-  [
-    "route",
-    "route-background",
-    ...Array(100)
-      .keys()
-      .map((i) => `route-segment-${i}`),
-  ].forEach((layerId) => {
-    if (map.getLayer(layerId)) {
-      map.removeLayer(layerId);
+  // Remove route-related layers
+  if (map.getLayer("route-line")) {
+    map.removeLayer("route-line");
+  }
+
+  // Remove any other layers that might be using the 'route' source
+  map.getStyle().layers.forEach((layer) => {
+    if (layer.source === "route") {
+      map.removeLayer(layer.id);
     }
   });
 
@@ -255,6 +254,8 @@ export const clearRoute = (map) => {
   if (map.getSource("route")) {
     map.removeSource("route");
   }
+
+  console.log("Route cleared from map");
 };
 
 // Function to remove the current marker and popup from the map
