@@ -57,3 +57,13 @@
   font-size: 14px;
   text-align: center;
 }
+
+.elevation-legend {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.elevation-legend h4 {
+  margin: 0 0 5px 0;
+}

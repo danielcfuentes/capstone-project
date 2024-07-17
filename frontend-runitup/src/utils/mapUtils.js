@@ -128,10 +128,7 @@ const chunkArray = (array, chunkSize) => {
 // Function to add a route to the map
 
 export const addRouteToMap = (map, routeGeometry, elevationData) => {
-  if (map.getSource("route")) {
-    map.removeLayer("route");
-    map.removeSource("route");
-  }
+  clearRoute(map);
 
   const minElevation = Math.min(...elevationData.map((d) => d.elevation));
   const maxElevation = Math.max(...elevationData.map((d) => d.elevation));
@@ -141,10 +138,7 @@ export const addRouteToMap = (map, routeGeometry, elevationData) => {
     data: {
       type: "Feature",
       properties: {},
-      geometry: {
-        type: "LineString",
-        coordinates: routeGeometry.coordinates,
-      },
+      geometry: routeGeometry,
     },
   };
 
@@ -240,8 +234,21 @@ export const addStartMarker = (map, coordinates, locationName) => {
 
 // Function to clear the route from the map
 export const clearRoute = (map) => {
+  // Remove all route-related layers
+  [
+    "route",
+    "route-background",
+    ...Array(100)
+      .keys()
+      .map((i) => `route-segment-${i}`),
+  ].forEach((layerId) => {
+    if (map.getLayer(layerId)) {
+      map.removeLayer(layerId);
+    }
+  });
+
+  // Remove the route source
   if (map.getSource("route")) {
-    map.removeLayer("route");
     map.removeSource("route");
   }
 };

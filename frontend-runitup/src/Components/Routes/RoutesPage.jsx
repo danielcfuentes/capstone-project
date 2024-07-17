@@ -18,6 +18,8 @@ import {
   calculatePersonalizedRunningTime,
   addMileMarkers,
   clearMileMarkers,
+  getElevationData,
+  addElevationLegend,
 } from "../../utils/mapUtils";
 import RouteInfo from "./RouteInfo";
 import { getHeaders } from "../../utils/apiConfig";
@@ -47,11 +49,14 @@ const RoutesPage = () => {
 
   // Effect to initialize the map and fetch user profile on component mount
   useEffect(() => {
-    const map = initializeMap(mapContainer.current); // Initialize the map
-    map.on("load", () => setMap(map)); // Set map instance in state on load
-    fetchUserProfile(); // Fetch user profile
+    const map = initializeMap(mapContainer.current);
+    map.on("load", () => {
+      setMap(map);
+      addElevationLegend(map);
+    });
+    fetchUserProfile();
     fetchChallenges();
-    return () => map.remove(); // Clean up map instance on unmount
+    return () => map.remove();
   }, []);
 
   const handleSelectRoute = () => {
@@ -154,12 +159,12 @@ const RoutesPage = () => {
 
     try {
       if (map) {
-        clearRoute(map); // Clear existing route from map
-        removeCurrentMarker(); // Remove existing marker from map
-        clearMileMarkers(); //  clear existing mile markers
+        clearRoute(map);
+        removeCurrentMarker();
+        clearMileMarkers();
       }
 
-      const [startLng, startLat] = await geocodeLocation(startLocation); // Geocode start location
+      const [startLng, startLat] = await geocodeLocation(startLocation);
       const startCoordinates = [startLng, startLat];
 
       const { route, actualDistance } = await generateRouteWithinDistance(
@@ -172,19 +177,26 @@ const RoutesPage = () => {
         throw new Error("Invalid route data received. Please try again.");
       }
 
-      addRouteToMap(map, route.geometry); // Add generated route to map
-      addStartMarker(map, startCoordinates, startLocation); // Add start marker to map
-      fitMapToRouteWithStart(map, route.geometry.coordinates, startCoordinates); // Fit map view to route
-      addMileMarkers(map, route); //  create mile markers
+      const elevationData = await getElevationData(route.geometry.coordinates);
+      addRouteToMap(map, route.geometry, elevationData.elevationProfile);
+      addStartMarker(map, startCoordinates, startLocation);
+      fitMapToRouteWithStart(map, route.geometry.coordinates, startCoordinates);
+      addMileMarkers(map, route);
 
       setIsGeneratingRoute(false);
       setIsLoadingBasicInfo(true);
 
-      // Get basic route info
-      const basicInfo = await getBasicRouteInfo(route);
+      const basicInfo = {
+        distance: actualDistance,
+        elevationData: {
+          gain: elevationData.gain,
+          loss: elevationData.loss,
+        },
+      };
+
       const duration = calculatePersonalizedRunningTime(
         actualDistance,
-        basicInfo.elevationData.gain,
+        elevationData.gain,
         userProfile || {
           age: 30,
           fitnessLevel: "intermediate",
@@ -203,7 +215,6 @@ const RoutesPage = () => {
       setIsLoadingBasicInfo(false);
       setIsLoadingTerrainInfo(true);
 
-      // Get detailed terrain info
       const terrainInfo = await getDetailedTerrainInfo(
         route.geometry.coordinates
       );
@@ -216,7 +227,6 @@ const RoutesPage = () => {
 
       setIsLoadingTerrainInfo(false);
 
-      // Display a warning if the generated route distance significantly differs from the requested distance
       if (Math.abs(actualDistance - distance) > 0.5) {
         setWarning(
           `Note: The generated route is ${actualDistance.toFixed(
