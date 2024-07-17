@@ -643,7 +643,7 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
   elevationData.forEach((data, index) => {
     const el = document.createElement("div");
     el.className = "elevation-marker";
-    el.innerHTML = `<span>${Math.round(data.elevation)}m</span>`;
+    el.innerHTML = `<span>${Math.round(metersToFeet(data.elevation))}ft</span>`;
     el.style.backgroundColor = getColorForElevation(
       data.elevation,
       Math.min(...elevationData.map((d) => d.elevation)),
@@ -666,6 +666,8 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
   elevationProfile.style.width = "300px";
   elevationProfile.style.height = "200px";
   elevationProfile.style.display = "none"; // Initially hidden
+  elevationProfile.style.borderRadius = "5px";
+  elevationProfile.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
 
   // Create canvas for Chart.js
   const canvas = document.createElement("canvas");
@@ -678,6 +680,19 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
   toggleButton.style.position = "absolute";
   toggleButton.style.bottom = "220px";
   toggleButton.style.left = "10px";
+  toggleButton.style.padding = "10px 15px";
+  toggleButton.style.backgroundColor = "#4CAF50";
+  toggleButton.style.color = "white";
+  toggleButton.style.border = "none";
+  toggleButton.style.borderRadius = "5px";
+  toggleButton.style.cursor = "pointer";
+  toggleButton.style.transition = "background-color 0.3s";
+  toggleButton.onmouseover = () => {
+    toggleButton.style.backgroundColor = "#45a049";
+  };
+  toggleButton.onmouseout = () => {
+    toggleButton.style.backgroundColor = "#4CAF50";
+  };
   toggleButton.onclick = () => {
     elevationProfile.style.display =
       elevationProfile.style.display === "none" ? "block" : "none";
@@ -698,7 +713,7 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
   // Prepare data for the chart
   const data = elevationData.map((d, i) => ({
     x: distances[i],
-    y: d.elevation,
+    y: metersToFeet(d.elevation),
   }));
 
   // Create the chart
@@ -724,7 +739,7 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
           beginAtZero: false,
           title: {
             display: true,
-            text: "Elevation (m)",
+            text: "Elevation (ft)",
           },
         },
         x: {
@@ -741,7 +756,7 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
             label: function (context) {
               return `Elevation: ${context.parsed.y.toFixed(
                 1
-              )}m, Distance: ${context.parsed.x.toFixed(2)} miles`;
+              )}ft, Distance: ${context.parsed.x.toFixed(2)} miles`;
             },
           },
         },
@@ -749,7 +764,7 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
     },
   });
 
-  console.log("Enhanced elevation profile graph added");
+  console.log("Enhanced elevation profile graph added with feet measurements");
 };
 
 export const runElevationTests = (elevationData, routeGeometry) => {
@@ -784,3 +799,6 @@ export const runElevationTests = (elevationData, routeGeometry) => {
 
   console.log("Elevation tests completed");
 };
+
+
+const metersToFeet = (meters) => meters * 3.28084;
