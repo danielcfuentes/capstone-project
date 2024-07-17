@@ -140,28 +140,30 @@ export const addRouteToMap = (map, routeGeometry, elevationData) => {
   console.log("Min elevation:", minElevation);
   console.log("Max elevation:", maxElevation);
 
-  // Create a new array of coordinates with elevation data
-  const coordinatesWithElevation = routeGeometry.coordinates.map(
-    (coord, index) => ({
+  // Create line segments with elevation data
+  const features = [];
+  for (let i = 0; i < routeGeometry.coordinates.length - 1; i++) {
+    features.push({
       type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: coord,
-      },
       properties: {
-        elevation: elevationData[index]
-          ? elevationData[index].elevation
-          : (minElevation + maxElevation) / 2,
+        elevation:
+          (elevationData[i].elevation + elevationData[i + 1].elevation) / 2,
       },
-    })
-  );
+      geometry: {
+        type: "LineString",
+        coordinates: [
+          routeGeometry.coordinates[i],
+          routeGeometry.coordinates[i + 1],
+        ],
+      },
+    });
+  }
 
   map.addSource("route", {
     type: "geojson",
     data: {
-      type: "Feature",
-      properties: {},
-      geometry: routeGeometry,
+      type: "FeatureCollection",
+      features: features,
     },
   });
 
@@ -189,7 +191,7 @@ export const addRouteToMap = (map, routeGeometry, elevationData) => {
     },
   });
 
-  console.log("Route layer added");
+  console.log("Route layer added with elevation-based gradient");
 };
 
 // Function to fit the map view to the given route coordinates
