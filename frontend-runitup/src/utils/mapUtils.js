@@ -230,10 +230,8 @@ export const calculateRunningTime = (distanceMiles) => {
 
 // Function to get elevation data for a set of coordinates
 export const getElevationData = async (coordinates) => {
-  const chunkSize = 50; // Mapbox allows up to 50 points per request
-  let elevationGain = 0;
-  let elevationLoss = 0;
-  let prevElevation = null;
+  const chunkSize = 50;
+  let elevationData = [];
 
   for (let i = 0; i < coordinates.length; i += chunkSize) {
     const chunk = coordinates.slice(i, i + chunkSize);
@@ -250,20 +248,33 @@ export const getElevationData = async (coordinates) => {
     const data = await response.json();
 
     data.features.forEach((feature, index) => {
-      const elevation = feature.properties.ele;
-      if (prevElevation !== null) {
-        const diff = elevation - prevElevation;
-        if (diff > 0) {
-          elevationGain += diff;
-        } else {
-          elevationLoss += Math.abs(diff);
-        }
-      }
-      prevElevation = elevation;
+      elevationData.push({
+        coordinate: chunk[index],
+        elevation: feature.properties.ele,
+      });
     });
   }
 
-  return { gain: Math.round(elevationGain), loss: Math.round(elevationLoss) };
+  // Calculate total elevation gain and loss
+  let elevationGain = 0;
+  let elevationLoss = 0;
+  let prevElevation = elevationData[0].elevation;
+
+  for (let i = 1; i < elevationData.length; i++) {
+    const diff = elevationData[i].elevation - prevElevation;
+    if (diff > 0) {
+      elevationGain += diff;
+    } else {
+      elevationLoss += Math.abs(diff);
+    }
+    prevElevation = elevationData[i].elevation;
+  }
+
+  return {
+    elevationProfile: elevationData,
+    gain: Math.round(elevationGain),
+    loss: Math.round(elevationLoss),
+  };
 };
 
 // Function to calculate the distance of a route
@@ -463,7 +474,6 @@ export const getBasicRouteInfo = async (route) => {
   const elevationData = await getElevationData(route.geometry.coordinates);
   return { distance, elevationData };
 };
-
 
 let mileMarkers = []; // Array to store mile marker
 
