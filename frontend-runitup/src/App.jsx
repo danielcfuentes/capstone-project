@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Header from "./utils/Header";
 import Footer from "./utils/Footer";
+import ActiveRun from "./Components/Routes/ActiveRun";
 
 // Protected route wrapper component
 const ProtectedRoute = ({ children, isLoggedIn, isProfileComplete }) => {
@@ -211,6 +212,17 @@ function App() {
                   user={user}
                   onProfileUpdate={handleProfileUpdate}
                 />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/active-run/:runId"
+            element={
+              <ProtectedRoute
+                isLoggedIn={isLoggedIn}
+                isProfileComplete={isProfileComplete}
+              >
+                <ActiveRun />
               </ProtectedRoute>
             }
           />

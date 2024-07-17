@@ -11,15 +11,21 @@ const multer = require("multer");
 app.use(express.json());
 app.use(cors());
 
-// Middleware to authenticate token
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (token == null) return res.sendStatus(401);
 
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, user) => {
     if (err) return res.sendStatus(403);
-    req.user = user;
+
+    // Fetch the user from the database to get the ID
+    const dbUser = await prisma.user.findUnique({
+      where: { username: user.name },
+    });
+    if (!dbUser) return res.sendStatus(403);
+
+    req.user = { id: dbUser.id, name: user.name };
     next();
   });
 }
@@ -256,7 +262,6 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
       },
     });
 
-
     res.json(activity);
   } catch (error) {
     res.status(500).json({
@@ -264,6 +269,152 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
+  }
+});
+
+// Fetch an active run
+app.get("/active-run/:runId", authenticateToken, async (req, res) => {
+  try {
+    const runId = parseInt(req.params.runId);
+    const activeRun = await prisma.activeRun.findUnique({
+      where: { id: runId },
+    });
+
+    if (!activeRun) {
+      return res.status(404).json({ message: "Active run not found" });
+    }
+
+    // Check if the active run belongs to the authenticated user
+    if (activeRun.userId !== req.user.id) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized access to this run" });
+    }
+
+    res.json(activeRun);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching active run", error: error.message });
+  }
+});
+
+// Start a new run
+app.post("/start-run", authenticateToken, async (req, res) => {
+  try {
+    const {
+      distance,
+      elevationData,
+      routeCoordinates,
+      startLocation,
+      duration,
+    } = req.body;
+
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Calculate average pace (minutes per mile)
+    const durationMinutes = parseFloat(duration.split("m")[0]);
+    const averagePace = durationMinutes / parseFloat(distance);
+
+    // Calculate estimated calories burned
+    const caloriesBurned = calculateCaloriesBurned(
+      user,
+      parseFloat(distance),
+      elevationData.gain
+    );
+
+    const activeRun = await prisma.activeRun.create({
+      data: {
+        userId: user.id,
+        startDateTime: new Date(),
+        distance: parseFloat(distance),
+        elevationGain: elevationData.gain,
+        elevationLoss: elevationData.loss,
+        startLatitude: routeCoordinates[0][1],
+        startLongitude: routeCoordinates[0][0],
+        endLatitude: routeCoordinates[routeCoordinates.length - 1][1],
+        endLongitude: routeCoordinates[routeCoordinates.length - 1][0],
+        routeCoordinates: JSON.stringify(routeCoordinates),
+        startLocation,
+        averagePace,
+        estimatedCaloriesBurned: caloriesBurned,
+      },
+    });
+
+    res.json(activeRun);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error starting run",
+      error: error.message,
+      stack: error.stack,
+    });
+  }
+});
+
+// Complete a run
+app.post("/complete-run/:runId", authenticateToken, async (req, res) => {
+  try {
+    const runId = parseInt(req.params.runId);
+    const activeRun = await prisma.activeRun.findUnique({
+      where: { id: runId },
+      include: { user: true },
+    });
+
+    if (!activeRun) {
+      return res.status(404).json({ message: "Active run not found" });
+    }
+
+    if (activeRun.userId !== req.user.id) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized access to this run" });
+    }
+
+    // Calculate actual duration
+    const actualDuration = Math.round(
+      (new Date() - activeRun.startDateTime) / 1000
+    ); // in seconds
+
+    // Create UserActivity from completed run
+    const userActivity = await prisma.userActivity.create({
+      data: {
+        userId: activeRun.userId,
+        activityType: "Run",
+        startDateTime: activeRun.startDateTime,
+        duration: actualDuration,
+        distance: activeRun.distance,
+        averagePace: activeRun.averagePace,
+        elevationGain: activeRun.elevationGain,
+        elevationLoss: activeRun.elevationLoss,
+        caloriesBurned: activeRun.estimatedCaloriesBurned,
+        startLatitude: activeRun.startLatitude,
+        startLongitude: activeRun.startLongitude,
+        endLatitude: activeRun.endLatitude,
+        endLongitude: activeRun.endLongitude,
+        routeCoordinates: activeRun.routeCoordinates,
+        startLocation: activeRun.startLocation,
+      },
+    });
+
+    // Mark the ActiveRun as completed
+    await prisma.activeRun.update({
+      where: { id: runId },
+      data: { isCompleted: true },
+    });
+
+    res.json({ message: "Run completed successfully", userActivity });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error completing run", error: error.message });
   }
 });
 

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Layout, Form, Input, Button, message, Alert, Spin, Modal } from "antd";
+import { Layout, Form, Input, Button, message, Alert, Spin } from "antd";
+import { PlayCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {
@@ -26,6 +28,7 @@ const { Content } = Layout;
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const RoutesPage = () => {
+  const navigate = useNavigate();
   const [map, setMap] = useState(null); // State for the map instance
   const mapContainer = useRef(null); // Ref for the map container
   const [form] = Form.useForm(); // Ant Design form instance
@@ -38,6 +41,7 @@ const RoutesPage = () => {
   const [isLoadingTerrainInfo, setIsLoadingTerrainInfo] = useState(false); // State for loading terrain info
   const [basicRouteData, setBasicRouteData] = useState(null); // State for basic route data
   const [selectedRoute, setSelectedRoute] = useState(null);
+  const [isStartingRun, setIsStartingRun] = useState(false);
 
   // Effect to initialize the map and fetch user profile on component mount
   useEffect(() => {
@@ -219,6 +223,54 @@ const RoutesPage = () => {
     }
   };
 
+const handleStartRun = async () => {
+  if (!selectedRoute) {
+    message.error("No route generated to start a run.");
+    return;
+  }
+
+  setIsStartingRun(true);
+
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_POST_ADDRESS}/start-run`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          ...selectedRoute,
+          distance: parseFloat(selectedRoute.distance),
+          duration: selectedRoute.duration, // Make sure this is included
+          elevationData: {
+            gain: parseFloat(selectedRoute.elevationData.gain),
+            loss: parseFloat(selectedRoute.elevationData.loss),
+          },
+          terrain: Object.fromEntries(
+            Object.entries(selectedRoute.terrain).map(([key, value]) => [
+              key,
+              parseFloat(value),
+            ])
+          ),
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to start run");
+    }
+
+    message.success("Run started successfully!");
+    navigate(`/active-run/${data.id}`);
+  } catch (error) {
+    message.error(`Error starting run: ${error.message}`);
+  } finally {
+    setIsStartingRun(false);
+  }
+};
+
+
   return (
     <Layout className="routes-page">
       <Content className="routes-content">
@@ -272,8 +324,13 @@ const RoutesPage = () => {
         <div ref={mapContainer} className="map-container" />
         {isGeneratingRoute && <Spin tip="Generating route..." />}
         {selectedRoute && (
-          <Button onClick={handleSelectRoute} type="primary">
-            Select This Route
+          <Button
+            onClick={handleStartRun}
+            type="primary"
+            icon={isStartingRun ? <LoadingOutlined /> : <PlayCircleOutlined />}
+            loading={isStartingRun}
+          >
+            Start Run
           </Button>
         )}
         {(basicRouteData || routeData) && (

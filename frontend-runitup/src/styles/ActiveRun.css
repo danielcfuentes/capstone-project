@@ -1,0 +1,95 @@
+.active-run-container {
+  padding: 24px;
+  background: linear-gradient(135deg, #f0f2f5 0%, #e6f7ff 100%);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.run-title {
+  padding-top: 90px;
+  text-align: center;
+  color: #1890ff;
+  margin-bottom: 24px;
+}
+
+.stats-row {
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(24, 144, 255, 0.2);
+}
+
+.ant-statistic-title {
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.ant-statistic-content {
+  color: #1890ff;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.ant-statistic-content-value {
+  display: flex;
+  align-items: center;
+}
+
+.ant-statistic-content-prefix {
+  margin-right: 8px;
+}
+
+.progress-card {
+  margin-bottom: 24px;
+}
+
+.ant-progress-text {
+  font-weight: bold;
+}
+
+.pace-indicator {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.map-card {
+  margin-bottom: 24px;
+}
+
+.complete-run-btn {
+  width: 100%;
+  height: 48px;
+  font-size: 18px;
+  font-weight: bold;
+  background: linear-gradient(45deg, #1890ff, #36cfc9);
+  border: none;
+  box-shadow: 0 4px 8px rgba(24, 144, 255, 0.3);
+}
+
+.complete-run-btn:hover {
+  background: linear-gradient(45deg, #40a9ff, #5cdbd3);
+  box-shadow: 0 6px 12px rgba(24, 144, 255, 0.4);
+}
+
+@media (max-width: 768px) {
+  .active-run-container {
+    padding: 16px;
+  }
+
+  .run-title {
+    font-size: 24px;
+  }
+
+  .ant-statistic-content {
+    font-size: 20px;
+  }
+}

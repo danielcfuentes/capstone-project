@@ -34,6 +34,7 @@ model User {
   completedRuns     CompletedRun[]
   isProfileComplete Boolean           @default(false)
   activities        UserActivity[]
+  activeRuns        ActiveRun[]
 }
 
 model Token {
@@ -122,4 +123,23 @@ model UserActivity {
   routeCoordinates String? // JSON string of coordinate pairs
   startLocation    String? // New field for the starting location name
   createdAt        DateTime @default(now())
+}
+
+model ActiveRun {
+  id                      Int      @id @default(autoincrement())
+  user                    User     @relation(fields: [userId], references: [id])
+  userId                  Int
+  startDateTime           DateTime
+  distance                Float
+  elevationGain           Float
+  elevationLoss           Float
+  startLatitude           Float
+  startLongitude          Float
+  endLatitude             Float
+  endLongitude            Float
+  routeCoordinates        String
+  startLocation           String
+  isCompleted             Boolean  @default(false)
+  averagePace             Float? // New field
+  estimatedCaloriesBurned Int? // New field
 }
