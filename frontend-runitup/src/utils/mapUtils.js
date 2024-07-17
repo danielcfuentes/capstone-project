@@ -238,6 +238,9 @@ export const addStartMarker = (map, coordinates, locationName) => {
 };
 
 // Function to clear the route from the map
+let elevationChart = null;
+let elevationMarkers = [];
+
 export const clearRoute = (map) => {
   // Remove route-related layers
   if (map.getLayer("route-line")) {
@@ -256,7 +259,17 @@ export const clearRoute = (map) => {
     map.removeSource("route");
   }
 
-  console.log("Route cleared from map");
+  // Clear elevation markers
+  elevationMarkers.forEach((marker) => marker.remove());
+  elevationMarkers = [];
+
+  // Clear existing chart data
+  if (elevationChart) {
+    elevationChart.data.datasets[0].data = [];
+    elevationChart.update();
+  }
+
+  console.log("Route and elevation data cleared from map");
 };
 
 // Function to remove the current marker and popup from the map
@@ -639,7 +652,13 @@ export const addElevationLegend = (map) => {
 
 
 export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
-  // Add elevation markers
+  console.log("Adding elevation testing tools");
+
+  // Clear existing markers
+  elevationMarkers.forEach((marker) => marker.remove());
+  elevationMarkers = [];
+
+  // Add new elevation markers
   elevationData.forEach((data, index) => {
     const el = document.createElement("div");
     el.className = "elevation-marker";
@@ -650,56 +669,65 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
       Math.max(...elevationData.map((d) => d.elevation))
     );
 
-    new mapboxgl.Marker(el)
+    const marker = new mapboxgl.Marker(el)
       .setLngLat(routeGeometry.coordinates[index])
       .addTo(map);
+
+    elevationMarkers.push(marker);
   });
 
-  // Create container for elevation profile
-  const elevationProfile = document.createElement("div");
-  elevationProfile.id = "elevation-profile";
-  elevationProfile.style.position = "absolute";
-  elevationProfile.style.bottom = "10px";
-  elevationProfile.style.left = "10px";
-  elevationProfile.style.backgroundColor = "white";
-  elevationProfile.style.padding = "10px";
-  elevationProfile.style.width = "300px";
-  elevationProfile.style.height = "200px";
-  elevationProfile.style.display = "none"; // Initially hidden
-  elevationProfile.style.borderRadius = "5px";
-  elevationProfile.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+  // Create or get elevation profile container
+  let elevationProfile = document.getElementById("elevation-profile");
+  if (!elevationProfile) {
+    elevationProfile = document.createElement("div");
+    elevationProfile.id = "elevation-profile";
+    elevationProfile.style.position = "absolute";
+    elevationProfile.style.bottom = "10px";
+    elevationProfile.style.left = "10px";
+    elevationProfile.style.backgroundColor = "white";
+    elevationProfile.style.padding = "10px";
+    elevationProfile.style.width = "300px";
+    elevationProfile.style.height = "200px";
+    elevationProfile.style.display = "none";
+    elevationProfile.style.borderRadius = "5px";
+    elevationProfile.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
 
-  // Create canvas for Chart.js
-  const canvas = document.createElement("canvas");
-  canvas.id = "elevation-chart";
-  elevationProfile.appendChild(canvas);
+    const canvas = document.createElement("canvas");
+    canvas.id = "elevation-chart";
+    elevationProfile.appendChild(canvas);
 
-  // Create toggle button
-  const toggleButton = document.createElement("button");
-  toggleButton.textContent = "Toggle Elevation Profile";
-  toggleButton.style.position = "absolute";
-  toggleButton.style.bottom = "220px";
-  toggleButton.style.left = "10px";
-  toggleButton.style.padding = "10px 15px";
-  toggleButton.style.backgroundColor = "#4CAF50";
-  toggleButton.style.color = "white";
-  toggleButton.style.border = "none";
-  toggleButton.style.borderRadius = "5px";
-  toggleButton.style.cursor = "pointer";
-  toggleButton.style.transition = "background-color 0.3s";
-  toggleButton.onmouseover = () => {
-    toggleButton.style.backgroundColor = "#45a049";
-  };
-  toggleButton.onmouseout = () => {
+    map.getContainer().appendChild(elevationProfile);
+  }
+
+  // Create or get toggle button
+  let toggleButton = document.getElementById("toggle-elevation-profile");
+  if (!toggleButton) {
+    toggleButton = document.createElement("button");
+    toggleButton.id = "toggle-elevation-profile";
+    toggleButton.textContent = "Toggle Elevation Profile";
+    toggleButton.style.position = "absolute";
+    toggleButton.style.bottom = "220px";
+    toggleButton.style.left = "10px";
+    toggleButton.style.padding = "10px 15px";
     toggleButton.style.backgroundColor = "#4CAF50";
-  };
-  toggleButton.onclick = () => {
-    elevationProfile.style.display =
-      elevationProfile.style.display === "none" ? "block" : "none";
-  };
+    toggleButton.style.color = "white";
+    toggleButton.style.border = "none";
+    toggleButton.style.borderRadius = "5px";
+    toggleButton.style.cursor = "pointer";
+    toggleButton.style.transition = "background-color 0.3s";
+    toggleButton.onmouseover = () => {
+      toggleButton.style.backgroundColor = "#45a049";
+    };
+    toggleButton.onmouseout = () => {
+      toggleButton.style.backgroundColor = "#4CAF50";
+    };
+    toggleButton.onclick = () => {
+      elevationProfile.style.display =
+        elevationProfile.style.display === "none" ? "block" : "none";
+    };
 
-  map.getContainer().appendChild(elevationProfile);
-  map.getContainer().appendChild(toggleButton);
+    map.getContainer().appendChild(toggleButton);
+  }
 
   // Calculate distances
   let distances = [0];
@@ -716,55 +744,61 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
     y: metersToFeet(d.elevation),
   }));
 
-  // Create the chart
-  const chart = new Chart(canvas, {
-    type: "line",
-    data: {
-      datasets: [
-        {
-          label: "Elevation",
-          data: data,
-          borderColor: "rgb(75, 192, 192)",
-          backgroundColor: "rgba(75, 192, 192, 0.2)",
-          fill: true,
-          tension: 0.1,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          beginAtZero: false,
-          title: {
-            display: true,
-            text: "Elevation (ft)",
+  // Update or create the chart
+  if (elevationChart) {
+    elevationChart.data.datasets[0].data = data;
+    elevationChart.update();
+  } else {
+    const ctx = document.getElementById("elevation-chart").getContext("2d");
+    elevationChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        datasets: [
+          {
+            label: "Elevation",
+            data: data,
+            borderColor: "rgb(75, 192, 192)",
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+            fill: true,
+            tension: 0.1,
           },
-        },
-        x: {
-          type: "linear",
-          title: {
-            display: true,
-            text: "Distance (miles)",
-          },
-        },
+        ],
       },
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label: function (context) {
-              return `Elevation: ${context.parsed.y.toFixed(
-                1
-              )}ft, Distance: ${context.parsed.x.toFixed(2)} miles`;
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: false,
+            title: {
+              display: true,
+              text: "Elevation (ft)",
+            },
+          },
+          x: {
+            type: "linear",
+            title: {
+              display: true,
+              text: "Distance (miles)",
+            },
+          },
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                return `Elevation: ${context.parsed.y.toFixed(
+                  1
+                )}ft, Distance: ${context.parsed.x.toFixed(2)} miles`;
+              },
             },
           },
         },
       },
-    },
-  });
+    });
+  }
 
-  console.log("Enhanced elevation profile graph added with feet measurements");
+  console.log("Elevation testing tools added or updated");
 };
 
 export const runElevationTests = (elevationData, routeGeometry) => {
