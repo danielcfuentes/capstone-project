@@ -12,27 +12,30 @@ const RecommendationPage = () => {
   const [activeChallenges, setActiveChallenges] = useState([]);
   const [pastChallenges, setPastChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [nextChallengeTime, setNextChallengeTime] = useState(null);
+  const [timeUntilNextChallenge, setTimeUntilNextChallenge] = useState("");
 
   useEffect(() => {
     fetchChallenges();
-    const intervalId = setInterval(fetchChallenges, 10000); // Refresh every 10 seconds
+    const intervalId = setInterval(fetchChallenges, 300000); // Refresh every 5 minutes
     return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
-    let timerId;
-    if (nextChallengeTime) {
-      timerId = setInterval(() => {
-        const now = new Date();
-        if (now >= nextChallengeTime) {
-          fetchChallenges();
-          clearInterval(timerId);
-        }
-      }, 1000);
-    }
-    return () => clearInterval(timerId);
-  }, [nextChallengeTime]);
+    const timer = setInterval(() => {
+      const now = new Date();
+      const tomorrow = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1
+      );
+      const timeLeft = tomorrow - now;
+      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+      setTimeUntilNextChallenge(`${hours}h ${minutes}m ${seconds}s`);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const fetchChallenges = async () => {
     setLoading(true);
@@ -45,23 +48,15 @@ const RecommendationPage = () => {
       );
       if (!response.ok) throw new Error("Failed to fetch challenges");
       const data = await response.json();
-      const activeChallenges = data.filter(
-        (challenge) => challenge.status === "active"
+      setActiveChallenges(
+        data.filter((challenge) => challenge.status === "active")
       );
-      const pastChallenges = data.filter(
-        (challenge) =>
-          challenge.status === "completed" || challenge.status === "failed"
+      setPastChallenges(
+        data.filter(
+          (challenge) =>
+            challenge.status === "completed" || challenge.status === "failed"
+        )
       );
-      setActiveChallenges(activeChallenges);
-      setPastChallenges(pastChallenges);
-
-      if (activeChallenges.length === 0) {
-        // Set next challenge time to 1 minute from now
-        const nextMinute = new Date(Date.now() + 60000);
-        setNextChallengeTime(nextMinute);
-      } else {
-        setNextChallengeTime(null);
-      }
     } catch (error) {
       console.error("Failed to fetch challenges:", error);
       message.error("Failed to fetch challenges");
@@ -92,17 +87,12 @@ const RecommendationPage = () => {
   const renderChallenges = () => {
     if (loading) return <Spin size="large" />;
     if (activeChallenges.length === 0) {
-      const timeUntilNext = nextChallengeTime
-        ? Math.max(0, Math.floor((nextChallengeTime - new Date()) / 1000))
-        : 0;
-      const minutes = Math.floor(timeUntilNext / 60);
-      const seconds = timeUntilNext % 60;
       return (
         <Empty
           description={
             <span>
               No current challenges. <br />
-              Next challenges in: {minutes}m {seconds}s
+              Next challenges in: {timeUntilNextChallenge}
             </span>
           }
         />

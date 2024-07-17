@@ -637,24 +637,26 @@ const generateChallenges = async (userId) => {
     const shuffledTypes = challengeTypes.sort(() => Math.random() - 0.5);
     const challenges = [];
 
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(23, 59, 59, 999); // Set to end of next day
+
     for (const type of shuffledTypes.slice(0, 3)) {
       let target, description;
       switch (type) {
         case "distance":
-          target = Math.max(Math.round(avgDistance * 1.2 * 10) / 10, 0.5);
-          description = `Run ${target.toFixed(1)} miles in the next 5 minutes`;
+          target = Math.max(Math.round(avgDistance * 1.2 * 10) / 10, 1); // At least 1 mile
+          description = `Run ${target.toFixed(1)} miles today`;
           break;
         case "calories":
           target = Math.round(avgCalories * 1.2);
-          description = `Burn ${target} calories in the next 5 minutes`;
+          description = `Burn ${target} calories today`;
           break;
         case "elevation":
           target = Math.round(avgElevation * 1.2);
-          description = `Gain ${target} feet of elevation in the next 5 minutes`;
+          description = `Gain ${target} feet of elevation today`;
           break;
       }
-
-      const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
 
       const challenge = await prisma.challenge.create({
         data: {
@@ -662,15 +664,17 @@ const generateChallenges = async (userId) => {
           type,
           description,
           target,
-          endDate: expiresAt,
-          expiresAt,
+          endDate: tomorrow,
+          expiresAt: tomorrow,
         },
       });
 
       challenges.push(challenge);
     }
 
-    console.log(`Generated ${challenges.length} challenges for user ${userId}`);
+    console.log(
+      `Generated ${challenges.length} daily challenges for user ${userId}`
+    );
     return challenges;
   } catch (error) {
     console.error(`Error generating challenges for user ${userId}:`, error);
@@ -724,9 +728,9 @@ app.post("/generate-challenges", authenticateToken, async (req, res) => {
 });
 
 
-// Cron job to update challenges every minute
-cron.schedule('* * * * *', async () => {
-  console.log('Running challenge update');
+/// Update cron job to run once a day at midnight
+cron.schedule('0 0 * * *', async () => {
+  console.log('Running daily challenge generation');
   try {
     // Mark expired challenges as failed
     await prisma.challenge.updateMany({
@@ -739,26 +743,15 @@ cron.schedule('* * * * *', async () => {
       },
     });
 
-    // Find users who need new challenges
-    const users = await prisma.user.findMany({
-      include: {
-        challenges: {
-          where: {
-            status: 'active',
-          },
-        },
-      },
-    });
-
+    // Generate new challenges for all users
+    const users = await prisma.user.findMany();
     for (const user of users) {
-      if (user.challenges.length === 0) {
-        await generateChallenges(user.id);
-      }
+      await generateChallenges(user.id);
     }
 
-    console.log(`Updated challenges for ${users.length} users`);
+    console.log(`Generated daily challenges for ${users.length} users`);
   } catch (error) {
-    console.error('Error in challenge update:', error);
+    console.error('Error in daily challenge generation:', error);
   }
 });
 
