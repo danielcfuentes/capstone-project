@@ -635,3 +635,71 @@ export const addElevationLegend = (map) => {
 
   map.getContainer().appendChild(legend);
 };
+
+
+export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
+  // Add elevation markers
+  elevationData.forEach((data, index) => {
+    const el = document.createElement("div");
+    el.className = "elevation-marker";
+    el.innerHTML = `<span>${Math.round(data.elevation)}m</span>`;
+    el.style.backgroundColor = getColorForElevation(
+      data.elevation,
+      Math.min(...elevationData.map((d) => d.elevation)),
+      Math.max(...elevationData.map((d) => d.elevation))
+    );
+
+    new mapboxgl.Marker(el)
+      .setLngLat(routeGeometry.coordinates[index])
+      .addTo(map);
+  });
+
+  // Add elevation profile graph
+  const elevationProfile = document.createElement("div");
+  elevationProfile.id = "elevation-profile";
+  elevationProfile.style.position = "absolute";
+  elevationProfile.style.bottom = "10px";
+  elevationProfile.style.left = "10px";
+  elevationProfile.style.backgroundColor = "white";
+  elevationProfile.style.padding = "10px";
+  map.getContainer().appendChild(elevationProfile);
+
+  // Use a charting library like Chart.js to create the elevation profile
+  // This is a placeholder for where you'd create the actual chart
+  elevationProfile.innerHTML = "Elevation Profile Placeholder";
+
+  console.log("Elevation testing tools added");
+};
+
+export const runElevationTests = (elevationData, routeGeometry) => {
+  console.log("Running elevation tests...");
+
+  // Test 1: Check if elevation data matches the number of coordinates
+  console.assert(
+    elevationData.length === routeGeometry.coordinates.length,
+    "Elevation data points should match the number of route coordinates"
+  );
+
+  // Test 2: Check for unrealistic elevation changes
+  for (let i = 1; i < elevationData.length; i++) {
+    const elevationChange = Math.abs(
+      elevationData[i].elevation - elevationData[i - 1].elevation
+    );
+    console.assert(
+      elevationChange < 100,
+      `Unrealistic elevation change detected: ${elevationChange}m between points ${
+        i - 1
+      } and ${i}`
+    );
+  }
+
+  // Test 3: Check if elevation data is within a realistic range
+  const minElevation = Math.min(...elevationData.map((d) => d.elevation));
+  const maxElevation = Math.max(...elevationData.map((d) => d.elevation));
+  console.assert(
+    minElevation > -500 && maxElevation < 9000,
+    `Elevation range (${minElevation}m to ${maxElevation}m) is outside realistic bounds`
+  );
+
+  console.log("Elevation tests completed");
+};

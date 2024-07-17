@@ -20,6 +20,8 @@ import {
   clearMileMarkers,
   getElevationData,
   addElevationLegend,
+  addElevationTestingTools,
+  runElevationTests,
 } from "../../utils/mapUtils";
 import RouteInfo from "./RouteInfo";
 import { getHeaders } from "../../utils/apiConfig";
@@ -181,6 +183,13 @@ const RoutesPage = () => {
       console.log("Elevation data received:", elevationData);
 
       addRouteToMap(map, route.geometry, elevationData.elevationProfile);
+      addElevationTestingTools(
+        map,
+        route.geometry,
+        elevationData.elevationProfile
+      );
+      runElevationTests(elevationData.elevationProfile, route.geometry);
+
       addStartMarker(map, startCoordinates, startLocation);
       fitMapToRouteWithStart(map, route.geometry.coordinates, startCoordinates);
       addMileMarkers(map, route);
