@@ -127,7 +127,6 @@ const chunkArray = (array, chunkSize) => {
 };
 
 // Function to add a route to the map
-
 export const addRouteToMap = (map, routeGeometry, elevationData) => {
   console.log("Adding route to map");
   console.log("Route geometry:", routeGeometry);
@@ -192,7 +191,39 @@ export const addRouteToMap = (map, routeGeometry, elevationData) => {
     },
   });
 
-  console.log("Route layer added with elevation-based gradient");
+  // Create a popup, but don't add it to the map yet.
+  const popup = new mapboxgl.Popup({
+    closeButton: false,
+    closeOnClick: false,
+  });
+
+  map.on("mousemove", "route-line", (e) => {
+    map.getCanvas().style.cursor = "pointer";
+
+    const coordinates = e.lngLat;
+    const line = turf.lineString(routeGeometry.coordinates);
+    const snapped = turf.nearestPointOnLine(line, [
+      coordinates.lng,
+      coordinates.lat,
+    ]);
+    const elevation =
+      elevationData[Math.round(snapped.properties.index)].elevation;
+    const elevationFt = Math.round(metersToFeet(elevation));
+    const distance = Math.round(snapped.properties.location * 100) / 100; // Round to 2 decimal places
+
+    // Update the popup's position and content
+    popup
+      .setLngLat(coordinates)
+      .setHTML(`Elevation: ${elevationFt} ft<br>Distance: ${distance} miles`)
+      .addTo(map);
+  });
+
+  map.on("mouseleave", "route-line", () => {
+    map.getCanvas().style.cursor = "";
+    popup.remove();
+  });
+
+  console.log("Route added to map with hover functionality");
 };
 
 // Function to fit the map view to the given route coordinates
@@ -650,7 +681,6 @@ export const addElevationLegend = (map) => {
   map.getContainer().appendChild(legend);
 };
 
-
 export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
   console.log("Adding elevation testing tools");
 
@@ -833,6 +863,5 @@ export const runElevationTests = (elevationData, routeGeometry) => {
 
   console.log("Elevation tests completed");
 };
-
 
 const metersToFeet = (meters) => meters * 3.28084;
