@@ -161,10 +161,7 @@ export const addRouteToMap = (map, routeGeometry, elevationData) => {
     data: {
       type: "Feature",
       properties: {},
-      geometry: {
-        type: "LineString",
-        coordinates: routeGeometry.coordinates,
-      },
+      geometry: routeGeometry,
     },
   });
 
@@ -192,35 +189,7 @@ export const addRouteToMap = (map, routeGeometry, elevationData) => {
     },
   });
 
-  map.addSource("elevation-points", {
-    type: "geojson",
-    data: {
-      type: "FeatureCollection",
-      features: coordinatesWithElevation,
-    },
-  });
-
-  map.addLayer({
-    id: "elevation-points",
-    type: "circle",
-    source: "elevation-points",
-    paint: {
-      "circle-radius": 3,
-      "circle-color": [
-        "interpolate",
-        ["linear"],
-        ["get", "elevation"],
-        minElevation,
-        "green",
-        (minElevation + maxElevation) / 2,
-        "yellow",
-        maxElevation,
-        "red",
-      ],
-    },
-  });
-
-  console.log("Route layers added");
+  console.log("Route layer added");
 };
 
 // Function to fit the map view to the given route coordinates
