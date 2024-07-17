@@ -1,6 +1,7 @@
 import mapboxgl from "mapbox-gl";
 import * as turf from "@turf/turf";
 import axios from "axios";
+import Chart from "chart.js/auto";
 
 // Function to initialize the map with given container, center, and zoom level
 export const initializeMap = (container, center = [-74.5, 40], zoom = 9) => {
@@ -654,7 +655,7 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
       .addTo(map);
   });
 
-  // Add elevation profile graph
+  // Create container for elevation profile
   const elevationProfile = document.createElement("div");
   elevationProfile.id = "elevation-profile";
   elevationProfile.style.position = "absolute";
@@ -662,13 +663,56 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
   elevationProfile.style.left = "10px";
   elevationProfile.style.backgroundColor = "white";
   elevationProfile.style.padding = "10px";
+  elevationProfile.style.width = "300px";
+  elevationProfile.style.height = "200px";
+
+  // Create canvas for Chart.js
+  const canvas = document.createElement("canvas");
+  canvas.id = "elevation-chart";
+  elevationProfile.appendChild(canvas);
+
   map.getContainer().appendChild(elevationProfile);
 
-  // Use a charting library like Chart.js to create the elevation profile
-  // This is a placeholder for where you'd create the actual chart
-  elevationProfile.innerHTML = "Elevation Profile Placeholder";
+  // Prepare data for the chart
+  const labels = elevationData.map((_, index) => index);
+  const data = elevationData.map((d) => d.elevation);
 
-  console.log("Elevation testing tools added");
+  // Create the chart
+  new Chart(canvas, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "Elevation",
+          data: data,
+          borderColor: "rgb(75, 192, 192)",
+          tension: 0.1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: false,
+          title: {
+            display: true,
+            text: "Elevation (m)",
+          },
+        },
+        x: {
+          title: {
+            display: true,
+            text: "Distance",
+          },
+        },
+      },
+    },
+  });
+
+  console.log("Elevation profile graph added");
 };
 
 export const runElevationTests = (elevationData, routeGeometry) => {
