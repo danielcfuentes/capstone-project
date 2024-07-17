@@ -16,8 +16,7 @@ const RecommendationPage = () => {
 
   useEffect(() => {
     fetchChallenges();
-    fetchPastChallenges();
-    const intervalId = setInterval(fetchChallenges, 60000); // Refresh every minute
+    const intervalId = setInterval(fetchChallenges, 10000); // Refresh every 10 seconds
     return () => clearInterval(intervalId);
   }, []);
 
@@ -49,42 +48,25 @@ const RecommendationPage = () => {
       const activeChallenges = data.filter(
         (challenge) => challenge.status === "active"
       );
+      const pastChallenges = data.filter(
+        (challenge) =>
+          challenge.status === "completed" || challenge.status === "failed"
+      );
       setActiveChallenges(activeChallenges);
+      setPastChallenges(pastChallenges);
 
       if (activeChallenges.length === 0) {
-        // Set next challenge time to the start of the next hour
-        const nextHour = new Date();
-        nextHour.setHours(nextHour.getHours() + 1);
-        nextHour.setMinutes(0);
-        nextHour.setSeconds(0);
-        nextHour.setMilliseconds(0);
-        setNextChallengeTime(nextHour);
+        // Set next challenge time to 1 minute from now
+        const nextMinute = new Date(Date.now() + 60000);
+        setNextChallengeTime(nextMinute);
       } else {
         setNextChallengeTime(null);
       }
     } catch (error) {
-      console.error("Failed to fetch active challenges:", error);
-      message.error("Failed to fetch active challenges");
+      console.error("Failed to fetch challenges:", error);
+      message.error("Failed to fetch challenges");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchPastChallenges = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_POST_ADDRESS}/past-challenges`,
-        {
-          headers: getHeaders(),
-        }
-      );
-      if (!response.ok) throw new Error("Failed to fetch past challenges");
-      const data = await response.json();
-      setPastChallenges(data);
-    } catch (error) {
-      console.error("Failed to fetch past challenges:", error);
-      message.error("Failed to fetch past challenges");
-      setPastChallenges([]); // Set to empty array on error
     }
   };
 
@@ -101,7 +83,6 @@ const RecommendationPage = () => {
       if (!response.ok) throw new Error("Failed to update challenge");
       message.success("Challenge updated successfully");
       fetchChallenges();
-      fetchPastChallenges();
     } catch (error) {
       console.error("Failed to update challenge:", error);
       message.error("Failed to update challenge");

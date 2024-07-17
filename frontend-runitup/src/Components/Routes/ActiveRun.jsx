@@ -119,7 +119,6 @@ const ActiveRun = ({ handleRunCompletion }) => {
     setIsCompleting(true);
 
     try {
-      // Step 1: Complete the run and create the activity in a single server operation
       const completeResponse = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/complete-run/${runId}`,
         {
@@ -129,19 +128,16 @@ const ActiveRun = ({ handleRunCompletion }) => {
       );
 
       if (!completeResponse.ok) {
-        const errorData = await completeResponse.json();
-        throw new Error(errorData.message || "Failed to complete run");
+        throw new Error("Failed to complete run");
       }
 
       const completeData = await completeResponse.json();
 
-      // Step 2: Update challenges
+      // Call handleRunCompletion to update challenges
       await handleRunCompletion(completeData.userActivity);
 
-      message.success("Run completed and saved successfully!");
-
-      // Step 3: Navigate to activities page
-      navigate("/activities");
+      message.success("Run completed and challenges updated successfully!");
+      navigate("/recommendations"); // Navigate to recommendations page to show updated challenges
     } catch (error) {
       console.error("Error in handleCompleteRun:", error);
       message.error(`Error completing run: ${error.message}`);
