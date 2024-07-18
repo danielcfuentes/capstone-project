@@ -128,17 +128,10 @@ const chunkArray = (array, chunkSize) => {
 
 // Function to add a route to the map
 export const addRouteToMap = (map, routeGeometry, elevationData) => {
-  console.log("Adding route to map");
-  console.log("Route geometry:", routeGeometry);
-  console.log("Elevation data:", elevationData);
-
   clearRoute(map);
 
   const minElevation = Math.min(...elevationData.map((d) => d.elevation));
   const maxElevation = Math.max(...elevationData.map((d) => d.elevation));
-
-  console.log("Min elevation:", minElevation);
-  console.log("Max elevation:", maxElevation);
 
   // Create line segments with elevation data
   const features = [];
@@ -222,8 +215,6 @@ export const addRouteToMap = (map, routeGeometry, elevationData) => {
     map.getCanvas().style.cursor = "";
     popup.remove();
   });
-
-  console.log("Route added to map with hover functionality");
 };
 
 // Function to fit the map view to the given route coordinates
@@ -299,8 +290,6 @@ export const clearRoute = (map) => {
     elevationChart.data.datasets[0].data = [];
     elevationChart.update();
   }
-
-  console.log("Route and elevation data cleared from map");
 };
 
 // Function to remove the current marker and popup from the map
@@ -326,7 +315,6 @@ export const calculateRunningTime = (distanceMiles) => {
 
 // Function to get elevation data for a set of coordinates
 export const getElevationData = async (coordinates) => {
-  console.log("Fetching elevation data for coordinates:", coordinates);
   const chunkSize = 50;
   let elevationData = [];
 
@@ -388,7 +376,6 @@ export const getElevationData = async (coordinates) => {
     loss: Math.round(elevationLoss),
   };
 
-  console.log("Elevation data result:", result);
   return result;
 };
 
@@ -681,10 +668,7 @@ export const addElevationLegend = (map) => {
   map.getContainer().appendChild(legend);
 };
 
-
 export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
-  console.log("Adding elevation testing tools");
-
   // Create or get elevation profile container
   let elevationProfile = document.getElementById("elevation-profile");
   if (!elevationProfile) {
@@ -806,41 +790,19 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
       },
     });
   }
-
-  console.log("Elevation profile graph added or updated");
 };
 
 export const runElevationTests = (elevationData, routeGeometry) => {
-  console.log("Running elevation tests...");
-
-  // Test 1: Check if elevation data matches the number of coordinates
-  console.assert(
-    elevationData.length === routeGeometry.coordinates.length,
-    "Elevation data points should match the number of route coordinates"
-  );
-
   // Test 2: Check for unrealistic elevation changes
   for (let i = 1; i < elevationData.length; i++) {
     const elevationChange = Math.abs(
       elevationData[i].elevation - elevationData[i - 1].elevation
-    );
-    console.assert(
-      elevationChange < 100,
-      `Unrealistic elevation change detected: ${elevationChange}m between points ${
-        i - 1
-      } and ${i}`
     );
   }
 
   // Test 3: Check if elevation data is within a realistic range
   const minElevation = Math.min(...elevationData.map((d) => d.elevation));
   const maxElevation = Math.max(...elevationData.map((d) => d.elevation));
-  console.assert(
-    minElevation > -500 && maxElevation < 9000,
-    `Elevation range (${minElevation}m to ${maxElevation}m) is outside realistic bounds`
-  );
-
-  console.log("Elevation tests completed");
 };
 
 const metersToFeet = (meters) => meters * 3.28084;

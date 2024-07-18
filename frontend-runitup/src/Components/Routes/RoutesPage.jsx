@@ -180,7 +180,6 @@ const RoutesPage = () => {
       }
 
       const elevationData = await getElevationData(route.geometry.coordinates);
-      console.log("Elevation data received:", elevationData);
 
       addRouteToMap(map, route.geometry, elevationData.elevationProfile);
       addElevationTestingTools(
