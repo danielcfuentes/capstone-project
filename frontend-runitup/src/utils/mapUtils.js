@@ -681,30 +681,9 @@ export const addElevationLegend = (map) => {
   map.getContainer().appendChild(legend);
 };
 
+
 export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
   console.log("Adding elevation testing tools");
-
-  // Clear existing markers
-  elevationMarkers.forEach((marker) => marker.remove());
-  elevationMarkers = [];
-
-  // Add new elevation markers
-  elevationData.forEach((data, index) => {
-    const el = document.createElement("div");
-    el.className = "elevation-marker";
-    el.innerHTML = `<span>${Math.round(metersToFeet(data.elevation))}ft</span>`;
-    el.style.backgroundColor = getColorForElevation(
-      data.elevation,
-      Math.min(...elevationData.map((d) => d.elevation)),
-      Math.max(...elevationData.map((d) => d.elevation))
-    );
-
-    const marker = new mapboxgl.Marker(el)
-      .setLngLat(routeGeometry.coordinates[index])
-      .addTo(map);
-
-    elevationMarkers.push(marker);
-  });
 
   // Create or get elevation profile container
   let elevationProfile = document.getElementById("elevation-profile");
@@ -718,7 +697,7 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
     elevationProfile.style.padding = "10px";
     elevationProfile.style.width = "300px";
     elevationProfile.style.height = "200px";
-    elevationProfile.style.display = "none";
+    elevationProfile.style.display = "none"; // Initially hidden
     elevationProfile.style.borderRadius = "5px";
     elevationProfile.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
 
@@ -828,7 +807,7 @@ export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
     });
   }
 
-  console.log("Elevation testing tools added or updated");
+  console.log("Elevation profile graph added or updated");
 };
 
 export const runElevationTests = (elevationData, routeGeometry) => {
