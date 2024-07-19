@@ -186,3 +186,13 @@ function calculateChallengeMultiplier(userProfile) {
   };
   return baseMultiplier + (fitnessLevelAdjustment[userProfile.fitnessLevel] || 0);
 }
+
+// Selects a new terrain type for exploration
+function selectNewTerrain(preferredTerrains) {
+  const allTerrains = ['road', 'trail', 'track', 'mixed'];
+  const sortedTerrains = Object.entries(preferredTerrains)
+    .sort((a, b) => b[1] - a[1])
+    .map(([terrain]) => terrain);
+
+  return allTerrains.find(t => !sortedTerrains.includes(t)) || 'mixed';
+}
