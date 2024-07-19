@@ -125,7 +125,7 @@ const RoutesPage = () => {
       );
       setRecommendations(recommendedRoutes);
     } catch (error) {
-      console.error("Error fetching recommendations:", error);
+      return;
     }
   };
 
@@ -301,7 +301,6 @@ const RoutesPage = () => {
   };
 
   const handleRecommendationSelect = async (recommendation) => {
-    console.log("Selected recommendation:", recommendation);
     setError(null);
     setWarning(null);
     setRouteData(null);
@@ -317,9 +316,7 @@ const RoutesPage = () => {
       removeCurrentMarker();
       clearMileMarkers();
 
-      console.log("Applying recommendation...");
       const appliedRoute = await applyRecommendation(recommendation);
-      console.log("Applied route:", appliedRoute);
 
       const {
         geometry,
@@ -338,7 +335,6 @@ const RoutesPage = () => {
       // Get elevation data if it's not included in the applied route
       let elevationProfile;
       if (!appliedRoute.elevationProfile) {
-        console.log("Fetching elevation data...");
         const elevationData = await getElevationData(geometry.coordinates);
         elevationProfile = elevationData.elevationProfile;
       } else {
@@ -378,10 +374,8 @@ const RoutesPage = () => {
         startLocation: startLocation.name || "Start",
       });
 
-      console.log("Route data set:", routeInfo);
       message.success("Recommended route applied successfully!");
     } catch (error) {
-      console.error("Error applying recommendation:", error);
       setError(
         error.message ||
           "An error occurred while applying the recommended route. Please try again."
