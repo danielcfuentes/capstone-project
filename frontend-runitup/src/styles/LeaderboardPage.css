@@ -38,18 +38,18 @@
   text-align: center;
   border-radius: 15px;
   transition: all 0.3s ease;
-  height: 220px; /* Increased height to accommodate larger avatar and crown */
+  height: 220px; /* Fixed height for all cards */
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  position: relative;
+  padding: 20px 10px;
   overflow: visible; /* Allow crown to overflow */
 }
 
 .top-three-card .ant-avatar {
-  border: 3px solid white; /* Add a white border around the avatar */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Add a subtle shadow to the avatar */
+  border: 3px solid white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .top-three-card .anticon-crown {
@@ -88,6 +88,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.username-container {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.username {
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  max-width: 100%;
+  display: block;
 }
 
 .top-three-card h4 {
@@ -131,4 +144,9 @@
   .top-three .ant-col {
     margin-bottom: 1rem;
   }
+}
+
+.challenge-count {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
 }

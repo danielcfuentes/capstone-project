@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { Table, Typography, Layout, Spin, Card, Row, Col, Avatar } from "antd";
-import { TrophyOutlined, CrownOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  Table,
+  Typography,
+  Layout,
+  Spin,
+  Card,
+  Row,
+  Col,
+  Avatar,
+  Tooltip,
+} from "antd";
+import { TrophyOutlined, CrownOutlined } from "@ant-design/icons";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
 import "../../styles/LeaderboardPage.css";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { Content } = Layout;
 
 const LeaderboardPage = () => {
@@ -104,8 +114,7 @@ const LeaderboardPage = () => {
     );
   };
 
-  return (
-    <Layout className="leaderboard-page">
+ <Layout className="leaderboard-page">
       <Content className="leaderboard-content">
         <Title level={2} className="leaderboard-title">
           <TrophyOutlined /> Leaderboard
@@ -123,9 +132,15 @@ const LeaderboardPage = () => {
                     <Card className={`top-three-card rank-${index + 1}`}>
                       {renderCrownedAvatar(user.username, index + 1)}
                       <div className="username-container">
-                        <Title level={4}>{user.username}</Title>
+                        <Tooltip title={user.username}>
+                          <Text ellipsis={true} className="username">
+                            {user.username}
+                          </Text>
+                        </Tooltip>
                       </div>
-                      <p>{user.completedChallenges} challenges</p>
+                      <Text className="challenge-count">
+                        {user.completedChallenges} challenges
+                      </Text>
                     </Card>
                   </Col>
                 ))}
