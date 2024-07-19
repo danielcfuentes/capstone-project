@@ -176,3 +176,13 @@ async function generateRecoveryRoute(routeAnalysis, userProfile, lastStartLocati
   };
 }
 
+// Calculates the challenge multiplier based on user's fitness level
+function calculateChallengeMultiplier(userProfile) {
+  const baseMultiplier = 1.2;
+  const fitnessLevelAdjustment = {
+    beginner: -0.1,
+    intermediate: 0,
+    advanced: 0.1
+  };
+  return baseMultiplier + (fitnessLevelAdjustment[userProfile.fitnessLevel] || 0);
+}
