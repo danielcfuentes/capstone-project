@@ -127,3 +127,20 @@ async function generateChallengeRoute(routeAnalysis, userProfile, lastStartLocat
     startLocation: lastStartLocation
   };
 }
+
+// Generates a route for exploration
+async function generateExplorationRoute(routeAnalysis, userProfile, lastStartLocation) {
+  const avgDistance = routeAnalysis.count > 0 ? routeAnalysis.totalDistance / routeAnalysis.count : 3;
+
+  const newTerrain = selectNewTerrain(routeAnalysis.preferredTerrains);
+
+  return {
+    type: 'exploration',
+    distance: avgDistance,
+    elevationGain: null, // To be determined by the new area
+    terrain: newTerrain,
+    estimatedPace: routeAnalysis.avgPace * 1.05, // Slightly slower pace for new terrain
+    description: 'An exciting new route to explore different areas and terrains',
+    startLocation: lastStartLocation
+  };
+}
