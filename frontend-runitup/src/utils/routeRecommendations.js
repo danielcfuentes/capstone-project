@@ -8,7 +8,7 @@ import {
 } from "./mapUtils";
 
 // Fetches the user's past running activities from the backend
-async function getUserPastRoutes(userId) {
+async function getUserPastRoutes() {
   try {
     // Sends a GET request to the backend to fetch the user's past activities
     const response = await fetch(
