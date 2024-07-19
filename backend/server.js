@@ -594,6 +594,18 @@ app.put("/challenges/:id", authenticateToken, async (req, res) => {
       where: { id: parseInt(id) },
       data: { currentProgress, isCompleted },
     });
+
+    if (isCompleted) {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: {
+          completedChallenges: {
+            increment: 1,
+          },
+        },
+      });
+    }
+
     res.json(updatedChallenge);
   } catch (error) {
     res.status(500).json({ error: "Failed to update challenge" });
