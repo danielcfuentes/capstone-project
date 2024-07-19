@@ -8,7 +8,7 @@ import {
 } from "./mapUtils";
 
 // Fetches the user's past running activities from the backend
-async function getUserPastRoutes(userId) {
+async function getUserPastRoutes() {
   try {
     // Sends a GET request to the backend to fetch the user's past activities
     const response = await fetch(
@@ -41,7 +41,6 @@ async function getUserPastRoutes(userId) {
     };
   } catch (error) {
     // Logs and handles any errors that occur during the fetch process
-    console.error("Error fetching user activities:", error);
     return { routes: [], lastStartLocation: null };
   }
 }
@@ -124,7 +123,6 @@ export async function getRouteRecommendations(userId, userProfile) {
     return recommendations;
   } catch (error) {
     // Logs and handles any errors that occur during the recommendation generation process
-    console.error("Error generating route recommendations:", error);
     return [];
   }
 }
@@ -349,7 +347,5 @@ export async function applyRecommendation(recommendation) {
     };
   } catch (error) {
     // Logs and handles any errors that occur during the route generation process
-    console.error("Error applying recommendation:", error);
-    throw error;
   }
 }
