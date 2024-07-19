@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Layout, Form, Input, Button, message, Alert, Spin, Modal } from "antd";
+import {
+  Layout,
+  Form,
+  Input,
+  Button,
+  message,
+  Alert,
+  Spin,
+  Modal,
+  Typography,
+} from "antd";
 import { PlayCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import mapboxgl from "mapbox-gl";
@@ -26,8 +36,11 @@ import {
 import RouteInfo from "./RouteInfo";
 import { getHeaders } from "../../utils/apiConfig";
 import "../../styles/RoutesPage.css";
+import RouteRecommendations from "./RouteRecommendations";
+import { getRouteRecommendations } from "../../utils/routeRecommendations";
 
 const { Content } = Layout;
+const { Title } = Typography;
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
@@ -48,6 +61,7 @@ const RoutesPage = () => {
   const [isStartingRun, setIsStartingRun] = useState(false);
   const [activeChallenges, setActiveChallenges] = useState([]);
   const [completedChallenges, setCompletedChallenges] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
 
   // Effect to initialize the map and fetch user profile on component mount
   useEffect(() => {
@@ -59,6 +73,10 @@ const RoutesPage = () => {
     fetchUserProfile();
     fetchChallenges();
     return () => map.remove();
+  }, []);
+
+  useEffect(() => {
+    fetchRecommendations();
   }, []);
 
   const handleSelectRoute = () => {
@@ -91,6 +109,20 @@ const RoutesPage = () => {
       setCompletedChallenges(challenges.filter((c) => c.isCompleted));
     } catch (error) {
       message.error("Failed to fetch challenges");
+    }
+  };
+
+  const fetchRecommendations = async () => {
+    try {
+      const userId = "current-user-id"; // Replace with actual user ID
+      const userProfile = {}; // Replace with actual user profile data
+      const recommendedRoutes = await getRouteRecommendations(
+        userId,
+        userProfile
+      );
+      setRecommendations(recommendedRoutes);
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
     }
   };
 
@@ -382,6 +414,11 @@ const RoutesPage = () => {
             isLoadingTerrain={isLoadingTerrainInfo}
           />
         )}
+
+        <Title level={3} style={{ marginTop: "2rem" }}>
+          Recommended Routes
+        </Title>
+        <RouteRecommendations recommendations={recommendations} />
       </Content>
     </Layout>
   );
