@@ -37,7 +37,10 @@ import RouteInfo from "./RouteInfo";
 import { getHeaders } from "../../utils/apiConfig";
 import "../../styles/RoutesPage.css";
 import RouteRecommendations from "./RouteRecommendations";
-import { getRouteRecommendations } from "../../utils/routeRecommendations";
+import {
+  getRouteRecommendations,
+  applyRecommendation,
+} from "../../utils/routeRecommendations";
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -297,6 +300,82 @@ const RoutesPage = () => {
     }
   };
 
+  const handleRecommendationSelect = async (recommendation) => {
+    console.log("Selected recommendation:", recommendation);
+    setError(null);
+    setWarning(null);
+    setRouteData(null);
+    setBasicRouteData(null);
+    setIsGeneratingRoute(true);
+
+    try {
+      if (map) {
+        clearRoute(map);
+        removeCurrentMarker();
+        clearMileMarkers();
+      }
+
+      console.log("Applying recommendation...");
+      const appliedRoute = await applyRecommendation(recommendation);
+      console.log("Applied route:", appliedRoute);
+
+      const {
+        geometry,
+        distance,
+        duration,
+        elevationGain,
+        elevationLoss,
+        terrain,
+        startLocation,
+      } = appliedRoute;
+
+      addRouteToMap(map, geometry, appliedRoute.elevationProfile);
+      addElevationTestingTools(map, geometry, appliedRoute.elevationProfile);
+      runElevationTests(appliedRoute.elevationProfile, geometry);
+
+      const startCoordinates = [
+        startLocation.longitude,
+        startLocation.latitude,
+      ];
+      addStartMarker(map, startCoordinates, startLocation.name || "Start");
+      fitMapToRouteWithStart(map, geometry.coordinates, startCoordinates);
+      addMileMarkers(map, { geometry, distance });
+
+      setIsGeneratingRoute(false);
+      setIsLoadingBasicInfo(false);
+      setIsLoadingTerrainInfo(false);
+
+      const routeInfo = {
+        distance,
+        duration,
+        elevationData: {
+          gain: elevationGain,
+          loss: elevationLoss,
+        },
+        terrain,
+      };
+
+      setRouteData(routeInfo);
+      setSelectedRoute({
+        ...routeInfo,
+        routeCoordinates: geometry.coordinates,
+        startLocation: startLocation.name || "Start",
+      });
+
+      console.log("Route data set:", routeInfo);
+      message.success("Recommended route applied successfully!");
+    } catch (error) {
+      console.error("Error applying recommendation:", error);
+      setError(
+        error.message ||
+          "An error occurred while applying the recommended route. Please try again."
+      );
+      setIsGeneratingRoute(false);
+      setIsLoadingBasicInfo(false);
+      setIsLoadingTerrainInfo(false);
+    }
+  };
+
   const handleStartRun = async () => {
     if (!selectedRoute) {
       message.error("No route generated to start a run.");
@@ -418,7 +497,10 @@ const RoutesPage = () => {
         <Title level={3} style={{ marginTop: "2rem" }}>
           Recommended Routes
         </Title>
-        <RouteRecommendations recommendations={recommendations} />
+        <RouteRecommendations
+          recommendations={recommendations}
+          onSelectRecommendation={handleRecommendationSelect}
+        />
       </Content>
     </Layout>
   );
