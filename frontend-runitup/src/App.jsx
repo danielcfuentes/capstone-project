@@ -14,6 +14,7 @@ import ActiveRun from "./Components/Routes/ActiveRun";
 import UserActivitiesPage from "./Components/Profile/UserActivites";
 import { getHeaders } from "./utils/apiConfig";
 import { message } from "antd";
+import LeaderboardPage from "./Components/LeaderBoard/LeaderboardPage";
 
 // Protected route wrapper component
 const ProtectedRoute = ({ children, isLoggedIn, isProfileComplete }) => {
@@ -255,6 +256,19 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/leaderboard"
+            element={
+              <ProtectedRoute
+                isLoggedIn={isLoggedIn}
+                isProfileComplete={isProfileComplete}
+              >
+                <LeaderboardPage />
+              </ProtectedRoute>
+            }
+          />
+          
         </Routes>
         {isLoggedIn && isProfileComplete && <Footer />}
       </BrowserRouter>
