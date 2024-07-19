@@ -9,7 +9,7 @@ import {
 
 const { Text, Paragraph } = Typography;
 
-const RecommendationCard = ({ recommendation }) => {
+const RecommendationCard = ({ recommendation, onSelect }) => {
   const { type, distance, elevationGain, terrain, estimatedPace, description } =
     recommendation;
 
@@ -39,7 +39,7 @@ const RecommendationCard = ({ recommendation }) => {
       }
       extra={
         <Tooltip title="Use this route">
-          <Button type="primary" size="small">
+          <Button type="primary" size="small" onClick={onSelect}>
             Select
           </Button>
         </Tooltip>
