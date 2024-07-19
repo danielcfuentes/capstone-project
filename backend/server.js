@@ -771,5 +771,32 @@ app.get("/leaderboard", authenticateToken, async (req, res) => {
   }
 });
 
+app.get("/current-user-rank", authenticateToken, async (req, res) => {
+  try {
+    const allUsers = await prisma.user.findMany({
+      select: {
+        username: true,
+        completedChallenges: true,
+      },
+      orderBy: {
+        completedChallenges: "desc",
+      },
+    });
+
+    const currentUserIndex = allUsers.findIndex(
+      (user) => user.username === req.user.username
+    );
+    const currentUserRank = currentUserIndex + 1;
+
+    res.json({
+      username: req.user.username,
+      completedChallenges: allUsers[currentUserIndex].completedChallenges,
+      rank: currentUserRank,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch current user rank" });
+  }
+});
+
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
