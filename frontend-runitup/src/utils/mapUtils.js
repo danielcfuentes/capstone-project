@@ -1,6 +1,7 @@
 import mapboxgl from "mapbox-gl";
 import * as turf from "@turf/turf";
 import axios from "axios";
+import Chart from "chart.js/auto";
 
 // Function to initialize the map with given container, center, and zoom level
 export const initializeMap = (container, center = [-74.5, 40], zoom = 9) => {
@@ -126,23 +127,41 @@ const chunkArray = (array, chunkSize) => {
 };
 
 // Function to add a route to the map
-export const addRouteToMap = (map, routeGeometry) => {
-  if (map.getSource("route")) {
-    map.removeLayer("route");
-    map.removeSource("route");
+export const addRouteToMap = (map, routeGeometry, elevationData) => {
+  clearRoute(map);
+
+  const minElevation = Math.min(...elevationData.map((d) => d.elevation));
+  const maxElevation = Math.max(...elevationData.map((d) => d.elevation));
+
+  // Create line segments with elevation data
+  const features = [];
+  for (let i = 0; i < routeGeometry.coordinates.length - 1; i++) {
+    features.push({
+      type: "Feature",
+      properties: {
+        elevation:
+          (elevationData[i].elevation + elevationData[i + 1].elevation) / 2,
+      },
+      geometry: {
+        type: "LineString",
+        coordinates: [
+          routeGeometry.coordinates[i],
+          routeGeometry.coordinates[i + 1],
+        ],
+      },
+    });
   }
 
   map.addSource("route", {
     type: "geojson",
     data: {
-      type: "Feature",
-      properties: {},
-      geometry: routeGeometry,
+      type: "FeatureCollection",
+      features: features,
     },
   });
 
   map.addLayer({
-    id: "route",
+    id: "route-line",
     type: "line",
     source: "route",
     layout: {
@@ -150,10 +169,51 @@ export const addRouteToMap = (map, routeGeometry) => {
       "line-cap": "round",
     },
     paint: {
-      "line-color": "#3887be",
-      "line-width": 5,
-      "line-opacity": 0.75,
+      "line-color": [
+        "interpolate",
+        ["linear"],
+        ["get", "elevation"],
+        minElevation,
+        "green",
+        (minElevation + maxElevation) / 2,
+        "yellow",
+        maxElevation,
+        "red",
+      ],
+      "line-width": 4,
     },
+  });
+
+  // Create a popup, but don't add it to the map yet.
+  const popup = new mapboxgl.Popup({
+    closeButton: false,
+    closeOnClick: false,
+  });
+
+  map.on("mousemove", "route-line", (e) => {
+    map.getCanvas().style.cursor = "pointer";
+
+    const coordinates = e.lngLat;
+    const line = turf.lineString(routeGeometry.coordinates);
+    const snapped = turf.nearestPointOnLine(line, [
+      coordinates.lng,
+      coordinates.lat,
+    ]);
+    const elevation =
+      elevationData[Math.round(snapped.properties.index)].elevation;
+    const elevationFt = Math.round(metersToFeet(elevation));
+    const distance = Math.round(snapped.properties.location * 100) / 100; // Round to 2 decimal places
+
+    // Update the popup's position and content
+    popup
+      .setLngLat(coordinates)
+      .setHTML(`Elevation: ${elevationFt} ft<br>Distance: ${distance} miles`)
+      .addTo(map);
+  });
+
+  map.on("mouseleave", "route-line", () => {
+    map.getCanvas().style.cursor = "";
+    popup.remove();
   });
 };
 
@@ -200,10 +260,35 @@ export const addStartMarker = (map, coordinates, locationName) => {
 };
 
 // Function to clear the route from the map
+let elevationChart = null;
+let elevationMarkers = [];
+
 export const clearRoute = (map) => {
+  // Remove route-related layers
+  if (map.getLayer("route-line")) {
+    map.removeLayer("route-line");
+  }
+
+  // Remove any other layers that might be using the 'route' source
+  map.getStyle().layers.forEach((layer) => {
+    if (layer.source === "route") {
+      map.removeLayer(layer.id);
+    }
+  });
+
+  // Remove the route source
   if (map.getSource("route")) {
-    map.removeLayer("route");
     map.removeSource("route");
+  }
+
+  // Clear elevation markers
+  elevationMarkers.forEach((marker) => marker.remove());
+  elevationMarkers = [];
+
+  // Clear existing chart data
+  if (elevationChart) {
+    elevationChart.data.datasets[0].data = [];
+    elevationChart.update();
   }
 };
 
@@ -230,10 +315,8 @@ export const calculateRunningTime = (distanceMiles) => {
 
 // Function to get elevation data for a set of coordinates
 export const getElevationData = async (coordinates) => {
-  const chunkSize = 50; // Mapbox allows up to 50 points per request
-  let elevationGain = 0;
-  let elevationLoss = 0;
-  let prevElevation = null;
+  const chunkSize = 50;
+  let elevationData = [];
 
   for (let i = 0; i < coordinates.length; i += chunkSize) {
     const chunk = coordinates.slice(i, i + chunkSize);
@@ -249,21 +332,51 @@ export const getElevationData = async (coordinates) => {
 
     const data = await response.json();
 
-    data.features.forEach((feature, index) => {
-      const elevation = feature.properties.ele;
-      if (prevElevation !== null) {
-        const diff = elevation - prevElevation;
-        if (diff > 0) {
-          elevationGain += diff;
-        } else {
-          elevationLoss += Math.abs(diff);
-        }
-      }
-      prevElevation = elevation;
+    // Ensure we have elevation data for each coordinate
+    chunk.forEach((coord, index) => {
+      const feature = data.features[index];
+      elevationData.push({
+        coordinate: coord,
+        elevation: feature ? feature.properties.ele : 0, // Use 0 if no elevation data
+      });
     });
   }
 
-  return { gain: Math.round(elevationGain), loss: Math.round(elevationLoss) };
+  // Interpolate missing elevation data
+  for (let i = 0; i < elevationData.length; i++) {
+    if (
+      elevationData[i].elevation === 0 &&
+      i > 0 &&
+      i < elevationData.length - 1
+    ) {
+      const prev = elevationData[i - 1].elevation;
+      const next = elevationData[i + 1].elevation;
+      elevationData[i].elevation = (prev + next) / 2;
+    }
+  }
+
+  // Calculate total elevation gain and loss
+  let elevationGain = 0;
+  let elevationLoss = 0;
+  let prevElevation = elevationData[0].elevation;
+
+  for (let i = 1; i < elevationData.length; i++) {
+    const diff = elevationData[i].elevation - prevElevation;
+    if (diff > 0) {
+      elevationGain += diff;
+    } else {
+      elevationLoss += Math.abs(diff);
+    }
+    prevElevation = elevationData[i].elevation;
+  }
+
+  const result = {
+    elevationProfile: elevationData,
+    gain: Math.round(elevationGain),
+    loss: Math.round(elevationLoss),
+  };
+
+  return result;
 };
 
 // Function to calculate the distance of a route
@@ -464,7 +577,6 @@ export const getBasicRouteInfo = async (route) => {
   return { distance, elevationData };
 };
 
-
 let mileMarkers = []; // Array to store mile marker
 
 export const addMileMarkers = (map, route) => {
@@ -501,3 +613,196 @@ export const clearMileMarkers = () => {
   mileMarkers.forEach((marker) => marker.remove());
   mileMarkers = [];
 };
+
+//colors for elveation
+
+const getColorForElevation = (elevation, minElevation, maxElevation) => {
+  const normalizedElevation =
+    (elevation - minElevation) / (maxElevation - minElevation);
+  // Use a gradient from green to yellow to red
+  if (normalizedElevation < 0.5) {
+    return `rgb(${Math.floor(normalizedElevation * 2 * 255)}, 255, 0)`;
+  } else {
+    return `rgb(255, ${Math.floor((1 - normalizedElevation) * 2 * 255)}, 0)`;
+  }
+};
+
+export const addElevationLegend = (map) => {
+  const legend = document.createElement("div");
+  legend.className = "elevation-legend";
+  legend.style.position = "absolute";
+  legend.style.bottom = "30px";
+  legend.style.right = "10px";
+  legend.style.background = "white";
+  legend.style.padding = "10px";
+  legend.style.borderRadius = "5px";
+  legend.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.1)";
+
+  const title = document.createElement("h4");
+  title.textContent = "Elevation";
+  title.style.marginBottom = "5px";
+  legend.appendChild(title);
+
+  const gradientBar = document.createElement("div");
+  gradientBar.style.width = "20px";
+  gradientBar.style.height = "100px";
+  gradientBar.style.background = "linear-gradient(to top, green, yellow, red)";
+  gradientBar.style.marginRight = "10px";
+  legend.appendChild(gradientBar);
+
+  const labels = document.createElement("div");
+  labels.style.display = "flex";
+  labels.style.flexDirection = "column";
+  labels.style.justifyContent = "space-between";
+  labels.style.height = "100px";
+
+  const highLabel = document.createElement("div");
+  highLabel.textContent = "High";
+  const lowLabel = document.createElement("div");
+  lowLabel.textContent = "Low";
+
+  labels.appendChild(highLabel);
+  labels.appendChild(lowLabel);
+  legend.appendChild(labels);
+
+  map.getContainer().appendChild(legend);
+};
+
+export const addElevationTestingTools = (map, routeGeometry, elevationData) => {
+  // Create or get elevation profile container
+  let elevationProfile = document.getElementById("elevation-profile");
+  if (!elevationProfile) {
+    elevationProfile = document.createElement("div");
+    elevationProfile.id = "elevation-profile";
+    elevationProfile.style.position = "absolute";
+    elevationProfile.style.bottom = "10px";
+    elevationProfile.style.left = "10px";
+    elevationProfile.style.backgroundColor = "white";
+    elevationProfile.style.padding = "10px";
+    elevationProfile.style.width = "300px";
+    elevationProfile.style.height = "200px";
+    elevationProfile.style.display = "none"; // Initially hidden
+    elevationProfile.style.borderRadius = "5px";
+    elevationProfile.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+
+    const canvas = document.createElement("canvas");
+    canvas.id = "elevation-chart";
+    elevationProfile.appendChild(canvas);
+
+    map.getContainer().appendChild(elevationProfile);
+  }
+
+  // Create or get toggle button
+  let toggleButton = document.getElementById("toggle-elevation-profile");
+  if (!toggleButton) {
+    toggleButton = document.createElement("button");
+    toggleButton.id = "toggle-elevation-profile";
+    toggleButton.textContent = "Toggle Elevation Profile";
+    toggleButton.style.position = "absolute";
+    toggleButton.style.bottom = "220px";
+    toggleButton.style.left = "10px";
+    toggleButton.style.padding = "10px 15px";
+    toggleButton.style.backgroundColor = "#4CAF50";
+    toggleButton.style.color = "white";
+    toggleButton.style.border = "none";
+    toggleButton.style.borderRadius = "5px";
+    toggleButton.style.cursor = "pointer";
+    toggleButton.style.transition = "background-color 0.3s";
+    toggleButton.onmouseover = () => {
+      toggleButton.style.backgroundColor = "#45a049";
+    };
+    toggleButton.onmouseout = () => {
+      toggleButton.style.backgroundColor = "#4CAF50";
+    };
+    toggleButton.onclick = () => {
+      elevationProfile.style.display =
+        elevationProfile.style.display === "none" ? "block" : "none";
+    };
+
+    map.getContainer().appendChild(toggleButton);
+  }
+
+  // Calculate distances
+  let distances = [0];
+  for (let i = 1; i < routeGeometry.coordinates.length; i++) {
+    const from = turf.point(routeGeometry.coordinates[i - 1]);
+    const to = turf.point(routeGeometry.coordinates[i]);
+    const distance = turf.distance(from, to, { units: "miles" });
+    distances.push(distances[i - 1] + distance);
+  }
+
+  // Prepare data for the chart
+  const data = elevationData.map((d, i) => ({
+    x: distances[i],
+    y: metersToFeet(d.elevation),
+  }));
+
+  // Update or create the chart
+  if (elevationChart) {
+    elevationChart.data.datasets[0].data = data;
+    elevationChart.update();
+  } else {
+    const ctx = document.getElementById("elevation-chart").getContext("2d");
+    elevationChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        datasets: [
+          {
+            label: "Elevation",
+            data: data,
+            borderColor: "rgb(75, 192, 192)",
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+            fill: true,
+            tension: 0.1,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: false,
+            title: {
+              display: true,
+              text: "Elevation (ft)",
+            },
+          },
+          x: {
+            type: "linear",
+            title: {
+              display: true,
+              text: "Distance (miles)",
+            },
+          },
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                return `Elevation: ${context.parsed.y.toFixed(
+                  1
+                )}ft, Distance: ${context.parsed.x.toFixed(2)} miles`;
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+};
+
+export const runElevationTests = (elevationData, routeGeometry) => {
+  // Test 2: Check for unrealistic elevation changes
+  for (let i = 1; i < elevationData.length; i++) {
+    const elevationChange = Math.abs(
+      elevationData[i].elevation - elevationData[i - 1].elevation
+    );
+  }
+
+  // Test 3: Check if elevation data is within a realistic range
+  const minElevation = Math.min(...elevationData.map((d) => d.elevation));
+  const maxElevation = Math.max(...elevationData.map((d) => d.elevation));
+};
+
+const metersToFeet = (meters) => meters * 3.28084;

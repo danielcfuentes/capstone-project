@@ -57,3 +57,20 @@
   font-size: 14px;
   text-align: center;
 }
+
+.elevation-legend {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.elevation-legend h4 {
+  margin: 0 0 5px 0;
+}
+
+.elevation-marker {
+  background-color: #ffffff;
+  border-radius: 50%;
+  padding: 5px;
+  font-size: 10px;
+}
