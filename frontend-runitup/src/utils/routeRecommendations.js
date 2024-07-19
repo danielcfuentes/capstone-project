@@ -144,3 +144,20 @@ async function generateExplorationRoute(routeAnalysis, userProfile, lastStartLoc
     startLocation: lastStartLocation
   };
 }
+
+// Generates an interval training route
+async function generateIntervalTrainingRoute(routeAnalysis, userProfile, lastStartLocation) {
+  const intervalDistance = Math.min(routeAnalysis.totalDistance / routeAnalysis.count, 5); // Cap at 5 miles
+
+  return {
+    type: 'interval',
+    distance: intervalDistance,
+    elevationGain: null,
+    terrain: 'flat',
+    estimatedPace: routeAnalysis.avgPace * 0.9, // Faster pace for intervals
+    description: 'An interval training route to improve your speed',
+    startLocation: lastStartLocation,
+    intervals: generateIntervals(intervalDistance, userProfile.fitnessLevel)
+  };
+}
+
