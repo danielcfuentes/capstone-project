@@ -196,3 +196,15 @@ function selectNewTerrain(preferredTerrains) {
 
   return allTerrains.find(t => !sortedTerrains.includes(t)) || 'mixed';
 }
+
+// Generates interval segments for interval training
+function generateIntervals(distance, fitnessLevel) {
+  const intervalCount = Math.floor(distance / 0.25); // Quarter-mile intervals
+  const restRatio = fitnessLevel === 'beginner' ? 2 : fitnessLevel === 'intermediate' ? 1 : 0.5;
+
+  return Array(intervalCount).fill().map(() => ({
+    distance: 0.25,
+    type: 'sprint',
+    restDistance: 0.25 * restRatio
+  }));
+}
