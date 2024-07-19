@@ -208,3 +208,43 @@ function generateIntervals(distance, fitnessLevel) {
     restDistance: 0.25 * restRatio
   }));
 }
+
+// Applies a selected recommendation to generate an actual route
+export async function applyRecommendation(recommendation) {
+  try {
+    if (!recommendation.startLocation) {
+      throw new Error("Start location is not available");
+    }
+
+    const radius = recommendation.distance / (2 * Math.PI);
+    const coordinates = generateCircularRouteCoordinates(
+      recommendation.startLocation.latitude,
+      recommendation.startLocation.longitude,
+      radius
+    );
+
+    const route = await getRouteFromMapbox(coordinates);
+
+    if (!route) {
+      throw new Error("Failed to generate route");
+    }
+
+    const elevationData = await getElevationData(route.geometry.coordinates);
+    const terrainInfo = await getDetailedTerrainInfo(route.geometry.coordinates);
+
+    return {
+      geometry: route.geometry,
+      distance: calculateRouteDistance(route),
+      duration: route.duration,
+      elevationGain: elevationData.gain,
+      elevationLoss: elevationData.loss,
+      terrain: terrainInfo,
+      startLocation: recommendation.startLocation,
+      type: recommendation.type,
+      intervals: recommendation.intervals
+    };
+  } catch (error) {
+    console.error("Error applying recommendation:", error);
+    throw error;
+  }
+}
