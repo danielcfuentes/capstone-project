@@ -109,3 +109,21 @@ async function generateSimilarRoute(routeAnalysis, userProfile, lastStartLocatio
     startLocation: lastStartLocation
   };
 }
+
+// Generates a more challenging route
+async function generateChallengeRoute(routeAnalysis, userProfile, lastStartLocation) {
+  const avgDistance = routeAnalysis.count > 0 ? routeAnalysis.totalDistance / routeAnalysis.count : 3;
+  const avgElevationGain = routeAnalysis.count > 0 ? routeAnalysis.totalElevationGain / routeAnalysis.count : 50;
+
+  const challengeMultiplier = calculateChallengeMultiplier(userProfile);
+
+  return {
+    type: 'challenge',
+    distance: avgDistance * challengeMultiplier,
+    elevationGain: avgElevationGain * challengeMultiplier,
+    terrain: 'mixed',
+    estimatedPace: routeAnalysis.avgPace * 0.95, // Slightly faster pace
+    description: 'A more challenging route to push your limits',
+    startLocation: lastStartLocation
+  };
+}
