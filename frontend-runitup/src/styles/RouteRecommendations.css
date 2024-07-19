@@ -1,0 +1,29 @@
+.routes-page {
+  padding: 24px;
+}
+
+.routes-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.ant-card-head-title {
+  display: flex;
+  align-items: center;
+}
+
+.ant-card-head-title .anticon {
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+.ant-card-body {
+  height: 200px;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .routes-page {
+    padding: 16px;
+  }
+}

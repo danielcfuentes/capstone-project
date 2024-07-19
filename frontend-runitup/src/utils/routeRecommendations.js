@@ -347,5 +347,6 @@ export async function applyRecommendation(recommendation) {
     };
   } catch (error) {
     // Logs and handles any errors that occur during the route generation process
+    error;
   }
 }

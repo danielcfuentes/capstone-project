@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Layout, Form, Input, Button, message, Alert, Spin, Modal } from "antd";
+import {
+  Layout,
+  Form,
+  Input,
+  Button,
+  message,
+  Alert,
+  Spin,
+  Modal,
+  Typography,
+} from "antd";
 import { PlayCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import mapboxgl from "mapbox-gl";
@@ -26,8 +36,14 @@ import {
 import RouteInfo from "./RouteInfo";
 import { getHeaders } from "../../utils/apiConfig";
 import "../../styles/RoutesPage.css";
+import RouteRecommendations from "./RouteRecommendations";
+import {
+  getRouteRecommendations,
+  applyRecommendation,
+} from "../../utils/routeRecommendations";
 
 const { Content } = Layout;
+const { Title } = Typography;
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
@@ -48,6 +64,7 @@ const RoutesPage = () => {
   const [isStartingRun, setIsStartingRun] = useState(false);
   const [activeChallenges, setActiveChallenges] = useState([]);
   const [completedChallenges, setCompletedChallenges] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
 
   // Effect to initialize the map and fetch user profile on component mount
   useEffect(() => {
@@ -59,6 +76,10 @@ const RoutesPage = () => {
     fetchUserProfile();
     fetchChallenges();
     return () => map.remove();
+  }, []);
+
+  useEffect(() => {
+    fetchRecommendations();
   }, []);
 
   const handleSelectRoute = () => {
@@ -91,6 +112,20 @@ const RoutesPage = () => {
       setCompletedChallenges(challenges.filter((c) => c.isCompleted));
     } catch (error) {
       message.error("Failed to fetch challenges");
+    }
+  };
+
+  const fetchRecommendations = async () => {
+    try {
+      const userId = "current-user-id"; // Replace with actual user ID
+      const userProfile = {}; // Replace with actual user profile data
+      const recommendedRoutes = await getRouteRecommendations(
+        userId,
+        userProfile
+      );
+      setRecommendations(recommendedRoutes);
+    } catch (error) {
+      return;
     }
   };
 
@@ -265,6 +300,92 @@ const RoutesPage = () => {
     }
   };
 
+  const handleRecommendationSelect = async (recommendation) => {
+    setError(null);
+    setWarning(null);
+    setRouteData(null);
+    setBasicRouteData(null);
+    setIsGeneratingRoute(true);
+
+    try {
+      if (!map) {
+        throw new Error("Map is not initialized");
+      }
+
+      clearRoute(map);
+      removeCurrentMarker();
+      clearMileMarkers();
+
+      const appliedRoute = await applyRecommendation(recommendation);
+
+      const {
+        geometry,
+        distance,
+        duration,
+        elevationGain,
+        elevationLoss,
+        terrain,
+        startLocation,
+      } = appliedRoute;
+
+      if (!geometry || !geometry.coordinates) {
+        throw new Error("Invalid route geometry");
+      }
+
+      // Get elevation data if it's not included in the applied route
+      let elevationProfile;
+      if (!appliedRoute.elevationProfile) {
+        const elevationData = await getElevationData(geometry.coordinates);
+        elevationProfile = elevationData.elevationProfile;
+      } else {
+        elevationProfile = appliedRoute.elevationProfile;
+      }
+
+      addRouteToMap(map, geometry, elevationProfile);
+      addElevationTestingTools(map, geometry, elevationProfile);
+      runElevationTests(elevationProfile, geometry);
+
+      const startCoordinates = [
+        startLocation.longitude,
+        startLocation.latitude,
+      ];
+      addStartMarker(map, startCoordinates, startLocation.name || "Start");
+      fitMapToRouteWithStart(map, geometry.coordinates, startCoordinates);
+      addMileMarkers(map, { geometry, distance: parseFloat(distance) });
+
+      setIsGeneratingRoute(false);
+      setIsLoadingBasicInfo(false);
+      setIsLoadingTerrainInfo(false);
+
+      const routeInfo = {
+        distance: parseFloat(distance),
+        duration,
+        elevationData: {
+          gain: elevationGain,
+          loss: elevationLoss,
+        },
+        terrain,
+      };
+
+      setRouteData(routeInfo);
+      setSelectedRoute({
+        ...routeInfo,
+        routeCoordinates: geometry.coordinates,
+        startLocation: startLocation.name || "Start",
+      });
+
+      message.success("Recommended route applied successfully!");
+    } catch (error) {
+      setError(
+        error.message ||
+          "An error occurred while applying the recommended route. Please try again."
+      );
+      setIsGeneratingRoute(false);
+      setIsLoadingBasicInfo(false);
+      setIsLoadingTerrainInfo(false);
+    }
+  };
+
   const handleStartRun = async () => {
     if (!selectedRoute) {
       message.error("No route generated to start a run.");
@@ -382,6 +503,14 @@ const RoutesPage = () => {
             isLoadingTerrain={isLoadingTerrainInfo}
           />
         )}
+
+        <Title level={3} style={{ marginTop: "2rem" }}>
+          Recommended Routes
+        </Title>
+        <RouteRecommendations
+          recommendations={recommendations}
+          onSelectRecommendation={handleRecommendationSelect}
+        />
       </Content>
     </Layout>
   );
