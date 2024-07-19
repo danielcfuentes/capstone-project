@@ -38,3 +38,34 @@ async function getUserPastRoutes(userId) {
     return { routes: [], lastStartLocation: null };
   }
 }
+
+// Analyzes past routes to extract useful metrics
+function analyzePastRoutes(routes) {
+  if (!routes || routes.length === 0) {
+    return {
+      totalDistance: 0,
+      totalElevationGain: 0,
+      totalDuration: 0,
+      preferredTerrains: {},
+      avgPace: 0,
+      count: 0
+    };
+  }
+
+  const analysis = routes.reduce((acc, route) => {
+    acc.totalDistance += route.distance || 0;
+    acc.totalElevationGain += route.elevationGain || 0;
+    acc.totalDuration += route.duration || 0;
+    if (route.terrain) {
+      route.terrain.forEach(t => {
+        acc.preferredTerrains[t] = (acc.preferredTerrains[t] || 0) + 1;
+      });
+    }
+    acc.count += 1;
+    return acc;
+  }, { totalDistance: 0, totalElevationGain: 0, totalDuration: 0, preferredTerrains: {}, count: 0 });
+
+  // Calculate average pace
+  analysis.avgPace = analysis.totalDuration / analysis.totalDistance / 60;
+  return analysis;
+}
