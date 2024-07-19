@@ -161,3 +161,18 @@ async function generateIntervalTrainingRoute(routeAnalysis, userProfile, lastSta
   };
 }
 
+// Generates a recovery route
+async function generateRecoveryRoute(routeAnalysis, userProfile, lastStartLocation) {
+  const recoveryDistance = Math.min(routeAnalysis.totalDistance / routeAnalysis.count * 0.7, 3); // 70% of avg distance, capped at 3 miles
+
+  return {
+    type: 'recovery',
+    distance: recoveryDistance,
+    elevationGain: 0,
+    terrain: 'flat',
+    estimatedPace: routeAnalysis.avgPace * 1.2, // Slower pace for recovery
+    description: 'An easy recovery route to help you rest and rejuvenate',
+    startLocation: lastStartLocation
+  };
+}
+
