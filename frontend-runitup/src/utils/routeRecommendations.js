@@ -69,3 +69,24 @@ function analyzePastRoutes(routes) {
   analysis.avgPace = analysis.totalDuration / analysis.totalDistance / 60;
   return analysis;
 }
+
+// Main function to generate route recommendations
+export async function getRouteRecommendations(userId, userProfile) {
+  try {
+    const { routes, lastStartLocation } = await getUserPastRoutes(userId);
+    const routeAnalysis = analyzePastRoutes(routes);
+
+    const recommendations = [
+      await generateSimilarRoute(routeAnalysis, userProfile, lastStartLocation),
+      await generateChallengeRoute(routeAnalysis, userProfile, lastStartLocation),
+      await generateExplorationRoute(routeAnalysis, userProfile, lastStartLocation),
+      await generateIntervalTrainingRoute(routeAnalysis, userProfile, lastStartLocation),
+      await generateRecoveryRoute(routeAnalysis, userProfile, lastStartLocation)
+    ].filter(Boolean); // Remove any null recommendations
+
+    return recommendations;
+  } catch (error) {
+    console.error('Error generating route recommendations:', error);
+    return [];
+  }
+}
