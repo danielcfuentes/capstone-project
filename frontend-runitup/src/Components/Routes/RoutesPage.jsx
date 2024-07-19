@@ -309,11 +309,13 @@ const RoutesPage = () => {
     setIsGeneratingRoute(true);
 
     try {
-      if (map) {
-        clearRoute(map);
-        removeCurrentMarker();
-        clearMileMarkers();
+      if (!map) {
+        throw new Error("Map is not initialized");
       }
+
+      clearRoute(map);
+      removeCurrentMarker();
+      clearMileMarkers();
 
       console.log("Applying recommendation...");
       const appliedRoute = await applyRecommendation(recommendation);
@@ -329,9 +331,23 @@ const RoutesPage = () => {
         startLocation,
       } = appliedRoute;
 
-      addRouteToMap(map, geometry, appliedRoute.elevationProfile);
-      addElevationTestingTools(map, geometry, appliedRoute.elevationProfile);
-      runElevationTests(appliedRoute.elevationProfile, geometry);
+      if (!geometry || !geometry.coordinates) {
+        throw new Error("Invalid route geometry");
+      }
+
+      // Get elevation data if it's not included in the applied route
+      let elevationProfile;
+      if (!appliedRoute.elevationProfile) {
+        console.log("Fetching elevation data...");
+        const elevationData = await getElevationData(geometry.coordinates);
+        elevationProfile = elevationData.elevationProfile;
+      } else {
+        elevationProfile = appliedRoute.elevationProfile;
+      }
+
+      addRouteToMap(map, geometry, elevationProfile);
+      addElevationTestingTools(map, geometry, elevationProfile);
+      runElevationTests(elevationProfile, geometry);
 
       const startCoordinates = [
         startLocation.longitude,
@@ -339,14 +355,14 @@ const RoutesPage = () => {
       ];
       addStartMarker(map, startCoordinates, startLocation.name || "Start");
       fitMapToRouteWithStart(map, geometry.coordinates, startCoordinates);
-      addMileMarkers(map, { geometry, distance });
+      addMileMarkers(map, { geometry, distance: parseFloat(distance) });
 
       setIsGeneratingRoute(false);
       setIsLoadingBasicInfo(false);
       setIsLoadingTerrainInfo(false);
 
       const routeInfo = {
-        distance,
+        distance: parseFloat(distance),
         duration,
         elevationData: {
           gain: elevationGain,
