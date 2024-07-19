@@ -35,6 +35,12 @@ const Header = ({ onLogout, user }) => {
       icon: <TrophyOutlined />,
       link: "/recommendations",
     },
+    {
+      key: "leaderboard",
+      label: "Leaderboard",
+      icon: <TrophyOutlined />,
+      link: "/leaderboard",
+    },
   ];
 
   const userMenu = (
