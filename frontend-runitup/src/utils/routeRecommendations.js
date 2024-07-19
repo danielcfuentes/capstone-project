@@ -90,3 +90,22 @@ export async function getRouteRecommendations(userId, userProfile) {
     return [];
   }
 }
+
+// Generates a route similar to the user's past runs
+async function generateSimilarRoute(routeAnalysis, userProfile, lastStartLocation) {
+  const avgDistance = routeAnalysis.count > 0 ? routeAnalysis.totalDistance / routeAnalysis.count : 3;
+  const avgElevationGain = routeAnalysis.count > 0 ? routeAnalysis.totalElevationGain / routeAnalysis.count : 50;
+
+  // Find the most preferred terrain
+  const preferredTerrain = Object.entries(routeAnalysis.preferredTerrains).sort((a, b) => b[1] - a[1])[0]?.[0] || 'road';
+
+  return {
+    type: 'similar',
+    distance: avgDistance,
+    elevationGain: avgElevationGain,
+    terrain: preferredTerrain,
+    estimatedPace: routeAnalysis.avgPace,
+    description: 'A route similar to your usual runs',
+    startLocation: lastStartLocation
+  };
+}
