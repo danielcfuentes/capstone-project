@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Table, Typography, Layout, Spin, Card, Row, Col, Avatar } from "antd";
 import { TrophyOutlined, CrownOutlined, UserOutlined } from "@ant-design/icons";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
-import "../../styles/LeaderboardPage.css"
+import "../../styles/LeaderboardPage.css";
 
 const { Title } = Typography;
 const { Content } = Layout;
@@ -39,21 +39,7 @@ const LeaderboardPage = () => {
     {
       title: "Rank",
       key: "rank",
-      render: (_, __, index) => {
-        if (index + 1 === 1)
-          return (
-            <CrownOutlined style={{ color: "#FFD700", fontSize: "24px" }} />
-          );
-        if (index + 1 === 2)
-          return (
-            <CrownOutlined style={{ color: "#C0C0C0", fontSize: "22px" }} />
-          );
-        if (index + 1 === 3)
-          return (
-            <CrownOutlined style={{ color: "#CD7F32", fontSize: "20px" }} />
-          );
-        return index + 1;
-      },
+      render: (_, __, index) => index + 4,
     },
     {
       title: "User",
@@ -85,6 +71,39 @@ const LeaderboardPage = () => {
     },
   ];
 
+  const renderCrownedAvatar = (username, rank) => {
+    const crownStyle = {
+      position: "absolute",
+      top: "-12px",
+      right: "-12px",
+      fontSize: "32px",
+      filter: "drop-shadow(0px 0px 2px rgba(0,0,0,0.5))",
+    };
+    let crown;
+    switch (rank) {
+      case 1:
+        crown = <CrownOutlined style={{ ...crownStyle, color: "#FFD700" }} />;
+        break;
+      case 2:
+        crown = <CrownOutlined style={{ ...crownStyle, color: "#C0C0C0" }} />;
+        break;
+      case 3:
+        crown = <CrownOutlined style={{ ...crownStyle, color: "#CD7F32" }} />;
+        break;
+      default:
+        crown = null;
+    }
+
+    return (
+      <div style={{ position: "relative", display: "inline-block" }}>
+        <Avatar size={80} style={{ backgroundColor: generateColor(username) }}>
+          {username.charAt(0).toUpperCase()}
+        </Avatar>
+        {crown}
+      </div>
+    );
+  };
+
   return (
     <Layout className="leaderboard-page">
       <Content className="leaderboard-content">
@@ -102,15 +121,10 @@ const LeaderboardPage = () => {
                 {leaderboardData.slice(0, 3).map((user, index) => (
                   <Col xs={24} sm={8} key={user.username}>
                     <Card className={`top-three-card rank-${index + 1}`}>
-                      <Avatar
-                        size={64}
-                        style={{
-                          backgroundColor: generateColor(user.username),
-                        }}
-                      >
-                        {user.username.charAt(0).toUpperCase()}
-                      </Avatar>
-                      <Title level={4}>{user.username}</Title>
+                      {renderCrownedAvatar(user.username, index + 1)}
+                      <div className="username-container">
+                        <Title level={4}>{user.username}</Title>
+                      </div>
                       <p>{user.completedChallenges} challenges</p>
                     </Card>
                   </Col>
