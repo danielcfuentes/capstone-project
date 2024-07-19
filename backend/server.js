@@ -750,5 +750,26 @@ cron.schedule("0 0 * * *", async () => {
   } catch (error) {}
 });
 
+
+//leaderboard
+app.get("/leaderboard", authenticateToken, async (req, res) => {
+  try {
+    const leaderboard = await prisma.user.findMany({
+      select: {
+        username: true,
+        completedChallenges: true,
+      },
+      orderBy: {
+        completedChallenges: "desc",
+      },
+      take: 10, // Limit to top 10 users
+    });
+
+    res.json(leaderboard);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch leaderboard" });
+  }
+});
+
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
