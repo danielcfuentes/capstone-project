@@ -9,16 +9,18 @@ import {
   Col,
   Avatar,
   Tooltip,
+  Tag,
 } from "antd";
-import { TrophyOutlined, CrownOutlined } from "@ant-design/icons";
+import { TrophyOutlined, CrownOutlined, UserOutlined } from "@ant-design/icons";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
 import "../../styles/LeaderboardPage.css";
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
 
-const LeaderboardPage = () => {
+const LeaderboardPage = ({ currentUser }) => {
   const [leaderboardData, setLeaderboardData] = useState([]);
+  const [currentUserRank, setCurrentUserRank] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,7 +39,9 @@ const LeaderboardPage = () => {
         throw new Error("Failed to fetch leaderboard data");
       }
       const data = await response.json();
-      setLeaderboardData(data);
+      console.log("Leaderboard data:", data);
+      setLeaderboardData(data.leaderboard);
+      setCurrentUserRank(data.currentUserRank);
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
     } finally {
@@ -48,14 +52,14 @@ const LeaderboardPage = () => {
   const columns = [
     {
       title: "Rank",
+      dataIndex: "rank",
       key: "rank",
-      render: (_, __, index) => index + 4,
     },
     {
       title: "User",
       dataIndex: "username",
       key: "username",
-      render: (username) => (
+      render: (username, record) => (
         <div style={{ display: "flex", alignItems: "center" }}>
           <Avatar
             style={{
@@ -66,6 +70,9 @@ const LeaderboardPage = () => {
             {username.charAt(0).toUpperCase()}
           </Avatar>
           {username}
+          {record.username === currentUser?.name && (
+            <UserOutlined style={{ marginLeft: "8px", color: "#1890ff" }} />
+          )}
         </div>
       ),
     },
@@ -81,7 +88,7 @@ const LeaderboardPage = () => {
     },
   ];
 
-  const renderCrownedAvatar = (username, rank) => {
+  const renderCrownedAvatar = (username, rank, isCurrentUser) => {
     const crownStyle = {
       position: "absolute",
       top: "-12px",
@@ -110,11 +117,27 @@ const LeaderboardPage = () => {
           {username.charAt(0).toUpperCase()}
         </Avatar>
         {crown}
+        {isCurrentUser && (
+          <UserOutlined
+            style={{
+              position: "absolute",
+              bottom: "-5px",
+              right: "-5px",
+              fontSize: "24px",
+              color: "#1890ff",
+              backgroundColor: "white",
+              borderRadius: "50%",
+              padding: "2px",
+              border: "2px solid #1890ff",
+            }}
+          />
+        )}
       </div>
     );
   };
 
- <Layout className="leaderboard-page">
+  return (
+    <Layout className="leaderboard-page">
       <Content className="leaderboard-content">
         <Title level={2} className="leaderboard-title">
           <TrophyOutlined /> Leaderboard
@@ -127,10 +150,20 @@ const LeaderboardPage = () => {
           ) : (
             <>
               <Row gutter={[16, 16]} className="top-three">
-                {leaderboardData.slice(0, 3).map((user, index) => (
+                {leaderboardData.slice(0, 3).map((user) => (
                   <Col xs={24} sm={8} key={user.username}>
-                    <Card className={`top-three-card rank-${index + 1}`}>
-                      {renderCrownedAvatar(user.username, index + 1)}
+                    <Card
+                      className={`top-three-card rank-${user.rank} ${
+                        user.username === currentUser?.name
+                          ? "current-user"
+                          : ""
+                      }`}
+                    >
+                      {renderCrownedAvatar(
+                        user.username,
+                        user.rank,
+                        user.username === currentUser?.name
+                      )}
                       <div className="username-container">
                         <Tooltip title={user.username}>
                           <Text ellipsis={true} className="username">
@@ -141,6 +174,11 @@ const LeaderboardPage = () => {
                       <Text className="challenge-count">
                         {user.completedChallenges} challenges
                       </Text>
+                      {user.username === currentUser?.name && (
+                        <Tag color="blue" className="current-user-tag">
+                          You
+                        </Tag>
+                      )}
                     </Card>
                   </Col>
                 ))}
@@ -151,10 +189,20 @@ const LeaderboardPage = () => {
                 rowKey="username"
                 pagination={false}
                 className="leaderboard-table"
+                rowClassName={(record) =>
+                  record.username === currentUser?.name
+                    ? "current-user-row"
+                    : ""
+                }
               />
             </>
           )}
         </Card>
+        {currentUserRank && currentUserRank > 10 && (
+          <Card className="current-user-card">
+            <Text>Your Rank: {currentUserRank}</Text>
+          </Card>
+        )}
       </Content>
     </Layout>
   );

@@ -150,3 +150,34 @@
   font-size: 14px;
   color: rgba(255, 255, 255, 0.8);
 }
+
+.top-three-card.current-user {
+  box-shadow: 0 0 15px rgba(24, 144, 255, 0.7);
+  border: 2px solid #1890ff;
+}
+
+.current-user-indicator {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1890ff;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.top-three-card .ant-card-extra {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.leaderboard-table .current-user-row {
+  background-color: rgba(24, 144, 255, 0.1);
+}
+
+.leaderboard-table .current-user-row:hover > td {
+  background-color: rgba(24, 144, 255, 0.2) !important;
+}

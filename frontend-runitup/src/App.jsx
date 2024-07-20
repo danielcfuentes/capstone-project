@@ -264,11 +264,10 @@ function App() {
                 isLoggedIn={isLoggedIn}
                 isProfileComplete={isProfileComplete}
               >
-                <LeaderboardPage />
+                <LeaderboardPage currentUser={user} />
               </ProtectedRoute>
             }
           />
-          
         </Routes>
         {isLoggedIn && isProfileComplete && <Footer />}
       </BrowserRouter>

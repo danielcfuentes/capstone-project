@@ -754,25 +754,6 @@ cron.schedule("0 0 * * *", async () => {
 //leaderboard
 app.get("/leaderboard", authenticateToken, async (req, res) => {
   try {
-    const leaderboard = await prisma.user.findMany({
-      select: {
-        username: true,
-        completedChallenges: true,
-      },
-      orderBy: {
-        completedChallenges: "desc",
-      },
-      take: 10, // Limit to top 10 users
-    });
-
-    res.json(leaderboard);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch leaderboard" });
-  }
-});
-
-app.get("/current-user-rank", authenticateToken, async (req, res) => {
-  try {
     const allUsers = await prisma.user.findMany({
       select: {
         username: true,
@@ -786,15 +767,32 @@ app.get("/current-user-rank", authenticateToken, async (req, res) => {
     const currentUserIndex = allUsers.findIndex(
       (user) => user.username === req.user.username
     );
-    const currentUserRank = currentUserIndex + 1;
+    const currentUserRank =
+      currentUserIndex !== -1 ? currentUserIndex + 1 : null;
+
+    const leaderboardData = allUsers.slice(0, 10).map((user, index) => ({
+      rank: index + 1,
+      username: user.username,
+      completedChallenges: user.completedChallenges,
+      isCurrentUser: user.username === req.user.username,
+    }));
+
+    if (currentUserRank && currentUserRank > 10) {
+      leaderboardData.push({
+        rank: currentUserRank,
+        username: req.user.username,
+        completedChallenges: allUsers[currentUserIndex].completedChallenges,
+        isCurrentUser: true,
+      });
+    }
 
     res.json({
-      username: req.user.username,
-      completedChallenges: allUsers[currentUserIndex].completedChallenges,
-      rank: currentUserRank,
+      leaderboard: leaderboardData,
+      currentUserRank: currentUserRank,
     });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch current user rank" });
+    console.error("Error fetching leaderboard:", error);
+    res.status(500).json({ error: "Failed to fetch leaderboard" });
   }
 });
 
