@@ -53,7 +53,7 @@ const ChallengeCard = ({ challenge, onUpdate }) => {
       }
     >
       <Progress
-        percent={Math.min(progress, 100)}
+        percent={Math.min(progress, 100).toFixed(2)}
         status={
           challenge.status === "completed"
             ? "success"
