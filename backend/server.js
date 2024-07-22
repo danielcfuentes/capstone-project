@@ -170,6 +170,32 @@ app.post("/posts/:postId/like", authenticateToken, async (req, res) => {
   }
 });
 
+// Add a new endpoint for adding a comment to a post
+app.post("/posts/:postId/comments", authenticateToken, async (req, res) => {
+  const { postId } = req.params;
+  const { content } = req.body;
+  const userId = req.user.id;
+
+  try {
+    const newComment = await prisma.comment.create({
+      data: {
+        content,
+        post: { connect: { id: parseInt(postId) } },
+        user: { connect: { id: userId } },
+      },
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+    });
+    res.json(newComment);
+  } catch (error) {
+    res.status(500).json({ message: "Error adding comment", error: error.message });
+  }
+});
 
 //Profile ________________________
 
