@@ -594,6 +594,18 @@ app.put("/challenges/:id", authenticateToken, async (req, res) => {
       where: { id: parseInt(id) },
       data: { currentProgress, isCompleted },
     });
+
+    if (isCompleted) {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: {
+          completedChallenges: {
+            increment: 1,
+          },
+        },
+      });
+    }
+
     res.json(updatedChallenge);
   } catch (error) {
     res.status(500).json({ error: "Failed to update challenge" });
@@ -736,6 +748,51 @@ cron.schedule("0 0 * * *", async () => {
       await generateChallenges(user.id);
     }
   } catch (error) {}
+});
+
+
+//leaderboard
+app.get("/leaderboard", authenticateToken, async (req, res) => {
+  try {
+    const allUsers = await prisma.user.findMany({
+      select: {
+        username: true,
+        completedChallenges: true,
+      },
+      orderBy: {
+        completedChallenges: "desc",
+      },
+    });
+
+    const currentUserIndex = allUsers.findIndex(
+      (user) => user.username === req.user.username
+    );
+    const currentUserRank =
+      currentUserIndex !== -1 ? currentUserIndex + 1 : null;
+
+    const leaderboardData = allUsers.slice(0, 10).map((user, index) => ({
+      rank: index + 1,
+      username: user.username,
+      completedChallenges: user.completedChallenges,
+      isCurrentUser: user.username === req.user.username,
+    }));
+
+    if (currentUserRank && currentUserRank > 10) {
+      leaderboardData.push({
+        rank: currentUserRank,
+        username: req.user.username,
+        completedChallenges: allUsers[currentUserIndex].completedChallenges,
+        isCurrentUser: true,
+      });
+    }
+
+    res.json({
+      leaderboard: leaderboardData,
+      currentUserRank: currentUserRank,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch leaderboard" });
+  }
 });
 
 // Start the server and log that the cron job is set up

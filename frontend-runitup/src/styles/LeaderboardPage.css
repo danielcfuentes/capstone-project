@@ -1,0 +1,205 @@
+.leaderboard-page {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 2rem;
+  padding-top: 80px;
+}
+
+.leaderboard-content {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.leaderboard-title {
+  text-align: center;
+  color: white;
+  margin-bottom: 2rem;
+}
+
+.leaderboard-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+}
+
+.top-three {
+  margin-bottom: 2rem;
+}
+
+.top-three-card {
+  text-align: center;
+  border-radius: 15px;
+  transition: all 0.3s ease;
+  height: 220px; /* Fixed height for all cards */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 10px;
+  overflow: visible; /* Allow crown to overflow */
+}
+
+.top-three-card .ant-avatar {
+  border: 3px solid white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.top-three-card .anticon-crown {
+  z-index: 1; /* Ensure crown appears above the avatar */
+}
+
+.top-three-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.top-three-card.rank-1 {
+  background: linear-gradient(45deg, #ffd700, #ffa500);
+}
+
+.top-three-card.rank-2 {
+  background: linear-gradient(45deg, #c0c0c0, #a9a9a9);
+}
+
+.top-three-card.rank-3 {
+  background: linear-gradient(45deg, #cd7f32, #b8860b);
+}
+
+.top-three-card .ant-card-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.top-three-card .username-container {
+  margin-top: 0.5rem;
+  height: 3em; /* Fixed height for username */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.username-container {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.username {
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  max-width: 100%;
+  display: block;
+}
+
+.top-three-card h4 {
+  color: white;
+  margin: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.top-three-card p {
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 0.5rem;
+}
+
+.leaderboard-table {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.leaderboard-table .ant-table-thead > tr > th {
+  background: #1890ff;
+  color: white;
+}
+
+.leaderboard-table .ant-table-tbody > tr > td {
+  transition: all 0.3s ease;
+}
+
+.leaderboard-table .ant-table-tbody > tr:hover > td {
+  background: #e6f7ff;
+}
+
+@media (max-width: 768px) {
+  .leaderboard-page {
+    padding: 1rem;
+  }
+
+  .top-three .ant-col {
+    margin-bottom: 1rem;
+  }
+}
+
+.challenge-count {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.top-three-card.current-user {
+  box-shadow: 0 0 15px rgba(24, 144, 255, 0.7);
+  border: 2px solid #1890ff;
+}
+
+.current-user-indicator {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1890ff;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.top-three-card .ant-card-extra {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.leaderboard-table .current-user-row {
+  background-color: rgba(24, 144, 255, 0.1);
+  font-weight: bold;
+}
+
+.leaderboard-table .current-user-row:hover > td {
+  background-color: rgba(24, 144, 255, 0.2) !important;
+}
+
+.current-user-rank,
+.current-user-name,
+.current-user-challenges {
+  color: #1890ff;
+  font-weight: bold;
+}
+
+.leaderboard-table .ant-table-cell {
+  vertical-align: middle;
+}
+
+.leaderboard-table .current-user-row,
+.current-user-row {
+  background-color: rgba(24, 144, 255, 0.1);
+  font-weight: bold;
+}
+
+.leaderboard-table .current-user-row:hover > td,
+.current-user-row:hover > td {
+  background-color: rgba(24, 144, 255, 0.2) !important;
+}

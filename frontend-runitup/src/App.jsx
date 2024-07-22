@@ -14,6 +14,7 @@ import ActiveRun from "./Components/Routes/ActiveRun";
 import UserActivitiesPage from "./Components/Profile/UserActivites";
 import { getHeaders } from "./utils/apiConfig";
 import { message } from "antd";
+import LeaderboardPage from "./Components/LeaderBoard/LeaderboardPage";
 
 // Protected route wrapper component
 const ProtectedRoute = ({ children, isLoggedIn, isProfileComplete }) => {
@@ -44,11 +45,15 @@ function App() {
   }, []);
 
   const handleLogin = (userData, accessToken, refreshToken) => {
-    setUser(userData);
+    const userWithChallenges = {
+      ...userData,
+      completedChallenges: userData.completedChallenges, // Ensure this is included
+    };
+    setUser(userWithChallenges);
     setAccessToken(accessToken);
     setRefreshToken(refreshToken);
     setIsProfileComplete(userData.isProfileComplete);
-    localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("user", JSON.stringify(userWithChallenges));
     localStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
   };
@@ -252,6 +257,17 @@ function App() {
                 isProfileComplete={isProfileComplete}
               >
                 <UserActivitiesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leaderboard"
+            element={
+              <ProtectedRoute
+                isLoggedIn={isLoggedIn}
+                isProfileComplete={isProfileComplete}
+              >
+                <LeaderboardPage currentUser={user} />
               </ProtectedRoute>
             }
           />

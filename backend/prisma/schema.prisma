@@ -16,26 +16,27 @@ datasource db {
 }
 
 model User {
-  id                Int               @id @default(autoincrement())
-  username          String            @unique
-  password          String
-  tokens            Token[]
-  posts             Post[]
-  age               Int?
-  gender            String?
-  weight            Float?
-  height            Float?
-  fitnessLevel      String?
-  runningExperience String?
-  preferredTerrains String[]
-  healthConditions  String[]
-  lastKnownLocation String?
-  runningGoals      UserRunningGoal[]
-  completedRuns     CompletedRun[]
-  isProfileComplete Boolean           @default(false)
-  activities        UserActivity[]
-  activeRuns        ActiveRun[]
-  challenges        Challenge[]
+  id                    Int               @id @default(autoincrement())
+  username              String            @unique
+  password              String
+  tokens                Token[]
+  posts                 Post[]
+  age                   Int?
+  gender                String?
+  weight                Float?
+  height                Float?
+  fitnessLevel          String?
+  runningExperience     String?
+  preferredTerrains     String[]
+  healthConditions      String[]
+  lastKnownLocation     String?
+  runningGoals          UserRunningGoal[]
+  completedRuns         CompletedRun[]
+  isProfileComplete     Boolean           @default(false)
+  activities            UserActivity[]
+  activeRuns            ActiveRun[]
+  challenges            Challenge[]
+  completedChallenges   Int               @default(0)  // New field
 }
 
 model Token {
