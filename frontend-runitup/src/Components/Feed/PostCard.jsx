@@ -22,9 +22,9 @@ import CommentSection from "./CommentSection";
 const { Text, Paragraph, Title } = Typography;
 
 const PostCard = ({ post, onLike, onCommentAdded }) => {
-  const [isLiked, setIsLiked] = useState(post.isLikedByUser);
-  const [likeCount, setLikeCount] = useState(post.likeCount);
-  const [commentCount, setCommentCount] = useState(post.commentCount);
+  const [isLiked, setIsLiked] = useState(post.isLikedByUser || false);
+  const [likeCount, setLikeCount] = useState(post.likeCount || 0);
+  const [commentCount, setCommentCount] = useState(post.commentCount || 0);
   const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
 
   const avatarColor = generateColor(post.userId);
@@ -46,7 +46,7 @@ const PostCard = ({ post, onLike, onCommentAdded }) => {
 
       if (response.ok) {
         setIsLiked(!isLiked);
-        setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
+        setLikeCount((prevCount) => (isLiked ? prevCount - 1 : prevCount + 1));
         if (onLike) {
           onLike(post.id, !isLiked);
         }
@@ -131,20 +131,31 @@ const PostCard = ({ post, onLike, onCommentAdded }) => {
         </Paragraph>
       </div>
       <div className="post-actions">
-          <Button
-            type="text"
-            icon={isLiked ? <HeartFilled style={{ color: "#ff4d4f" }} /> : <HeartOutlined />}
-            onClick={handleLike}
-          >
-            Like ({likeCount})
-          </Button>
-          <Button type="text" icon={<MessageOutlined />} onClick={handleCommentClick}>
-            Comment ({commentCount})
-          </Button>
-          <Button type="text" icon={<ShareAltOutlined />}>
-            Share
-          </Button>
-        </div>
+        <Button
+          type="text"
+          icon={
+            isLiked ? (
+              <HeartFilled style={{ color: "#ff4d4f" }} />
+            ) : (
+              <HeartOutlined />
+            )
+          }
+          onClick={handleLike}
+        >
+          Like ({likeCount})
+        </Button>
+        <Button
+          type="text"
+          icon={<MessageOutlined />}
+          onClick={handleCommentClick}
+        >
+          Comment ({commentCount})
+        </Button>
+        <Button type="text" icon={<ShareAltOutlined />}>
+          Share
+        </Button>
+      </div>
+
       <Modal
         title={`Comments on "${post.title}"`}
         visible={isCommentModalVisible}
