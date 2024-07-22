@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { Modal } from "antd";
 import "../../styles/CustomCarousel.css";
 
 const CustomCarousel = ({ images, autoSlideInterval = 3000 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+  const [previewImage, setPreviewImage] = useState("");
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -11,12 +14,6 @@ const CustomCarousel = ({ images, autoSlideInterval = 3000 }) => {
 
     return () => clearInterval(intervalId);
   }, [currentIndex, autoSlideInterval]);
-
-  const handlePrev = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? images.length - 1 : prevIndex - 1
-    );
-  };
 
   const handleNext = () => {
     setCurrentIndex((prevIndex) =>
@@ -28,21 +25,27 @@ const CustomCarousel = ({ images, autoSlideInterval = 3000 }) => {
     setCurrentIndex(index);
   };
 
+  const handleImageClick = (image) => {
+    setPreviewImage(image);
+    setIsPreviewVisible(true);
+  };
+
+  const handlePreviewClose = () => {
+    setIsPreviewVisible(false);
+  };
+
   return (
     <div className="carousel-container">
-      <button className="carousel-button prev" onClick={handlePrev}>
-        &#9664;
-      </button>
-      <div className="carousel-images">
+      <div
+        className="carousel-images"
+        onClick={() => handleImageClick(images[currentIndex])}
+      >
         <img
           src={images[currentIndex]}
           alt={`Slide ${currentIndex + 1}`}
           className="carousel-image"
         />
       </div>
-      <button className="carousel-button next" onClick={handleNext}>
-        &#9654;
-      </button>
       <div className="carousel-indicators">
         {images.map((_, index) => (
           <div
@@ -52,6 +55,13 @@ const CustomCarousel = ({ images, autoSlideInterval = 3000 }) => {
           />
         ))}
       </div>
+      <Modal
+        visible={isPreviewVisible}
+        footer={null}
+        onCancel={handlePreviewClose}
+      >
+        <img src={previewImage} alt="Preview" style={{ width: "100%" }} />
+      </Modal>
     </div>
   );
 };
