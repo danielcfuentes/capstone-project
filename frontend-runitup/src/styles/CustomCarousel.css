@@ -1,4 +1,3 @@
-
 .carousel-container {
   position: relative;
   width: 100%;
@@ -35,12 +34,14 @@
   height: 12px;
   background-color: rgba(0, 0, 0, 0.5);
   border-radius: 50%;
+  border: 1px solid #fff; /* Add a white border */
   margin: 0 5px;
   cursor: pointer;
 }
 
 .indicator.active {
-  background-color: #fff;
+  background-color: #1890ff; /* Change to a more visible color */
+  border-color: #1890ff; /* Change border color to match */
 }
 
 .indicator:hover {
