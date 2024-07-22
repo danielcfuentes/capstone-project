@@ -3,11 +3,11 @@ import { Layout, Typography, Tabs, message, Spin, Empty } from "antd";
 import { getHeaders } from "../../utils/apiConfig";
 import ChallengeCard from "./ChallengeCard";
 import PastChallenges from "./PastChallenges";
+import "../../styles/RecommendationPage.css";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
-
 const RecommendationPage = () => {
   const [activeChallenges, setActiveChallenges] = useState([]);
   const [pastChallenges, setPastChallenges] = useState([]);
@@ -107,11 +107,12 @@ const RecommendationPage = () => {
   };
 
   return (
-    <Layout style={{ padding: "50px 0 0 0" }}>
-      <Content style={{ padding: "50px" }}>
+    <Layout className="recommendation-page">
+      <Content className="recommendation-content">
+        <Title level={2}>Challenges</Title>
         <Tabs defaultActiveKey="1">
           <TabPane tab="Current Challenges" key="1">
-            {renderChallenges()}
+            <div className="challenges-grid">{renderChallenges()}</div>
           </TabPane>
           <TabPane tab="Past Challenges" key="2">
             <PastChallenges challenges={pastChallenges} />
