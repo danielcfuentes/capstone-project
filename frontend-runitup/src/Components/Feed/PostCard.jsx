@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, Avatar, Typography, Space, Image, Carousel, Button } from "antd";
 import {
   HeartOutlined,
+  HeartFilled,
   MessageOutlined,
   ShareAltOutlined,
 } from "@ant-design/icons";
@@ -10,10 +11,40 @@ import { generateColor } from "../../utils/apiConfig";
 
 const { Text, Paragraph, Title } = Typography;
 
-const PostCard = ({ post }) => {
+const PostCard = ({ post, onLike }) => {
+  const [isLiked, setIsLiked] = useState(post.isLikedByUser);
+  const [likeCount, setLikeCount] = useState(post.likeCount);
+
   const avatarColor = generateColor(post.userId);
   const userInitial = post.userId.charAt(0).toUpperCase();
   const hasImages = post.images && post.images.length > 0;
+
+  const handleLike = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/posts/${post.id}/like`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        setIsLiked(!isLiked);
+        setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
+        if (onLike) {
+          onLike(post.id, !isLiked);
+        }
+      } else {
+        console.error("Failed to update like");
+      }
+    } catch (error) {
+      console.error("Error updating like:", error);
+    }
+  };
 
   const renderImages = () => {
     if (!hasImages) return null;
@@ -73,8 +104,18 @@ const PostCard = ({ post }) => {
         </Paragraph>
       </div>
       <div className="post-actions">
-        <Button type="text" icon={<HeartOutlined />}>
-          Like
+        <Button
+          type="text"
+          icon={
+            isLiked ? (
+              <HeartFilled style={{ color: "#ff4d4f" }} />
+            ) : (
+              <HeartOutlined />
+            )
+          }
+          onClick={handleLike}
+        >
+          Like ({likeCount})
         </Button>
         <Button type="text" icon={<MessageOutlined />}>
           Comment
