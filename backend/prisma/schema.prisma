@@ -38,6 +38,7 @@ model User {
   challenges          Challenge[]
   completedChallenges Int               @default(0) // New field
   Like                Like[]
+  Comment             Comment[]
 }
 
 model Token {
@@ -48,14 +49,15 @@ model Token {
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   title     String
   content   String?
   userId    String
-  user      User     @relation(fields: [userId], references: [username])
-  createdAt DateTime @default(now())
+  user      User      @relation(fields: [userId], references: [username])
+  createdAt DateTime  @default(now())
   images    Image[]
-  likes     Like[] 
+  likes     Like[]
+  comments  Comment[]
 }
 
 model Image {
@@ -75,6 +77,16 @@ model Like {
   createdAt DateTime @default(now())
 
   @@unique([postId, userId]) // Ensures a user can only like a post once
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime @default(now())
 }
 
 model UserRunningGoal {
