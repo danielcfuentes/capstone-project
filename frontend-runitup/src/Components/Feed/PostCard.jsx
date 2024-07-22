@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, Avatar, Typography, Space, Image, Carousel, Button } from "antd";
+import { Card, Avatar, Typography, Space, Image, Carousel, Button, message } from "antd";
 import {
   HeartOutlined,
   HeartFilled,
@@ -39,10 +39,10 @@ const PostCard = ({ post, onLike }) => {
           onLike(post.id, !isLiked);
         }
       } else {
-        console.error("Failed to update like");
+        message.error("Failed to update like");
       }
     } catch (error) {
-      console.error("Error updating like:", error);
+      message.error("Error updating like:", error);
     }
   };
 
