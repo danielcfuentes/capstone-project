@@ -8,12 +8,15 @@ import {
 } from "@ant-design/icons";
 import "../../styles/PostCard.css";
 import { generateColor } from "../../utils/apiConfig";
+import CommentSection from "./CommentSection";
 
 const { Text, Paragraph, Title } = Typography;
 
-const PostCard = ({ post, onLike }) => {
+const PostCard = ({ post, onLike, onCommentAdded }) => {
   const [isLiked, setIsLiked] = useState(post.isLikedByUser);
   const [likeCount, setLikeCount] = useState(post.likeCount);
+  const [commentCount, setCommentCount] = useState(post.commentCount);
+  const [showComments, setShowComments] = useState(false);
 
   const avatarColor = generateColor(post.userId);
   const userInitial = post.userId.charAt(0).toUpperCase();
@@ -43,6 +46,17 @@ const PostCard = ({ post, onLike }) => {
       }
     } catch (error) {
       console.error("Error updating like:", error);
+    }
+  };
+
+  const handleCommentClick = () => {
+    setShowComments(!showComments);
+  };
+
+  const handleCommentAdded = () => {
+    setCommentCount(commentCount + 1);
+    if (onCommentAdded) {
+      onCommentAdded(post.id);
     }
   };
 
@@ -117,13 +131,20 @@ const PostCard = ({ post, onLike }) => {
         >
           Like ({likeCount})
         </Button>
-        <Button type="text" icon={<MessageOutlined />}>
-          Comment
+        <Button
+          type="text"
+          icon={<MessageOutlined />}
+          onClick={handleCommentClick}
+        >
+          Comment ({commentCount})
         </Button>
         <Button type="text" icon={<ShareAltOutlined />}>
           Share
         </Button>
       </div>
+      {showComments && (
+        <CommentSection postId={post.id} onCommentAdded={handleCommentAdded} />
+      )}
     </Card>
   );
 };
