@@ -86,6 +86,7 @@ app.get("/allposts", authenticateToken, async (req, res) => {
             username: true,
           },
         },
+        likes: true, // Include likes
       },
       orderBy: {
         createdAt: "desc",
@@ -99,6 +100,8 @@ app.get("/allposts", authenticateToken, async (req, res) => {
         url: `/images/${image.id}`,
         mimeType: image.mimeType,
       })),
+      likeCount: post.likes.length,
+      isLikedByUser: post.likes.some((like) => like.userId === req.user.id),
     }));
 
     res.json(transformedPosts);
@@ -108,6 +111,7 @@ app.get("/allposts", authenticateToken, async (req, res) => {
       .json({ message: "Error fetching all posts", error: error.message });
   }
 });
+
 
 app.get("/images/:id", async (req, res) => {
   const { id } = req.params;
