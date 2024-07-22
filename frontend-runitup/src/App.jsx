@@ -45,11 +45,15 @@ function App() {
   }, []);
 
   const handleLogin = (userData, accessToken, refreshToken) => {
-    setUser(userData);
+    const userWithChallenges = {
+      ...userData,
+      completedChallenges: userData.completedChallenges, // Ensure this is included
+    };
+    setUser(userWithChallenges);
     setAccessToken(accessToken);
     setRefreshToken(refreshToken);
     setIsProfileComplete(userData.isProfileComplete);
-    localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("user", JSON.stringify(userWithChallenges));
     localStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
   };
@@ -256,7 +260,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/leaderboard"
             element={

@@ -33,7 +33,6 @@
   margin-bottom: 2rem;
 }
 
-
 .top-three-card {
   text-align: center;
   border-radius: 15px;
@@ -49,7 +48,7 @@
 
 .top-three-card .ant-avatar {
   border: 3px solid white;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .top-three-card .anticon-crown {
@@ -62,15 +61,15 @@
 }
 
 .top-three-card.rank-1 {
-  background: linear-gradient(45deg, #FFD700, #FFA500);
+  background: linear-gradient(45deg, #ffd700, #ffa500);
 }
 
 .top-three-card.rank-2 {
-  background: linear-gradient(45deg, #C0C0C0, #A9A9A9);
+  background: linear-gradient(45deg, #c0c0c0, #a9a9a9);
 }
 
 .top-three-card.rank-3 {
-  background: linear-gradient(45deg, #CD7F32, #B8860B);
+  background: linear-gradient(45deg, #cd7f32, #b8860b);
 }
 
 .top-three-card .ant-card-body {
@@ -176,8 +175,31 @@
 
 .leaderboard-table .current-user-row {
   background-color: rgba(24, 144, 255, 0.1);
+  font-weight: bold;
 }
 
 .leaderboard-table .current-user-row:hover > td {
+  background-color: rgba(24, 144, 255, 0.2) !important;
+}
+
+.current-user-rank,
+.current-user-name,
+.current-user-challenges {
+  color: #1890ff;
+  font-weight: bold;
+}
+
+.leaderboard-table .ant-table-cell {
+  vertical-align: middle;
+}
+
+.leaderboard-table .current-user-row,
+.current-user-row {
+  background-color: rgba(24, 144, 255, 0.1);
+  font-weight: bold;
+}
+
+.leaderboard-table .current-user-row:hover > td,
+.current-user-row:hover > td {
   background-color: rgba(24, 144, 255, 0.2) !important;
 }
