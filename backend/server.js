@@ -86,7 +86,8 @@ app.get("/allposts", authenticateToken, async (req, res) => {
             username: true,
           },
         },
-        likes: true, // Include likes
+        likes: true,
+        comments: true, // Include comments
       },
       orderBy: {
         createdAt: "desc",
@@ -102,6 +103,7 @@ app.get("/allposts", authenticateToken, async (req, res) => {
       })),
       likeCount: post.likes.length,
       isLikedByUser: post.likes.some((like) => like.userId === req.user.id),
+      commentCount: post.comments.length, // Add comment count
     }));
 
     res.json(transformedPosts);
