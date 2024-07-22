@@ -16,27 +16,28 @@ datasource db {
 }
 
 model User {
-  id                    Int               @id @default(autoincrement())
-  username              String            @unique
-  password              String
-  tokens                Token[]
-  posts                 Post[]
-  age                   Int?
-  gender                String?
-  weight                Float?
-  height                Float?
-  fitnessLevel          String?
-  runningExperience     String?
-  preferredTerrains     String[]
-  healthConditions      String[]
-  lastKnownLocation     String?
-  runningGoals          UserRunningGoal[]
-  completedRuns         CompletedRun[]
-  isProfileComplete     Boolean           @default(false)
-  activities            UserActivity[]
-  activeRuns            ActiveRun[]
-  challenges            Challenge[]
-  completedChallenges   Int               @default(0)  // New field
+  id                  Int               @id @default(autoincrement())
+  username            String            @unique
+  password            String
+  tokens              Token[]
+  posts               Post[]
+  age                 Int?
+  gender              String?
+  weight              Float?
+  height              Float?
+  fitnessLevel        String?
+  runningExperience   String?
+  preferredTerrains   String[]
+  healthConditions    String[]
+  lastKnownLocation   String?
+  runningGoals        UserRunningGoal[]
+  completedRuns       CompletedRun[]
+  isProfileComplete   Boolean           @default(false)
+  activities          UserActivity[]
+  activeRuns          ActiveRun[]
+  challenges          Challenge[]
+  completedChallenges Int               @default(0) // New field
+  Like                Like[]
 }
 
 model Token {
@@ -54,6 +55,7 @@ model Post {
   user      User     @relation(fields: [userId], references: [username])
   createdAt DateTime @default(now())
   images    Image[]
+  likes     Like[] 
 }
 
 model Image {
@@ -62,6 +64,17 @@ model Image {
   mimeType String
   postId   Int
   post     Post   @relation(fields: [postId], references: [id])
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId]) // Ensures a user can only like a post once
 }
 
 model UserRunningGoal {
