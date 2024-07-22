@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from "react";
-import {
-  List,
-  Avatar,
-  Form,
-  Input,
-  Button,
-  message,
-  Typography,
-  Space,
-} from "antd";
+import { List, Avatar, Form, Input, Button, Typography, Divider } from "antd";
+import { SendOutlined } from "@ant-design/icons";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
+import "../../styles/CommentSection.css";
 
 const { TextArea } = Input;
 const { Text } = Typography;
 
-const CommentSection = ({ postId, onCommentAdded, limit, fullView }) => {
+const CommentSection = ({ postId, onCommentAdded }) => {
   const [comments, setComments] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [value, setValue] = useState("");
@@ -31,7 +24,7 @@ const CommentSection = ({ postId, onCommentAdded, limit, fullView }) => {
       const response = await fetch(
         `${
           import.meta.env.VITE_POST_ADDRESS
-        }/posts/${postId}/comments?offset=${offset}&limit=${limit || 10}`,
+        }/posts/${postId}/comments?offset=${offset}&limit=10`,
         { headers: getHeaders() }
       );
       if (!response.ok) throw new Error("Failed to fetch comments");
@@ -39,16 +32,16 @@ const CommentSection = ({ postId, onCommentAdded, limit, fullView }) => {
       setComments((prevComments) =>
         offset === 0 ? data : [...prevComments, ...data]
       );
-      setHasMore(data.length === (limit || 10));
+      setHasMore(data.length === 10);
     } catch (error) {
-      message.error("Failed to load comments");
+      console.error("Failed to load comments:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSubmit = async () => {
-    if (!value) return;
+    if (!value.trim()) return;
 
     setSubmitting(true);
     try {
@@ -57,7 +50,7 @@ const CommentSection = ({ postId, onCommentAdded, limit, fullView }) => {
         {
           method: "POST",
           headers: getHeaders(),
-          body: JSON.stringify({ content: value }),
+          body: JSON.stringify({ content: value.trim() }),
         }
       );
       if (!response.ok) throw new Error("Failed to add comment");
@@ -65,9 +58,8 @@ const CommentSection = ({ postId, onCommentAdded, limit, fullView }) => {
       setComments([newComment, ...comments]);
       setValue("");
       if (onCommentAdded) onCommentAdded();
-      message.success("Comment added successfully");
     } catch (error) {
-      message.error("Failed to add comment");
+      console.error("Failed to add comment:", error);
     } finally {
       setSubmitting(false);
     }
@@ -78,15 +70,12 @@ const CommentSection = ({ postId, onCommentAdded, limit, fullView }) => {
   };
 
   return (
-    <div>
+    <div className="comment-section">
       <List
-        dataSource={comments}
-        header={`${comments.length} ${
-          comments.length > 1 ? "comments" : "comment"
-        }`}
         itemLayout="horizontal"
+        dataSource={comments}
         renderItem={(comment) => (
-          <List.Item>
+          <List.Item className="comment-item">
             <List.Item.Meta
               avatar={
                 <Avatar
@@ -99,45 +88,44 @@ const CommentSection = ({ postId, onCommentAdded, limit, fullView }) => {
               }
               title={<Text strong>{comment.user.username}</Text>}
               description={
-                <Space direction="vertical">
-                  <Text>{comment.content}</Text>
-                  <Text type="secondary">
+                <>
+                  <Text className="comment-content">{comment.content}</Text>
+                  <Text type="secondary" className="comment-date">
                     {new Date(comment.createdAt).toLocaleString()}
                   </Text>
-                </Space>
+                </>
               }
             />
           </List.Item>
         )}
-        loadMore={
-          fullView &&
-          hasMore && (
-            <div
-              style={{
-                textAlign: "center",
-                marginTop: 12,
-                height: 32,
-                lineHeight: "32px",
-              }}
-            >
-              <Button onClick={loadMoreComments} loading={loading}>
-                Load More
-              </Button>
-            </div>
-          )
-        }
       />
-      <Form onFinish={handleSubmit}>
+      {hasMore && (
+        <div className="load-more-container">
+          <Button onClick={loadMoreComments} loading={loading}>
+            Load More
+          </Button>
+        </div>
+      )}
+      <Divider />
+      <Form onFinish={handleSubmit} className="comment-form">
         <Form.Item>
           <TextArea
-            rows={4}
+            rows={3}
             onChange={(e) => setValue(e.target.value)}
             value={value}
+            placeholder="Write a comment..."
+            className="comment-input"
           />
         </Form.Item>
         <Form.Item>
-          <Button htmlType="submit" loading={submitting} type="primary">
-            Add Comment
+          <Button
+            htmlType="submit"
+            loading={submitting}
+            type="primary"
+            icon={<SendOutlined />}
+            className="submit-button"
+          >
+            Post Comment
           </Button>
         </Form.Item>
       </Form>

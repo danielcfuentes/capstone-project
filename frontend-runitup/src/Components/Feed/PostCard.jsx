@@ -14,7 +14,6 @@ import {
   HeartFilled,
   MessageOutlined,
   ShareAltOutlined,
-  ExpandAltOutlined,
 } from "@ant-design/icons";
 import "../../styles/PostCard.css";
 import { generateColor } from "../../utils/apiConfig";
@@ -26,8 +25,7 @@ const PostCard = ({ post, onLike, onCommentAdded }) => {
   const [isLiked, setIsLiked] = useState(post.isLikedByUser);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [commentCount, setCommentCount] = useState(post.commentCount);
-  const [showComments, setShowComments] = useState(false);
-  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
 
   const avatarColor = generateColor(post.userId);
   const userInitial = post.userId.charAt(0).toUpperCase();
@@ -61,19 +59,15 @@ const PostCard = ({ post, onLike, onCommentAdded }) => {
   };
 
   const handleCommentClick = () => {
-    setShowComments(!showComments);
+    setIsCommentModalVisible(true);
   };
 
-  const handleOpenCommentModal = () => {
-    setShowCommentModal(true);
-  };
-
-  const handleCloseCommentModal = () => {
-    setShowCommentModal(false);
+  const handleCommentModalClose = () => {
+    setIsCommentModalVisible(false);
   };
 
   const handleCommentAdded = () => {
-    setCommentCount(commentCount + 1);
+    setCommentCount((prevCount) => prevCount + 1);
     if (onCommentAdded) {
       onCommentAdded(post.id);
     }
@@ -137,55 +131,31 @@ const PostCard = ({ post, onLike, onCommentAdded }) => {
         </Paragraph>
       </div>
       <div className="post-actions">
-        <Button
-          type="text"
-          icon={
-            isLiked ? (
-              <HeartFilled style={{ color: "#ff4d4f" }} />
-            ) : (
-              <HeartOutlined />
-            )
-          }
-          onClick={handleLike}
-        >
-          Like ({likeCount})
-        </Button>
-        <Button
-          type="text"
-          icon={<MessageOutlined />}
-          onClick={handleCommentClick}
-        >
-          Comment ({commentCount})
-        </Button>
-        <Button
-          type="text"
-          icon={<ExpandAltOutlined />}
-          onClick={handleOpenCommentModal}
-        >
-          View All Comments
-        </Button>
-        <Button type="text" icon={<ShareAltOutlined />}>
-          Share
-        </Button>
-      </div>
-      {showComments && (
-        <CommentSection
-          postId={post.id}
-          onCommentAdded={handleCommentAdded}
-          limit={3} // Show only the latest 3 comments in the feed
-        />
-      )}
+          <Button
+            type="text"
+            icon={isLiked ? <HeartFilled style={{ color: "#ff4d4f" }} /> : <HeartOutlined />}
+            onClick={handleLike}
+          >
+            Like ({likeCount})
+          </Button>
+          <Button type="text" icon={<MessageOutlined />} onClick={handleCommentClick}>
+            Comment ({commentCount})
+          </Button>
+          <Button type="text" icon={<ShareAltOutlined />}>
+            Share
+          </Button>
+        </div>
       <Modal
         title={`Comments on "${post.title}"`}
-        visible={showCommentModal}
-        onCancel={handleCloseCommentModal}
+        visible={isCommentModalVisible}
+        onCancel={handleCommentModalClose}
         footer={null}
-        width={800}
+        width={600}
       >
         <CommentSection
           postId={post.id}
           onCommentAdded={handleCommentAdded}
-          fullView={true} // Pass a prop to indicate full view in modal
+          fullView={true}
         />
       </Modal>
     </Card>
