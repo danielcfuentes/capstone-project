@@ -1,7 +1,7 @@
 .carousel-container {
   position: relative;
   width: 100%;
-  max-width: 600px; /* Adjust to your preferred width */
+  max-width: 600px;
   margin: 0 auto;
   overflow: hidden;
 }
@@ -11,7 +11,7 @@
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: 400px; /* Adjust as needed */
+  height: 400px;
   cursor: pointer;
 }
 
@@ -34,14 +34,14 @@
   height: 12px;
   background-color: rgba(0, 0, 0, 0.5);
   border-radius: 50%;
-  border: 1px solid #fff; /* Add a white border */
+  border: 1px solid #fff;
   margin: 0 5px;
   cursor: pointer;
 }
 
 .indicator.active {
-  background-color: #1890ff; /* Change to a more visible color */
-  border-color: #1890ff; /* Change border color to match */
+  background-color: #1890ff;
+  border-color: #1890ff;
 }
 
 .indicator:hover {
