@@ -127,6 +127,48 @@ app.get("/images/:id", async (req, res) => {
   }
 });
 
+
+// Add a new endpoint for liking/unliking a post
+app.post("/posts/:postId/like", authenticateToken, async (req, res) => {
+  const { postId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const existingLike = await prisma.like.findUnique({
+      where: {
+        postId_userId: {
+          postId: parseInt(postId),
+          userId: userId,
+        },
+      },
+    });
+
+    if (existingLike) {
+      // Unlike the post
+      await prisma.like.delete({
+        where: {
+          id: existingLike.id,
+        },
+      });
+      res.json({ message: "Post unliked successfully" });
+    } else {
+      // Like the post
+      await prisma.like.create({
+        data: {
+          post: { connect: { id: parseInt(postId) } },
+          user: { connect: { id: userId } },
+        },
+      });
+      res.json({ message: "Post liked successfully" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error updating like", error: error.message });
+  }
+});
+
+
+//Profile ________________________
+
 app.put("/profile", authenticateToken, async (req, res) => {
   const {
     age,
