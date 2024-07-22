@@ -11,6 +11,7 @@ import {
   Tooltip,
   Tag,
   Divider,
+  message,
 } from "antd";
 import { TrophyOutlined, CrownOutlined, UserOutlined } from "@ant-design/icons";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
@@ -40,11 +41,10 @@ const LeaderboardPage = ({ currentUser }) => {
         throw new Error("Failed to fetch leaderboard data");
       }
       const data = await response.json();
-      console.log("Fetched leaderboard data:", data);
       setLeaderboardData(data.leaderboard);
       setCurrentUserRank(data.currentUserRank);
     } catch (error) {
-      console.error("Error fetching leaderboard:", error);
+      message.error("Error fetching leaderboard:", error);
     } finally {
       setLoading(false);
     }
@@ -161,9 +161,6 @@ const LeaderboardPage = ({ currentUser }) => {
   };
 
   const renderUserRank = () => {
-    console.log("Current user:", currentUser);
-    console.log("Current user rank:", currentUserRank);
-    console.log("Leaderboard data:", leaderboardData);
 
     const userInTop10 = leaderboardData.some(
       (user) => user.username === currentUser?.name
@@ -174,7 +171,6 @@ const LeaderboardPage = ({ currentUser }) => {
         username: currentUser.name,
         completedChallenges: currentUser.completedChallenges || 0,
       };
-      console.log("User rank data:", userRankData);
       return (
         <>
           <Divider />
