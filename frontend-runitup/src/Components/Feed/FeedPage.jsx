@@ -61,6 +61,16 @@ const FeedPage = () => {
     );
   };
 
+  const handleCommentAdded = (postId) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === postId
+          ? { ...post, commentCount: post.commentCount + 1 }
+          : post
+      )
+    );
+  };
+
   return (
     <Layout className="feed-page">
       <Content className="feed-content">
@@ -81,7 +91,11 @@ const FeedPage = () => {
             dataSource={posts}
             renderItem={(post) => (
               <List.Item key={post.id}>
-                <PostCard post={post} onLike={handlePostLiked} />
+                <PostCard
+                  post={post}
+                  onLike={handlePostLiked}
+                  onCommentAdded={handleCommentAdded}
+                />
               </List.Item>
             )}
           />

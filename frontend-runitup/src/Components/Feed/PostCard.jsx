@@ -1,10 +1,20 @@
 import React, { useState } from "react";
-import { Card, Avatar, Typography, Space, Image, Carousel, Button } from "antd";
+import {
+  Card,
+  Avatar,
+  Typography,
+  Space,
+  Image,
+  Carousel,
+  Button,
+  Modal,
+} from "antd";
 import {
   HeartOutlined,
   HeartFilled,
   MessageOutlined,
   ShareAltOutlined,
+  ExpandAltOutlined,
 } from "@ant-design/icons";
 import "../../styles/PostCard.css";
 import { generateColor } from "../../utils/apiConfig";
@@ -17,6 +27,7 @@ const PostCard = ({ post, onLike, onCommentAdded }) => {
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const [showComments, setShowComments] = useState(false);
+  const [showCommentModal, setShowCommentModal] = useState(false);
 
   const avatarColor = generateColor(post.userId);
   const userInitial = post.userId.charAt(0).toUpperCase();
@@ -51,6 +62,14 @@ const PostCard = ({ post, onLike, onCommentAdded }) => {
 
   const handleCommentClick = () => {
     setShowComments(!showComments);
+  };
+
+  const handleOpenCommentModal = () => {
+    setShowCommentModal(true);
+  };
+
+  const handleCloseCommentModal = () => {
+    setShowCommentModal(false);
   };
 
   const handleCommentAdded = () => {
@@ -138,13 +157,37 @@ const PostCard = ({ post, onLike, onCommentAdded }) => {
         >
           Comment ({commentCount})
         </Button>
+        <Button
+          type="text"
+          icon={<ExpandAltOutlined />}
+          onClick={handleOpenCommentModal}
+        >
+          View All Comments
+        </Button>
         <Button type="text" icon={<ShareAltOutlined />}>
           Share
         </Button>
       </div>
       {showComments && (
-        <CommentSection postId={post.id} onCommentAdded={handleCommentAdded} />
+        <CommentSection
+          postId={post.id}
+          onCommentAdded={handleCommentAdded}
+          limit={3} // Show only the latest 3 comments in the feed
+        />
       )}
+      <Modal
+        title={`Comments on "${post.title}"`}
+        visible={showCommentModal}
+        onCancel={handleCloseCommentModal}
+        footer={null}
+        width={800}
+      >
+        <CommentSection
+          postId={post.id}
+          onCommentAdded={handleCommentAdded}
+          fullView={true} // Pass a prop to indicate full view in modal
+        />
+      </Modal>
     </Card>
   );
 };
