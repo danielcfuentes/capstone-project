@@ -5,7 +5,6 @@ const prisma = new PrismaClient();
 const { faker } = require("@faker-js/faker");
 
 async function generateLeaderboardData(numberOfUsers = 50) {
-  console.log(`Generating leaderboard data for ${numberOfUsers} users...`);
 
   for (let i = 0; i < numberOfUsers; i++) {
     const username = faker.internet.userName();
@@ -21,15 +20,10 @@ async function generateLeaderboardData(numberOfUsers = 50) {
         },
       });
 
-      console.log(
-        `Created user: ${username} with ${completedChallenges} completed challenges`
-      );
     } catch (error) {
-      console.error(`Error creating user ${username}:`, error);
+      (`Error creating user ${username}:`, error);
     }
   }
-
-  console.log("Finished generating leaderboard data");
 }
 
 generateLeaderboardData()

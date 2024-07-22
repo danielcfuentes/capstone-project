@@ -11,7 +11,7 @@ async function deleteAllChallenges() {
 }
 
 deleteAllChallenges()
-  .then(() => console.log("Challenge deletion process completed."))
+  .then(() => "Challenge deletion process completed.")
   .catch((e) => {
     process.exit(1);
   });
