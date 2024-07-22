@@ -197,6 +197,29 @@ app.post("/posts/:postId/comments", authenticateToken, async (req, res) => {
   }
 });
 
+// Add a new endpoint for fetching comments for a post
+app.get("/posts/:postId/comments", authenticateToken, async (req, res) => {
+  const { postId } = req.params;
+  try {
+    const comments = await prisma.comment.findMany({
+      where: { postId: parseInt(postId) },
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    res.json(comments);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching comments", error: error.message });
+  }
+});
+
 //Profile ________________________
 
 app.put("/profile", authenticateToken, async (req, res) => {
