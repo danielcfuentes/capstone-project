@@ -21,7 +21,7 @@ import CommentSection from "./CommentSection";
 
 const { Text, Paragraph, Title } = Typography;
 
-const PostCard = ({ post, onLike, onCommentAdded }) => {
+const PostCard = ({ post, onLike, onCommentAdded, formatDate }) => {
   const [isLiked, setIsLiked] = useState(post.isLikedByUser || false);
   const [likeCount, setLikeCount] = useState(post.likeCount || 0);
   const [commentCount, setCommentCount] = useState(post.commentCount || 0);
@@ -110,20 +110,26 @@ const PostCard = ({ post, onLike, onCommentAdded }) => {
           <Avatar
             style={{ backgroundColor: avatarColor, verticalAlign: "middle" }}
             size="large"
+            className="user-avatar"
           >
             {userInitial}
           </Avatar>
-          <Text strong>{post.userId}</Text>
+          <div>
+            <Text strong className="user-name">
+              {post.userId}
+            </Text>
+            <br />
+            <Text type="secondary" className="post-date">
+              {formatDate(post.createdAt)}
+            </Text>
+          </div>
         </Space>
-        <Text type="secondary" className="post-date">
-          {new Date(post.createdAt).toLocaleDateString()}
-        </Text>
       </div>
       {hasImages && (
         <div className="post-image-container">{renderImages()}</div>
       )}
       <div className="post-content">
-        <Title level={3} className="post-title">
+        <Title level={4} className="post-title">
           {post.title}
         </Title>
         <Paragraph ellipsis={{ rows: 3, expandable: true, symbol: "more" }}>
@@ -133,14 +139,9 @@ const PostCard = ({ post, onLike, onCommentAdded }) => {
       <div className="post-actions">
         <Button
           type="text"
-          icon={
-            isLiked ? (
-              <HeartFilled style={{ color: "#ff4d4f" }} />
-            ) : (
-              <HeartOutlined />
-            )
-          }
+          icon={isLiked ? <HeartFilled className="liked" /> : <HeartOutlined />}
           onClick={handleLike}
+          className="action-button"
         >
           Like ({likeCount})
         </Button>
@@ -148,10 +149,15 @@ const PostCard = ({ post, onLike, onCommentAdded }) => {
           type="text"
           icon={<MessageOutlined />}
           onClick={handleCommentClick}
+          className="action-button"
         >
           Comment ({commentCount})
         </Button>
-        <Button type="text" icon={<ShareAltOutlined />}>
+        <Button
+          type="text"
+          icon={<ShareAltOutlined />}
+          className="action-button"
+        >
           Share
         </Button>
       </div>
