@@ -91,7 +91,7 @@ const PostCard = ({ post, onLike, onCommentAdded, formatDate }) => {
     return (
       <Carousel autoplay className="post-carousel">
         {post.images.map((image, index) => (
-          <div key={index}>
+          <div key={index} className="post-carousel-slide">
             <Image
               src={`${import.meta.env.VITE_POST_ADDRESS}/images/${image.id}`}
               alt={`Post image ${index + 1}`}

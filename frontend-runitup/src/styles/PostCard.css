@@ -29,12 +29,25 @@
 }
 
 .post-image-container {
-  max-height: 400px;
+  max-height: 400px; /* Set a maximum height */
   overflow: hidden;
+}
+
+.post-carousel .slick-slide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.post-carousel .post-image {
+  width: 100%;
+  height: 300px; /* Fixed height for consistency */
+  object-fit: cover;
 }
 
 .post-image {
   width: 100%;
+  height: 300px; /* Fixed height for consistency */
   object-fit: cover;
 }
 
