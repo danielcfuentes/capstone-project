@@ -1,78 +1,23 @@
-
 .recommendation-page {
   background-color: #f0f2f5;
-  min-height: calc(100vh - 64px);
-  padding-top: 64px;
 }
 
 .recommendation-content {
-  max-width: 1200px;
-  margin: 0 auto;
   padding: 24px;
+  max-width: 2000px;
 }
 
-.challenge-section {
-  margin-bottom: 48px;
-}
-
-.challenge-section-title {
-  color: #1890ff;
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.challenge-list {
+.challenges-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  gap: 16px;
 }
 
-.challenge-card {
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
+@media (max-width: 768px) {
+  .recommendation-content {
+    padding: 16px;
+  }
 
-.challenge-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.challenge-card .ant-card-head {
-  background-color: #1890ff;
-  color: #ffffff;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-}
-
-.challenge-card .ant-card-head-title {
-  font-weight: 600;
-}
-
-.challenge-card .ant-progress {
-  margin-bottom: 16px;
-}
-
-.challenge-info {
-  margin-bottom: 8px;
-  color: #595959;
-}
-
-.challenge-complete-button {
-  width: 100%;
-  margin-top: 16px;
-}
-
-.completed-challenge-card {
-  opacity: 0.7;
-}
-
-.completed-challenge-card .ant-card-head {
-  background-color: #52c41a;
-}
-
-.trophy-icon {
-  font-size: 24px;
-  color: gold;
+  .challenges-grid {
+    grid-template-columns: 1fr;
+  }
 }

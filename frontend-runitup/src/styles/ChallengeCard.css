@@ -1,0 +1,52 @@
+.challenge-card {
+  margin-bottom: 16px;
+  transition: all 0.3s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.challenge-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.challenge-card .ant-card-head-title {
+  display: flex;
+  align-items: center;
+}
+
+.challenge-card .ant-card-head-title .anticon {
+  margin-right: 8px;
+  font-size: 20px;
+}
+
+.challenge-card.completed {
+  border-color: #52c41a;
+}
+
+.challenge-card.failed {
+  border-color: #f5222d;
+}
+
+.challenge-card .ant-progress-bg {
+  border-radius: 4px;
+}
+
+.challenge-card .progress-text,
+.challenge-card .time-left {
+  display: block;
+  margin-top: 8px;
+}
+
+.challenge-card .complete-button {
+  margin-top: 16px;
+}
+
+@keyframes celebrate {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.challenge-card.completed {
+  animation: celebrate 0.5s ease-in-out;
+}

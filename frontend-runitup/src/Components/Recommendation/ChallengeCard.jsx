@@ -3,9 +3,9 @@ import { Card, Progress, Button, Typography } from "antd";
 import {
   CheckOutlined,
   CloseOutlined,
-  RunningOutlined,
+  DashboardOutlined,
   FireOutlined,
-  RiseOutlined,
+  AreaChartOutlined,
 } from "@ant-design/icons";
 import "../../styles/ChallengeCard.css";
 
@@ -26,11 +26,11 @@ const ChallengeCard = ({ challenge, onUpdate }) => {
   const getIcon = () => {
     switch (challenge.type) {
       case "distance":
-        return <RunningOutlined />;
+        return <DashboardOutlined />; // Using DashboardOutlined for distance
       case "calories":
         return <FireOutlined />;
       case "elevation":
-        return <RiseOutlined />;
+        return <AreaChartOutlined />; // Using AreaChartOutlined for elevation
       default:
         return null;
     }
