@@ -28,7 +28,6 @@ async function generateLeaderboardData(numberOfUsers = 50) {
 
 generateLeaderboardData()
   .catch((e) => {
-    console.error(e);
     process.exit(1);
   })
   .finally(async () => {

@@ -17,7 +17,7 @@ const FeedPage = () => {
   const [error, setError] = useState(null);
   const feedRef = useRef(null);
 
-  useEffect(()  => {
+  useEffect(() => {
     fetchPosts();
   }, []);
 
@@ -44,8 +44,21 @@ const FeedPage = () => {
 
   const handlePostCreated = (newPost) => {
     setPosts((prevPosts) => [newPost, ...prevPosts]);
-    // Scroll to top of the feed
     feedRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handlePostLiked = (postId, isLiked) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              isLikedByUser: isLiked,
+              likeCount: isLiked ? post.likeCount + 1 : post.likeCount - 1,
+            }
+          : post
+      )
+    );
   };
 
   return (
@@ -68,7 +81,7 @@ const FeedPage = () => {
             dataSource={posts}
             renderItem={(post) => (
               <List.Item key={post.id}>
-                <PostCard post={post} />
+                <PostCard post={post} onLike={handlePostLiked} />
               </List.Item>
             )}
           />
@@ -83,6 +96,5 @@ const FeedPage = () => {
     </Layout>
   );
 };
-
 
 export default FeedPage;
