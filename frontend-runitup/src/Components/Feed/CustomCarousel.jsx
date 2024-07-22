@@ -1,8 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../../styles/CustomCarousel.css";
 
-const CustomCarousel = ({ images }) => {
+const CustomCarousel = ({ images, autoSlideInterval = 3000 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      handleNext();
+    }, autoSlideInterval);
+
+    return () => clearInterval(intervalId);
+  }, [currentIndex, autoSlideInterval]);
 
   const handlePrev = () => {
     setCurrentIndex((prevIndex) =>
@@ -14,6 +22,10 @@ const CustomCarousel = ({ images }) => {
     setCurrentIndex((prevIndex) =>
       prevIndex === images.length - 1 ? 0 : prevIndex + 1
     );
+  };
+
+  const goToSlide = (index) => {
+    setCurrentIndex(index);
   };
 
   return (
@@ -31,6 +43,15 @@ const CustomCarousel = ({ images }) => {
       <button className="carousel-button next" onClick={handleNext}>
         &#9654;
       </button>
+      <div className="carousel-indicators">
+        {images.map((_, index) => (
+          <div
+            key={index}
+            className={`indicator ${currentIndex === index ? "active" : ""}`}
+            onClick={() => goToSlide(index)}
+          />
+        ))}
+      </div>
     </div>
   );
 };
