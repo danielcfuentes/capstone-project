@@ -83,9 +83,9 @@ function ProfilePage({ user, onProfileUpdate }) {
   };
 
   return (
-    <Layout style={{ padding: "100px 0 0 0" }} className="profile-page">
+    <Layout className="profile-page">
       <Content className="profile-content">
-        <Title level={2} className="page-title">
+        <Title level={1} className="page-title">
           {user.name}'s Profile
         </Title>
         <Text type="secondary" className="page-subtitle">
@@ -99,8 +99,8 @@ function ProfilePage({ user, onProfileUpdate }) {
             layout="vertical"
             className="profile-form"
           >
-            <Row gutter={24}>
-              <Col xs={24} sm={12}>
+            <Row gutter={[24, 24]}>
+              <Col xs={24} md={12}>
                 <Card title="Personal Information" className="info-card">
                   <Form.Item
                     name="age"
@@ -109,7 +109,7 @@ function ProfilePage({ user, onProfileUpdate }) {
                       { required: true, message: "Please input your age!" },
                     ]}
                   >
-                    <InputNumber min={1} max={120} prefix={<UserOutlined />} />
+                    <InputNumber min={1} max={120} className="full-width" />
                   </Form.Item>
                   <Form.Item
                     name="gender"
@@ -137,11 +137,7 @@ function ProfilePage({ user, onProfileUpdate }) {
                       { required: true, message: "Please input your weight!" },
                     ]}
                   >
-                    <InputNumber
-                      min={1}
-                      max={300}
-                      prefix={<DashboardOutlined />}
-                    />
+                    <InputNumber min={1} max={1000} className="full-width" />
                   </Form.Item>
                   <Form.Item
                     name="height"
@@ -152,13 +148,14 @@ function ProfilePage({ user, onProfileUpdate }) {
                   >
                     <InputNumber
                       min={1}
-                      max={300}
-                      prefix={<DashboardOutlined />}
+                      max={10}
+                      step={0.01}
+                      className="full-width"
                     />
                   </Form.Item>
                 </Card>
               </Col>
-              <Col xs={24} sm={12}>
+              <Col xs={24} md={12}>
                 <Card title="Running Profile" className="info-card">
                   <Form.Item
                     name="fitnessLevel"
