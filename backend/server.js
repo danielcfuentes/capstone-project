@@ -853,8 +853,10 @@ app.get("/leaderboard", authenticateToken, async (req, res) => {
   try {
     const allUsers = await prisma.user.findMany({
       select: {
+        id: true,
         username: true,
         completedChallenges: true,
+        previousRanking: true,
         activities: {
           select: {
             distance: true,
@@ -866,16 +868,35 @@ app.get("/leaderboard", authenticateToken, async (req, res) => {
       },
     });
 
-    const leaderboardData = allUsers.map((user, index) => ({
-      rank: index + 1,
-      username: user.username,
-      completedChallenges: user.completedChallenges,
-      totalDistance: user.activities
-        .reduce((sum, activity) => sum + activity.distance, 0)
-        .toFixed(2),
-      isCurrentUser: user.username === req.user.name,
-      trend: Math.floor(Math.random() * 3) - 1, // Mock trend data (replace with real logic)
-    }));
+    const leaderboardData = allUsers.map((user, index) => {
+      const currentRank = index + 1;
+      let trend = 0;
+
+      if (user.previousRanking) {
+        trend = user.previousRanking - currentRank;
+      }
+
+      return {
+        rank: currentRank,
+        username: user.username,
+        completedChallenges: user.completedChallenges,
+        totalDistance: user.activities
+          .reduce((sum, activity) => sum + activity.distance, 0)
+          .toFixed(2),
+        isCurrentUser: user.username === req.user.name,
+        trend: trend,
+      };
+    });
+
+    // Update previous rankings
+    await Promise.all(
+      leaderboardData.map(async (user) => {
+        await prisma.user.update({
+          where: { username: user.username },
+          data: { previousRanking: user.rank },
+        });
+      })
+    );
 
     const currentUserRank =
       leaderboardData.findIndex((user) => user.isCurrentUser) + 1;
