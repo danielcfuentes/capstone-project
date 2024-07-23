@@ -855,33 +855,30 @@ app.get("/leaderboard", authenticateToken, async (req, res) => {
       select: {
         username: true,
         completedChallenges: true,
+        activities: {
+          select: {
+            distance: true,
+          },
+        },
       },
       orderBy: {
         completedChallenges: "desc",
       },
     });
 
-    const currentUserIndex = allUsers.findIndex(
-      (user) => user.username === req.user.username
-    );
-    const currentUserRank =
-      currentUserIndex !== -1 ? currentUserIndex + 1 : null;
-
-    const leaderboardData = allUsers.slice(0, 10).map((user, index) => ({
+    const leaderboardData = allUsers.map((user, index) => ({
       rank: index + 1,
       username: user.username,
       completedChallenges: user.completedChallenges,
-      isCurrentUser: user.username === req.user.username,
+      totalDistance: user.activities
+        .reduce((sum, activity) => sum + activity.distance, 0)
+        .toFixed(2),
+      isCurrentUser: user.username === req.user.name,
+      trend: Math.floor(Math.random() * 3) - 1, // Mock trend data (replace with real logic)
     }));
 
-    if (currentUserRank && currentUserRank > 10) {
-      leaderboardData.push({
-        rank: currentUserRank,
-        username: req.user.username,
-        completedChallenges: allUsers[currentUserIndex].completedChallenges,
-        isCurrentUser: true,
-      });
-    }
+    const currentUserRank =
+      leaderboardData.findIndex((user) => user.isCurrentUser) + 1;
 
     res.json({
       leaderboard: leaderboardData,
