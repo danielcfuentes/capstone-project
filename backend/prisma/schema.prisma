@@ -39,6 +39,7 @@ model User {
   completedChallenges Int               @default(0) // New field
   Like                Like[]
   Comment             Comment[]
+  previousRanking     Int?
 }
 
 model Token {
