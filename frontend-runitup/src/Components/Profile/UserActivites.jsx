@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Typography, List, Card, Tag, Spin, message } from "antd";
+import {
+  Layout,
+  Typography,
+  List,
+  Card,
+  Tag,
+  Spin,
+  message,
+  Col,
+  Row,
+  Statistic,
+} from "antd";
 import {
   TrophyOutlined,
   CalendarOutlined,
@@ -55,12 +66,49 @@ const UserActivitiesPage = () => {
     return `${hours}h ${minutes}m`;
   };
 
+  const SummarySection = ({ activities }) => {
+    const totalDistance = activities.reduce(
+      (sum, activity) => sum + activity.distance,
+      0
+    );
+    const totalCalories = activities.reduce(
+      (sum, activity) => sum + activity.caloriesBurned,
+      0
+    );
+    const totalActivities = activities.length;
+
+    return (
+      <Card className="summary-section">
+        <Row gutter={16}>
+          <Col span={8}>
+            <Statistic
+              title="Total Distance"
+              value={totalDistance.toFixed(2)}
+              suffix="miles"
+            />
+          </Col>
+          <Col span={8}>
+            <Statistic
+              title="Total Calories Burned"
+              value={totalCalories}
+              suffix="cal"
+            />
+          </Col>
+          <Col span={8}>
+            <Statistic title="Total Activities" value={totalActivities} />
+          </Col>
+        </Row>
+      </Card>
+    );
+  };
+
   return (
     <Layout className="user-activities-page">
       <Content className="user-activities-content">
         <Title level={2} className="page-title">
           Your Running Activities
         </Title>
+        <SummarySection activities={activities} />
         <Spin spinning={loading}>
           <List
             grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 3 }}
