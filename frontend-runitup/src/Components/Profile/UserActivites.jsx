@@ -15,7 +15,7 @@ import {
   Row,
   Col,
   Statistic,
-  Table
+  Table,
 } from "antd";
 import {
   TrophyOutlined,
@@ -26,7 +26,15 @@ import {
   CloudOutlined,
 } from "@ant-design/icons";
 import { getHeaders } from "../../utils/apiConfig";
-import { Line } from "@ant-design/plots";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import "../../styles/UserActivitiesPage.css";
 
 const { Content } = Layout;
@@ -113,7 +121,7 @@ const UserActivitiesPage = () => {
 
     return (
       <Card className="summary-section">
-        <Row gutter={16}>
+        <Row justify="center" gutter={16}>
           <Col span={8}>
             <Statistic
               title="Total Distance"
@@ -144,26 +152,28 @@ const UserActivitiesPage = () => {
         distance: activity.distance,
       }));
 
-    const config = {
-      data: chartData,
-      xField: "date",
-      yField: "distance",
-      xAxis: {
-        type: "timeCat",
-        label: {
-          formatter: (v) => `${v.split(",")[0]} ${v.split(",")[1]}`,
-          rotate: 45,
-        },
-      },
-      yAxis: {
-        label: {
-          formatter: (v) => `${v} miles`,
-        },
-      },
-      smooth: true,
-    };
-
-    return <Line {...config} />;
+    return (
+      <Card className="progress-chart-card">
+        <Title level={4}>Running Progress</Title>
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart
+            data={chartData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Line
+              type="monotone"
+              dataKey="distance"
+              stroke="#8884d8"
+              activeDot={{ r: 8 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </Card>
+    );
   };
 
   const WeatherInfo = ({ weather }) => {
@@ -230,15 +240,11 @@ const UserActivitiesPage = () => {
         </Title>
         <SummarySection activities={activities} />
         <ProgressChart activities={activities} />
-        <Row
-          justify="space-between"
-          align="middle"
-          style={{ marginBottom: 16 }}
-        >
+        <Row justify="space-between" align="middle" className="controls-row">
           <Col>
             <Select
               defaultValue="date"
-              style={{ width: 120 }}
+              className="sort-select"
               onChange={handleSortChange}
             >
               <Option value="date">Date</Option>
@@ -248,6 +254,7 @@ const UserActivitiesPage = () => {
           </Col>
           <Col>
             <Button
+              className="compare-button"
               onClick={() => setIsCompareModalVisible(true)}
               disabled={selectedActivities.length < 2}
             >
@@ -269,7 +276,8 @@ const UserActivitiesPage = () => {
                         checked={selectedActivities.includes(activity)}
                         onChange={() => toggleActivitySelection(activity)}
                       />
-                      <TrophyOutlined /> {activity.activityType}
+                      <TrophyOutlined className="activity-icon" />{" "}
+                      {activity.activityType}
                     </div>
                   }
                   extra={
@@ -278,19 +286,16 @@ const UserActivitiesPage = () => {
                 >
                   <div className="activity-details">
                     <Text>
-                      <EnvironmentOutlined /> Start:{" "}
-                      {activity.startLocation || "N/A"}
+                      <EnvironmentOutlined className="detail-icon" /> Start:{" "}
+                      {activity.startLocation}
                     </Text>
                     <Text>
-                      <CalendarOutlined /> Distance:{" "}
-                      {activity.distance.toFixed(2)} miles
-                    </Text>
-                    <Text>
-                      <FieldTimeOutlined /> Duration:{" "}
+                      <FieldTimeOutlined className="detail-icon" /> Duration:{" "}
                       {formatDuration(activity.duration)}
                     </Text>
                     <Text>
-                      <FireOutlined /> Calories: {activity.caloriesBurned}
+                      <FireOutlined className="detail-icon" /> Calories Burned:{" "}
+                      {activity.caloriesBurned}
                     </Text>
                     <Text>
                       <WeatherInfo weather={activity.weather} />
@@ -301,19 +306,22 @@ const UserActivitiesPage = () => {
             )}
           />
         </Spin>
-        <Pagination
-          current={currentPage}
-          onChange={setCurrentPage}
-          total={activities.length}
-          pageSize={pageSize}
-          style={{ marginTop: 16, textAlign: "center" }}
-        />
+        <div className="pagination-container">
+          <Pagination
+            className="activities-pagination"
+            current={currentPage}
+            onChange={setCurrentPage}
+            total={activities.length}
+            pageSize={pageSize}
+          />
+        </div>
         <Modal
           title="Compare Activities"
           visible={isCompareModalVisible}
           onCancel={() => setIsCompareModalVisible(false)}
           footer={null}
           width={800}
+          className="compare-modal"
         >
           <CompareActivities activities={selectedActivities} />
         </Modal>
