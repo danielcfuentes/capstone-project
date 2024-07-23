@@ -9,6 +9,7 @@ import {
   Tag,
   Pagination,
   Select,
+  message,
 } from "antd";
 import {
   TrophyOutlined,
@@ -49,7 +50,7 @@ const LeaderboardPage = ({ currentUser }) => {
       setLeaderboardData(data.leaderboard);
       setCurrentUserRank(data.currentUserRank);
     } catch (error) {
-      console.error("Error fetching leaderboard:", error);
+      message.error("Error fetching leaderboard:", error);
     } finally {
       setLoading(false);
     }
