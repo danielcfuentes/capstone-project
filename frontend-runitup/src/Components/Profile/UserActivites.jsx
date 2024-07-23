@@ -268,22 +268,21 @@ const UserActivitiesPage = () => {
             dataSource={paginatedActivities}
             renderItem={(activity) => (
               <List.Item>
-                <Card
-                  className="activity-card"
-                  title={
+                <Card className="activity-card">
+                  <div className="activity-card-header">
+                    <Checkbox
+                      checked={selectedActivities.includes(activity)}
+                      onChange={() => toggleActivitySelection(activity)}
+                      className="activity-checkbox"
+                    />
                     <div className="activity-card-title">
-                      <Checkbox
-                        checked={selectedActivities.includes(activity)}
-                        onChange={() => toggleActivitySelection(activity)}
-                      />
                       <TrophyOutlined className="activity-icon" />{" "}
                       {activity.activityType}
                     </div>
-                  }
-                  extra={
-                    <Tag color="blue">{formatDate(activity.startDateTime)}</Tag>
-                  }
-                >
+                    <Tag color="blue" className="activity-date-tag">
+                      {formatDate(activity.startDateTime)}
+                    </Tag>
+                  </div>
                   <div className="activity-details">
                     <Text>
                       <EnvironmentOutlined className="detail-icon" /> Start:{" "}
