@@ -23,7 +23,6 @@ import {
   HeartOutlined,
 } from "@ant-design/icons";
 import { getHeaders } from "../../utils/apiConfig";
-import UserActivities from "./UserActivites";
 import "../../styles/ProfilePage.css";
 
 const { Content } = Layout;
@@ -255,9 +254,6 @@ function ProfilePage({ user, onProfileUpdate }) {
               </Button>
             </Form.Item>
           </Form>
-          <Col xs={24} lg={12}>
-            <UserActivities />
-          </Col>
         </Spin>
       </Content>
     </Layout>
