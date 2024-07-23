@@ -888,7 +888,6 @@ app.get("/leaderboard", authenticateToken, async (req, res) => {
       currentUserRank: currentUserRank,
     });
   } catch (error) {
-    console.error("Error fetching leaderboard:", error);
     res.status(500).json({ error: "Failed to fetch leaderboard" });
   }
 });
