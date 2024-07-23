@@ -1,8 +1,15 @@
 import React from "react";
 import { Card, Progress, Button, Typography } from "antd";
-import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
+import {
+  CheckOutlined,
+  CloseOutlined,
+  DashboardOutlined,
+  FireOutlined,
+  AreaChartOutlined,
+} from "@ant-design/icons";
+import "../../styles/ChallengeCard.css";
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const ChallengeCard = ({ challenge, onUpdate }) => {
   const progress = (challenge.currentProgress / challenge.target) * 100;
@@ -16,9 +23,27 @@ const ChallengeCard = ({ challenge, onUpdate }) => {
     return `${hoursLeft}h ${minutesLeft}m`;
   };
 
+  const getIcon = () => {
+    switch (challenge.type) {
+      case "distance":
+        return <DashboardOutlined />; // Using DashboardOutlined for distance
+      case "calories":
+        return <FireOutlined />;
+      case "elevation":
+        return <AreaChartOutlined />; // Using AreaChartOutlined for elevation
+      default:
+        return null;
+    }
+  };
+
   return (
     <Card
-      title={challenge.description}
+      className={`challenge-card ${challenge.status}`}
+      title={
+        <Title level={4}>
+          {getIcon()} {challenge.description}
+        </Title>
+      }
       extra={
         challenge.status === "completed" ? (
           <CheckOutlined style={{ color: "green" }} />
@@ -28,7 +53,7 @@ const ChallengeCard = ({ challenge, onUpdate }) => {
       }
     >
       <Progress
-        percent={Math.min(progress, 100)}
+        percent={Math.min(progress, 100).toFixed(2)}
         status={
           challenge.status === "completed"
             ? "success"
@@ -36,14 +61,23 @@ const ChallengeCard = ({ challenge, onUpdate }) => {
             ? "exception"
             : "active"
         }
+        strokeColor={{
+          "0%": "#108ee9",
+          "100%": "#87d068",
+        }}
       />
-      <Text>
+      <Text className="progress-text">
         Progress: {challenge.currentProgress.toFixed(2)} / {challenge.target}
       </Text>
       <br />
-      {challenge.status === "active" && <Text>Time left: {getTimeLeft()}</Text>}
+      {challenge.status === "active" && (
+        <Text className="time-left">Time left: {getTimeLeft()}</Text>
+      )}
       {challenge.status === "active" && progress >= 100 && (
-        <Button onClick={() => onUpdate(challenge.id, "completed")}>
+        <Button
+          onClick={() => onUpdate(challenge.id, "completed")}
+          className="complete-button"
+        >
           Mark as Completed
         </Button>
       )}
