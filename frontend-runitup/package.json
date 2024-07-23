@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.3.7",
+    "@ant-design/plots": "^2.2.5",
     "@turf/turf": "^7.0.0",
     "antd": "^5.19.1",
     "axios": "^1.7.2",
