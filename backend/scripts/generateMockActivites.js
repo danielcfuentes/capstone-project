@@ -92,7 +92,6 @@ async function main() {
   try {
     const user = await prisma.user.findFirst();
     if (!user) {
-      console.log("No user found. Please create a user first.");
       return;
     }
 
@@ -101,10 +100,7 @@ async function main() {
     await prisma.userActivity.createMany({
       data: mockActivities,
     });
-
-    console.log("Mock activities created successfully.");
   } catch (error) {
-    console.error("Error creating mock activities:", error);
   } finally {
     await prisma.$disconnect();
   }

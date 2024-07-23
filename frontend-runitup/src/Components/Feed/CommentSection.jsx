@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { List, Avatar, Form, Input, Button, Typography, Divider } from "antd";
+import { List, Avatar, Form, Input, Button, Typography, Divider, message } from "antd";
 import { SendOutlined } from "@ant-design/icons";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
 import "../../styles/CommentSection.css";
@@ -34,7 +34,7 @@ const CommentSection = ({ postId, onCommentAdded }) => {
       );
       setHasMore(data.length === 10);
     } catch (error) {
-      console.error("Failed to load comments:", error);
+      message.error("Failed to load comments:", error);
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,7 @@ const CommentSection = ({ postId, onCommentAdded }) => {
       setValue("");
       if (onCommentAdded) onCommentAdded();
     } catch (error) {
-      console.error("Failed to add comment:", error);
+      message.error("Failed to add comment:", error);
     } finally {
       setSubmitting(false);
     }
