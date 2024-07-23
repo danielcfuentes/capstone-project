@@ -188,3 +188,8 @@ model Challenge {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+model SystemSetting {
+  key   String @id
+  value String
+}
