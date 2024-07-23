@@ -11,6 +11,7 @@ import {
   Row,
   Statistic,
   Select,
+  Pagination
 } from "antd";
 import {
   TrophyOutlined,
@@ -29,6 +30,8 @@ const UserActivitiesPage = () => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("date");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 9; // Number of items per page
 
   useEffect(() => {
     fetchActivities();
@@ -116,6 +119,12 @@ const UserActivitiesPage = () => {
     setActivities(sortedActivities);
   };
 
+  const paginatedActivities = activities.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+
   return (
     <Layout className="user-activities-page">
       <Content className="user-activities-content">
@@ -135,7 +144,7 @@ const UserActivitiesPage = () => {
           </Select>
           <List
             grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 3 }}
-            dataSource={activities}
+            dataSource={paginatedActivities}
             renderItem={(activity) => (
               <List.Item>
                 <Card
@@ -169,6 +178,13 @@ const UserActivitiesPage = () => {
                 </Card>
               </List.Item>
             )}
+          />
+          <Pagination
+            current={currentPage}
+            onChange={setCurrentPage}
+            total={activities.length}
+            pageSize={pageSize}
+            style={{ marginTop: 16, textAlign: "center" }}
           />
         </Spin>
       </Content>
