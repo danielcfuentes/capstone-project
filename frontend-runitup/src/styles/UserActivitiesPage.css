@@ -47,41 +47,12 @@
   border-color: #40a9ff;
 }
 
-.activity-card {
-  height: 100%;
-  transition: all 0.3s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.activity-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-4px);
-}
-
-.activity-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
 .activity-checkbox {
   margin-right: 16px;
 }
 
-.activity-card-title {
-  display: flex;
-  align-items: center;
-  flex-grow: 1;
-}
-
 .activity-date-tag {
   margin-left: auto;
-}
-
-.activity-details {
-  display: flex;
-  flex-direction: column;
 }
 
 .activity-details .ant-typography {
@@ -89,16 +60,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.detail-icon {
-  margin-right: 8px;
-  color: #1890ff;
-}
-
-.activities-pagination {
-  margin-top: 24px;
-  text-align: center;
 }
 
 .compare-modal .ant-modal-body {
@@ -114,5 +75,101 @@
   .summary-section .ant-statistic {
     text-align: center;
     margin-bottom: 16px;
+  }
+}
+
+.controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.clear-selection-button {
+  margin-left: 8px;
+}
+
+/* You may want to adjust the width of the sort-select to accommodate the new button */
+.sort-select {
+  width: 140px !important;
+}
+
+.activities-pagination {
+  margin-top: 24px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+}
+
+.activity-card {
+  height: 100%;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.activity-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+}
+
+.activity-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background-color: #f0f2f5;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.activity-card-title {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.activity-icon {
+  margin-right: 8px;
+  color: #1890ff;
+}
+
+.activity-details {
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 16px;
+}
+
+.detail-icon {
+  margin-right: 8px;
+  color: #1890ff;
+  width: 16px;
+  text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .user-activities-content {
+    padding: 16px;
+  }
+
+  .summary-section .ant-statistic {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sort-select,
+  .compare-button,
+  .clear-selection-button {
+    width: 100%;
+    margin-bottom: 8px;
   }
 }

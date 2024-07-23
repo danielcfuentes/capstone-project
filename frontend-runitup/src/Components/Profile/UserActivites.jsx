@@ -40,7 +40,7 @@ import {
 import "../../styles/UserActivitiesPage.css";
 
 const { Content } = Layout;
-const { Title, Text} = Typography;
+const { Title, Text } = Typography;
 const { Option } = Select;
 
 const UserActivitiesPage = () => {
@@ -50,6 +50,7 @@ const UserActivitiesPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedActivities, setSelectedActivities] = useState([]);
   const [isCompareModalVisible, setIsCompareModalVisible] = useState(false);
+  const [originalActivities, setOriginalActivities] = useState([]);
   const pageSize = 9;
 
   useEffect(() => {
@@ -69,6 +70,7 @@ const UserActivitiesPage = () => {
       }
       const data = await response.json();
       setActivities(data);
+      setOriginalActivities(data); // Store the original order
       setLoading(false);
     } catch (error) {
       message.error(`Error fetching activities: ${error.message}`);
@@ -103,11 +105,22 @@ const UserActivitiesPage = () => {
   };
 
   const toggleActivitySelection = (activity) => {
-    setSelectedActivities((prev) =>
-      prev.includes(activity)
-        ? prev.filter((a) => a !== activity)
-        : [...prev, activity]
-    );
+    setSelectedActivities((prev) => {
+      if (prev.includes(activity)) {
+        return prev.filter((a) => a !== activity);
+      } else {
+        // Add the new activity and sort based on the original order
+        const newSelection = [...prev, activity];
+        return newSelection.sort(
+          (a, b) =>
+            originalActivities.indexOf(a) - originalActivities.indexOf(b)
+        );
+      }
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedActivities([]);
   };
 
   const filteredActivities =
@@ -150,12 +163,12 @@ const UserActivitiesPage = () => {
   };
 
   const ProgressChart = ({ activities }) => {
-    const chartData = filteredActivities
-      .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime))
-      .map((activity) => ({
-        date: formatDate(activity.startDateTime),
-        distance: activity.distance,
-      }));
+    const chartData = (
+      selectedActivities.length > 0 ? selectedActivities : activities
+    ).map((activity) => ({
+      date: formatDate(activity.startDateTime),
+      distance: activity.distance,
+    }));
 
     return (
       <Card className="progress-chart-card">
@@ -263,6 +276,13 @@ const UserActivitiesPage = () => {
             disabled={selectedActivities.length < 2}
           >
             Compare Selected
+          </Button>
+          <Button
+            onClick={clearSelection}
+            disabled={selectedActivities.length === 0}
+            className="clear-selection-button"
+          >
+            Clear Selection
           </Button>
         </div>
         <Spin spinning={loading}>
