@@ -1,20 +1,23 @@
 .leaderboard-page {
   padding: 24px;
+  background-color: #f0f2f5;
 }
 
 .leaderboard-content {
-  max-width: 90%;
+  max-width: 95%;
   margin: 0 auto;
 }
 
 .leaderboard-title {
   text-align: center;
   margin-bottom: 24px;
+  color: #1890ff;
 }
 
 .leaderboard-card {
   background-color: white;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
 }
 
 .loading-container {
@@ -28,12 +31,18 @@
   margin-top: 24px;
 }
 
+.leaderboard-table .ant-table-thead > tr > th {
+  background-color: #f0f2f5;
+  color: #1890ff;
+  font-weight: bold;
+}
+
 .current-user-row {
   background-color: rgba(24, 144, 255, 0.1);
 }
 
 .tenth-row {
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 2px solid #f0f2f5;
 }
 
 .current-user-rank,
@@ -43,9 +52,56 @@
   color: #1890ff;
 }
 
-.leaderboard-pagination {
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 24px;
-  text-align: center;
+}
+
+.leaderboard-pagination {
+  flex-grow: 1;
+}
+
+.page-size-selector {
+  width: 120px;
+  margin-left: 16px;
+}
+
+.rank-cell {
+  position: relative;
+  padding-left: 20px;
+}
+
+.crown {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.crown-1 {
+  color: gold;
+}
+
+.crown-2 {
+  color: silver;
+}
+
+.crown-3 {
+  color: #cd7f32;
+}
+
+.top-1 {
+  background-color: rgba(255, 215, 0, 0.1);
+}
+
+.top-2 {
+  background-color: rgba(192, 192, 192, 0.1);
+}
+
+.top-3 {
+  background-color: rgba(205, 127, 50, 0.1);
 }
 
 @media (max-width: 768px) {
@@ -57,5 +113,15 @@
   .leaderboard-table .ant-table-thead > tr > th,
   .leaderboard-table .ant-table-tbody > tr > td {
     padding: 8px 4px;
+  }
+
+  .pagination-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-size-selector {
+    margin-left: 0;
+    margin-top: 16px;
   }
 }

@@ -6,27 +6,29 @@ import {
   Spin,
   Card,
   Avatar,
-  Tooltip,
   Tag,
   Pagination,
+  Select,
 } from "antd";
 import {
   TrophyOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
+  CrownOutlined,
 } from "@ant-design/icons";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
 import "../../styles/LeaderboardPage.css";
 
 const { Title } = Typography;
 const { Content } = Layout;
+const { Option } = Select;
 
 const LeaderboardPage = ({ currentUser }) => {
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [currentUserRank, setCurrentUserRank] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -60,10 +62,11 @@ const LeaderboardPage = ({ currentUser }) => {
       key: "rank",
       render: (rank, record) => (
         <span
-          className={
+          className={`rank-cell ${
             record.username === currentUser?.name ? "current-user-rank" : ""
-          }
+          }`}
         >
+          {rank <= 3 && <CrownOutlined className={`crown crown-${rank}`} />}
           {rank}
         </span>
       ),
@@ -102,19 +105,22 @@ const LeaderboardPage = ({ currentUser }) => {
       dataIndex: "completedChallenges",
       key: "completedChallenges",
       render: (completedChallenges, record) => (
-        <Tooltip title={`Total Distance: ${record.totalDistance} miles`}>
-          <span
-            className={
-              record.username === currentUser?.name
-                ? "current-user-challenges"
-                : ""
-            }
-          >
-            {completedChallenges}{" "}
-            <TrophyOutlined style={{ color: "#FFD700" }} />
-          </span>
-        </Tooltip>
+        <span
+          className={
+            record.username === currentUser?.name
+              ? "current-user-challenges"
+              : ""
+          }
+        >
+          {completedChallenges} <TrophyOutlined style={{ color: "#FFD700" }} />
+        </span>
       ),
+    },
+    {
+      title: "Total Distance (miles)",
+      dataIndex: "totalDistance",
+      key: "totalDistance",
+      render: (totalDistance) => parseFloat(totalDistance).toFixed(2),
     },
     {
       title: "Trend",
@@ -159,19 +165,35 @@ const LeaderboardPage = ({ currentUser }) => {
                 pagination={false}
                 className="leaderboard-table"
                 rowClassName={(record, index) =>
-                  (index % 10 === 9 ? "tenth-row " : "") +
-                  (record.username === currentUser?.name
-                    ? "current-user-row"
-                    : "")
+                  `${index % 10 === 9 ? "tenth-row " : ""}${
+                    record.username === currentUser?.name
+                      ? "current-user-row"
+                      : ""
+                  }${record.rank <= 3 ? `top-${record.rank}` : ""}`
                 }
               />
-              <Pagination
-                current={currentPage}
-                total={leaderboardData.length}
-                pageSize={pageSize}
-                onChange={(page) => setCurrentPage(page)}
-                className="leaderboard-pagination"
-              />
+              <div className="pagination-container">
+                <Pagination
+                  current={currentPage}
+                  total={leaderboardData.length}
+                  pageSize={pageSize}
+                  onChange={(page) => setCurrentPage(page)}
+                  className="leaderboard-pagination"
+                />
+                <Select
+                  value={pageSize}
+                  onChange={(value) => {
+                    setPageSize(value);
+                    setCurrentPage(1);
+                  }}
+                  className="page-size-selector"
+                >
+                  <Option value={10}>10 / page</Option>
+                  <Option value={20}>20 / page</Option>
+                  <Option value={50}>50 / page</Option>
+                  <Option value={100}>100 / page</Option>
+                </Select>
+              </div>
             </>
           )}
         </Card>
