@@ -166,6 +166,22 @@ const UserActivitiesPage = () => {
     return <Line {...config} />;
   };
 
+  const WeatherInfo = ({ weather }) => {
+    if (!weather) return null;
+    try {
+      const weatherData = JSON.parse(weather);
+      return (
+        <Text>
+          <CloudOutlined /> Weather: {Math.round(weatherData.temperature)}°F,{" "}
+          {weatherData.condition}
+        </Text>
+      );
+    } catch (error) {
+      console.error("Error parsing weather data:", error);
+      return null;
+    }
+  };
+
   const CompareActivities = ({ activities }) => {
     const columns = [
       {
@@ -277,8 +293,7 @@ const UserActivitiesPage = () => {
                       <FireOutlined /> Calories: {activity.caloriesBurned}
                     </Text>
                     <Text>
-                      <CloudOutlined /> Weather: {activity.weather?.temperature}
-                      °F, {activity.weather?.condition}
+                      <WeatherInfo weather={activity.weather} />
                     </Text>
                   </div>
                 </Card>
