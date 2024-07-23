@@ -10,6 +10,7 @@ import {
   Col,
   Row,
   Statistic,
+  Select,
 } from "antd";
 import {
   TrophyOutlined,
@@ -27,6 +28,7 @@ const { Title, Text } = Typography;
 const UserActivitiesPage = () => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState("date");
 
   useEffect(() => {
     fetchActivities();
@@ -102,6 +104,18 @@ const UserActivitiesPage = () => {
     );
   };
 
+  const handleSortChange = (value) => {
+    setSortBy(value);
+    const sortedActivities = [...activities].sort((a, b) => {
+      if (value === "date")
+        return new Date(b.startDateTime) - new Date(a.startDateTime);
+      if (value === "distance") return b.distance - a.distance;
+      if (value === "calories") return b.caloriesBurned - a.caloriesBurned;
+      return 0;
+    });
+    setActivities(sortedActivities);
+  };
+
   return (
     <Layout className="user-activities-page">
       <Content className="user-activities-content">
@@ -110,6 +124,15 @@ const UserActivitiesPage = () => {
         </Title>
         <SummarySection activities={activities} />
         <Spin spinning={loading}>
+          <Select
+            defaultValue="date"
+            style={{ width: 120, marginBottom: 16 }}
+            onChange={handleSortChange}
+          >
+            <Option value="date">Date</Option>
+            <Option value="distance">Distance</Option>
+            <Option value="calories">Calories</Option>
+          </Select>
           <List
             grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 3 }}
             dataSource={activities}
