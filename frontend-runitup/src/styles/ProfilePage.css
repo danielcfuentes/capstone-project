@@ -1,11 +1,12 @@
 .profile-page {
   min-height: calc(100vh - 64px);
   padding: 40px;
+  padding-top: 80px;
   background: linear-gradient(135deg, #f0f2f5 0%, #e6f7ff 100%);
 }
 
 .profile-content {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -20,16 +21,20 @@
 .page-subtitle {
   display: block;
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
   font-size: 1.2rem;
   color: #8c8c8c;
 }
 
-.profile-form {
+.profile-card {
   background: white;
-  padding: 2rem;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.profile-form {
+  width: 100%;
 }
 
 .info-card {
@@ -61,40 +66,42 @@
   font-size: 1rem;
 }
 
-.ant-input-number-prefix,
-.ant-select-selection-item .anticon {
-  margin-right: 8px;
-  color: #1890ff;
+.ant-input-number-disabled,
+.ant-select-disabled .ant-select-selector {
+  color: rgba(0, 0, 0, 0.65) !important;
+  background-color: #f5f5f5 !important;
 }
 
-.update-button {
+.full-width {
+  width: 100%;
+}
+
+.update-button,
+.edit-button {
   margin-top: 2rem;
   height: 50px;
   font-size: 1.2rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
-  background: linear-gradient(135deg, #1890ff 0%, #52c41a 100%);
   border: none;
   border-radius: 25px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
+.update-button {
+  background: linear-gradient(135deg, #52c41a 0%, #1890ff 100%);
+}
+
+.edit-button {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+}
+
 .update-button:hover,
-.update-button:focus {
-  background: linear-gradient(135deg, #40a9ff 0%, #73d13d 100%);
+.edit-button:hover {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   transform: translateY(-2px);
-}
-
-.ant-select-multiple .ant-select-selection-item {
-  background-color: #e6f7ff;
-  border-color: #91d5ff;
-}
-
-.full-width {
-  width: 100%;
 }
 
 @media (max-width: 768px) {
@@ -102,7 +109,7 @@
     padding: 20px;
   }
 
-  .profile-form {
+  .profile-card {
     padding: 1.5rem;
   }
 
@@ -116,6 +123,6 @@
 
   .page-subtitle {
     font-size: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
   }
 }
