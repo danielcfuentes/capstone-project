@@ -152,9 +152,6 @@ const LeaderboardPage = ({ currentUser }) => {
   return (
     <Layout className="leaderboard-page">
       <Content className="leaderboard-content">
-        <Title level={2} className="leaderboard-title">
-          <TrophyOutlined /> Leaderboard
-        </Title>
         <Card className="leaderboard-card">
           {loading ? (
             <div className="loading-container">
