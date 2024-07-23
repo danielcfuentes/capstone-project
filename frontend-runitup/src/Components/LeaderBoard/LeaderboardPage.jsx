@@ -183,6 +183,7 @@ const LeaderboardPage = ({ currentUser }) => {
                   pageSize={pageSize}
                   onChange={(page) => setCurrentPage(page)}
                   className="leaderboard-pagination"
+                  showSizeChanger={false} // This hides the default select
                 />
                 <Select
                   value={pageSize}

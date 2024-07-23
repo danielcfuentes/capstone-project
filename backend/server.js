@@ -927,7 +927,7 @@ async function shouldUpdateLeaderboardRankings() {
   const lastUpdateTime = new Date(lastUpdate.value);
   const hoursSinceLastUpdate = (now - lastUpdateTime) / (1000 * 60 * 60);
 
-  return hoursSinceLastUpdate >= 24; // Update once per day
+  return hoursSinceLastUpdate >= 1; // Update once per day (currenlty have it for less for testing)
 }
 
 async function updateLastLeaderboardUpdate() {
