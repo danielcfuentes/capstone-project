@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { Card, Avatar, Typography, Space, Image, Carousel, Button, message } from "antd";
+import {
+  Card,
+  Avatar,
+  Typography,
+  Space,
+  Image,
+  Carousel,
+  Button,
+  Modal,
+} from "antd";
 import {
   HeartOutlined,
   HeartFilled,
@@ -8,12 +17,15 @@ import {
 } from "@ant-design/icons";
 import "../../styles/PostCard.css";
 import { generateColor } from "../../utils/apiConfig";
+import CommentSection from "./CommentSection";
 
 const { Text, Paragraph, Title } = Typography;
 
-const PostCard = ({ post, onLike }) => {
-  const [isLiked, setIsLiked] = useState(post.isLikedByUser);
-  const [likeCount, setLikeCount] = useState(post.likeCount);
+const PostCard = ({ post, onLike, onCommentAdded }) => {
+  const [isLiked, setIsLiked] = useState(post.isLikedByUser || false);
+  const [likeCount, setLikeCount] = useState(post.likeCount || 0);
+  const [commentCount, setCommentCount] = useState(post.commentCount || 0);
+  const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
 
   const avatarColor = generateColor(post.userId);
   const userInitial = post.userId.charAt(0).toUpperCase();
@@ -34,7 +46,7 @@ const PostCard = ({ post, onLike }) => {
 
       if (response.ok) {
         setIsLiked(!isLiked);
-        setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
+        setLikeCount((prevCount) => (isLiked ? prevCount - 1 : prevCount + 1));
         if (onLike) {
           onLike(post.id, !isLiked);
         }
@@ -43,6 +55,21 @@ const PostCard = ({ post, onLike }) => {
       }
     } catch (error) {
       message.error("Error updating like:", error);
+    }
+  };
+
+  const handleCommentClick = () => {
+    setIsCommentModalVisible(true);
+  };
+
+  const handleCommentModalClose = () => {
+    setIsCommentModalVisible(false);
+  };
+
+  const handleCommentAdded = () => {
+    setCommentCount((prevCount) => prevCount + 1);
+    if (onCommentAdded) {
+      onCommentAdded(post.id);
     }
   };
 
@@ -117,13 +144,31 @@ const PostCard = ({ post, onLike }) => {
         >
           Like ({likeCount})
         </Button>
-        <Button type="text" icon={<MessageOutlined />}>
-          Comment
+        <Button
+          type="text"
+          icon={<MessageOutlined />}
+          onClick={handleCommentClick}
+        >
+          Comment ({commentCount})
         </Button>
         <Button type="text" icon={<ShareAltOutlined />}>
           Share
         </Button>
       </div>
+
+      <Modal
+        title={`Comments on "${post.title}"`}
+        visible={isCommentModalVisible}
+        onCancel={handleCommentModalClose}
+        footer={null}
+        width={600}
+      >
+        <CommentSection
+          postId={post.id}
+          onCommentAdded={handleCommentAdded}
+          fullView={true}
+        />
+      </Modal>
     </Card>
   );
 };

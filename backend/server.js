@@ -86,7 +86,8 @@ app.get("/allposts", authenticateToken, async (req, res) => {
             username: true,
           },
         },
-        likes: true, // Include likes
+        likes: true,
+        comments: true, // Include comments
       },
       orderBy: {
         createdAt: "desc",
@@ -102,6 +103,7 @@ app.get("/allposts", authenticateToken, async (req, res) => {
       })),
       likeCount: post.likes.length,
       isLikedByUser: post.likes.some((like) => like.userId === req.user.id),
+      commentCount: post.comments.length, // Add comment count
     }));
 
     res.json(transformedPosts);
@@ -170,6 +172,55 @@ app.post("/posts/:postId/like", authenticateToken, async (req, res) => {
   }
 });
 
+// Add a new endpoint for adding a comment to a post
+app.post("/posts/:postId/comments", authenticateToken, async (req, res) => {
+  const { postId } = req.params;
+  const { content } = req.body;
+  const userId = req.user.id;
+
+  try {
+    const newComment = await prisma.comment.create({
+      data: {
+        content,
+        post: { connect: { id: parseInt(postId) } },
+        user: { connect: { id: userId } },
+      },
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+    });
+    res.json(newComment);
+  } catch (error) {
+    res.status(500).json({ message: "Error adding comment", error: error.message });
+  }
+});
+
+// Add a new endpoint for fetching comments for a post
+app.get("/posts/:postId/comments", authenticateToken, async (req, res) => {
+  const { postId } = req.params;
+  try {
+    const comments = await prisma.comment.findMany({
+      where: { postId: parseInt(postId) },
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    res.json(comments);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching comments", error: error.message });
+  }
+});
 
 //Profile ________________________
 

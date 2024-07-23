@@ -49,7 +49,16 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
       }
 
       const newPost = await response.json();
-      onSubmit(newPost);
+
+      // Add likeCount and commentCount properties to the new post
+      const postWithCounts = {
+        ...newPost,
+        likeCount: 0,
+        commentCount: 0,
+        isLikedByUser: false,
+      };
+
+      onSubmit(postWithCounts);
       message.success("Post created successfully!");
       form.resetFields();
       setFileList([]);
