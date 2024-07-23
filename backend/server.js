@@ -292,7 +292,6 @@ app.get("/user-activities", authenticateToken, async (req, res) => {
     const activities = await prisma.userActivity.findMany({
       where: { userId: req.user.id },
       orderBy: { startDateTime: "desc" },
-      take: 10, // Limit to 10 most recent activities
     });
     res.json(activities);
   } catch (error) {
