@@ -18,6 +18,7 @@ import {
 import "../../styles/PostCard.css";
 import { generateColor } from "../../utils/apiConfig";
 import CommentSection from "./CommentSection";
+import CustomCarousel from "./CustomCarousel";
 
 const { Text, Paragraph, Title } = Typography;
 
@@ -73,35 +74,9 @@ const PostCard = ({ post, onLike, onCommentAdded, formatDate }) => {
     }
   };
 
-  const renderImages = () => {
-    if (!hasImages) return null;
-
-    if (post.images.length === 1) {
-      return (
-        <Image
-          src={`${import.meta.env.VITE_POST_ADDRESS}/images/${
-            post.images[0].id
-          }`}
-          alt="Post image"
-          className="post-image"
-        />
-      );
-    }
-
-    return (
-      <Carousel autoplay className="post-carousel">
-        {post.images.map((image, index) => (
-          <div key={index} className="post-carousel-slide">
-            <Image
-              src={`${import.meta.env.VITE_POST_ADDRESS}/images/${image.id}`}
-              alt={`Post image ${index + 1}`}
-              className="post-image"
-            />
-          </div>
-        ))}
-      </Carousel>
-    );
-  };
+  const imageUrls = post.images.map(
+    (image) => `${import.meta.env.VITE_POST_ADDRESS}/images/${image.id}`
+  );
 
   return (
     <Card className="post-card" bodyStyle={{ padding: 0 }}>
@@ -125,9 +100,7 @@ const PostCard = ({ post, onLike, onCommentAdded, formatDate }) => {
           </div>
         </Space>
       </div>
-      {hasImages && (
-        <div className="post-image-container">{renderImages()}</div>
-      )}
+      {hasImages && <CustomCarousel images={imageUrls} />}
       <div className="post-content">
         <Title level={4} className="post-title">
           {post.title}
