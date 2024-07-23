@@ -129,9 +129,13 @@ const LeaderboardPage = ({ currentUser }) => {
       render: (trend) => (
         <span>
           {trend > 0 ? (
-            <ArrowUpOutlined style={{ color: "green" }} />
+            <>
+              <ArrowUpOutlined style={{ color: "green" }} /> {trend}
+            </>
           ) : trend < 0 ? (
-            <ArrowDownOutlined style={{ color: "red" }} />
+            <>
+              <ArrowDownOutlined style={{ color: "red" }} /> {Math.abs(trend)}
+            </>
           ) : (
             "-"
           )}
