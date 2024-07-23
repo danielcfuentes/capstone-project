@@ -7,11 +7,14 @@ import {
   Tag,
   Spin,
   message,
-  Col,
-  Row,
-  Statistic,
   Select,
-  Pagination
+  Pagination,
+  Button,
+  Modal,
+  Checkbox,
+  Row,
+  Col,
+  Statistic,
 } from "antd";
 import {
   TrophyOutlined,
@@ -19,19 +22,24 @@ import {
   FieldTimeOutlined,
   FireOutlined,
   EnvironmentOutlined,
+  CloudOutlined,
 } from "@ant-design/icons";
 import { getHeaders } from "../../utils/apiConfig";
+import { Line } from "@ant-design/plots";
 import "../../styles/UserActivitiesPage.css";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 const UserActivitiesPage = () => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("date");
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 9; // Number of items per page
+  const [selectedActivities, setSelectedActivities] = useState([]);
+  const [isCompareModalVisible, setIsCompareModalVisible] = useState(false);
+  const pageSize = 9;
 
   useEffect(() => {
     fetchActivities();
@@ -71,6 +79,26 @@ const UserActivitiesPage = () => {
     return `${hours}h ${minutes}m`;
   };
 
+  const handleSortChange = (value) => {
+    setSortBy(value);
+    const sortedActivities = [...activities].sort((a, b) => {
+      if (value === "date")
+        return new Date(b.startDateTime) - new Date(a.startDateTime);
+      if (value === "distance") return b.distance - a.distance;
+      if (value === "calories") return b.caloriesBurned - a.caloriesBurned;
+      return 0;
+    });
+    setActivities(sortedActivities);
+  };
+
+  const toggleActivitySelection = (activity) => {
+    setSelectedActivities((prev) =>
+      prev.includes(activity)
+        ? prev.filter((a) => a !== activity)
+        : [...prev, activity]
+    );
+  };
+
   const SummarySection = ({ activities }) => {
     const totalDistance = activities.reduce(
       (sum, activity) => sum + activity.distance,
@@ -107,23 +135,75 @@ const UserActivitiesPage = () => {
     );
   };
 
-  const handleSortChange = (value) => {
-    setSortBy(value);
-    const sortedActivities = [...activities].sort((a, b) => {
-      if (value === "date")
-        return new Date(b.startDateTime) - new Date(a.startDateTime);
-      if (value === "distance") return b.distance - a.distance;
-      if (value === "calories") return b.caloriesBurned - a.caloriesBurned;
-      return 0;
-    });
-    setActivities(sortedActivities);
+  const ProgressChart = ({ activities }) => {
+    const chartData = activities
+      .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime))
+      .map((activity) => ({
+        date: formatDate(activity.startDateTime),
+        distance: activity.distance,
+      }));
+
+    const config = {
+      data: chartData,
+      xField: "date",
+      yField: "distance",
+      xAxis: {
+        type: "timeCat",
+        label: {
+          formatter: (v) => `${v.split(",")[0]} ${v.split(",")[1]}`,
+          rotate: 45,
+        },
+      },
+      yAxis: {
+        label: {
+          formatter: (v) => `${v} miles`,
+        },
+      },
+      smooth: true,
+    };
+
+    return <Line {...config} />;
+  };
+
+  const CompareActivities = ({ activities }) => {
+    const columns = [
+      {
+        title: "Date",
+        dataIndex: "startDateTime",
+        render: (date) => formatDate(date),
+      },
+      {
+        title: "Distance",
+        dataIndex: "distance",
+        render: (dist) => `${dist.toFixed(2)} miles`,
+      },
+      {
+        title: "Duration",
+        dataIndex: "duration",
+        render: (dur) => formatDuration(dur),
+      },
+      { title: "Calories", dataIndex: "caloriesBurned" },
+      {
+        title: "Weather",
+        dataIndex: "weather",
+        render: (weather) => `${weather?.temperature}°F, ${weather?.condition}`,
+      },
+    ];
+
+    return (
+      <Table
+        dataSource={activities}
+        columns={columns}
+        rowKey="id"
+        pagination={false}
+      />
+    );
   };
 
   const paginatedActivities = activities.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
 
   return (
     <Layout className="user-activities-page">
@@ -132,16 +212,33 @@ const UserActivitiesPage = () => {
           Your Running Activities
         </Title>
         <SummarySection activities={activities} />
+        <ProgressChart activities={activities} />
+        <Row
+          justify="space-between"
+          align="middle"
+          style={{ marginBottom: 16 }}
+        >
+          <Col>
+            <Select
+              defaultValue="date"
+              style={{ width: 120 }}
+              onChange={handleSortChange}
+            >
+              <Option value="date">Date</Option>
+              <Option value="distance">Distance</Option>
+              <Option value="calories">Calories</Option>
+            </Select>
+          </Col>
+          <Col>
+            <Button
+              onClick={() => setIsCompareModalVisible(true)}
+              disabled={selectedActivities.length < 2}
+            >
+              Compare Selected Activities
+            </Button>
+          </Col>
+        </Row>
         <Spin spinning={loading}>
-          <Select
-            defaultValue="date"
-            style={{ width: 120, marginBottom: 16 }}
-            onChange={handleSortChange}
-          >
-            <Option value="date">Date</Option>
-            <Option value="distance">Distance</Option>
-            <Option value="calories">Calories</Option>
-          </Select>
           <List
             grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 3 }}
             dataSource={paginatedActivities}
@@ -151,6 +248,10 @@ const UserActivitiesPage = () => {
                   className="activity-card"
                   title={
                     <div className="activity-card-title">
+                      <Checkbox
+                        checked={selectedActivities.includes(activity)}
+                        onChange={() => toggleActivitySelection(activity)}
+                      />
                       <TrophyOutlined /> {activity.activityType}
                     </div>
                   }
@@ -174,19 +275,32 @@ const UserActivitiesPage = () => {
                     <Text>
                       <FireOutlined /> Calories: {activity.caloriesBurned}
                     </Text>
+                    <Text>
+                      <CloudOutlined /> Weather: {activity.weather?.temperature}
+                      °F, {activity.weather?.condition}
+                    </Text>
                   </div>
                 </Card>
               </List.Item>
             )}
           />
-          <Pagination
-            current={currentPage}
-            onChange={setCurrentPage}
-            total={activities.length}
-            pageSize={pageSize}
-            style={{ marginTop: 16, textAlign: "center" }}
-          />
         </Spin>
+        <Pagination
+          current={currentPage}
+          onChange={setCurrentPage}
+          total={activities.length}
+          pageSize={pageSize}
+          style={{ marginTop: 16, textAlign: "center" }}
+        />
+        <Modal
+          title="Compare Activities"
+          visible={isCompareModalVisible}
+          onCancel={() => setIsCompareModalVisible(false)}
+          footer={null}
+          width={800}
+        >
+          <CompareActivities activities={selectedActivities} />
+        </Modal>
       </Content>
     </Layout>
   );
