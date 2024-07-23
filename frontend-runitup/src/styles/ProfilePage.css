@@ -2,7 +2,6 @@
   min-height: calc(100vh - 64px);
   padding: 40px;
   padding-top: 80px;
-  background: linear-gradient(135deg, #f0f2f5 0%, #e6f7ff 100%);
 }
 
 .profile-content {
