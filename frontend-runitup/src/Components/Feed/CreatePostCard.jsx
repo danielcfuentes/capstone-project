@@ -1,29 +1,20 @@
 import React, { useState } from "react";
-import {
-  Modal,
-  Form,
-  Input,
-  Upload,
-  Button,
-  message,
-  Typography,
-  Divider,
-} from "antd";
-import {
-  PictureOutlined,
-  SendOutlined,
-  CloseOutlined,
-} from "@ant-design/icons";
+import { Card, Input, Button, Upload, message, Form, Typography } from "antd";
+import { PictureOutlined, SendOutlined, EditOutlined } from "@ant-design/icons";
 import { getAuthHeaders } from "../../utils/apiConfig";
-import "../../styles/CreateModal.css";
+import "../../styles/CreatePostCard.css";
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
 
-const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
+const CreatePostCard = ({ onPostCreated }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const handleExpand = () => setExpanded(true);
+  const handleCollapse = () => setExpanded(false);
 
   const handleSubmit = async (values) => {
     setSubmitting(true);
@@ -58,22 +49,16 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
         isLikedByUser: false,
       };
 
-      onSubmit(postWithCounts);
+      onPostCreated(postWithCounts);
       message.success("Post created successfully!");
       form.resetFields();
       setFileList([]);
-      onClose();
+      handleCollapse();
     } catch (error) {
       message.error("Error creating post");
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleCancel = () => {
-    form.resetFields();
-    setFileList([]);
-    onClose();
   };
 
   const handleFileChange = ({ fileList: newFileList }) => {
@@ -89,21 +74,20 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
   };
 
   return (
-    <Modal
-      open={isOpen}
-      onCancel={onClose}
-      footer={null}
-      width={500}
-      className="create-post-modal"
-      centered
-      closeIcon={<CloseOutlined className="close-icon" />}
-    >
-      <div className="modal-content">
-        <div className="modal-header">
-          <Title level={3}>Create a New Post</Title>
-          <Text type="secondary">Share your thoughts and moments</Text>
+    <Card className="create-post-card">
+      {!expanded ? (
+        <div onClick={handleExpand} className="create-post-preview">
+          <TextArea
+            placeholder="What's on your mind?"
+            autoSize={{ minRows: 2, maxRows: 4 }}
+            readOnly
+          />
+          <div className="create-post-actions">
+            <Button icon={<PictureOutlined />} />
+            <Button type="primary" icon={<EditOutlined />} />
+          </div>
         </div>
-        <Divider />
+      ) : (
         <Form form={form} onFinish={handleSubmit} layout="vertical">
           <Form.Item
             name="title"
@@ -150,11 +134,14 @@ const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
             >
               Create Post
             </Button>
+            <Button onClick={handleCollapse} block>
+              Cancel
+            </Button>
           </Form.Item>
         </Form>
-      </div>
-    </Modal>
+      )}
+    </Card>
   );
 };
 
-export default CreatePostModal;
+export default CreatePostCard;

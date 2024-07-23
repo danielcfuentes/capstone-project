@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { Layout, List, Spin, Alert, Typography, BackTop } from "antd";
 import { LoadingOutlined, UpOutlined } from "@ant-design/icons";
 import PostCard from "./PostCard";
-import AddButton from "./AddButton";
+import CreatePostCard from "./CreatePostCard";
 import { getHeaders } from "../../utils/apiConfig";
 import "../../styles/FeedPage.css";
+import { formatDistanceToNow, format } from "date-fns";
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -75,6 +76,7 @@ const FeedPage = () => {
     <Layout className="feed-page">
       <Content className="feed-content">
         <div ref={feedRef}></div>
+        <CreatePostCard onPostCreated={handlePostCreated} />
         {error && (
           <Alert
             message="Error"
@@ -90,18 +92,26 @@ const FeedPage = () => {
             size="large"
             dataSource={posts}
             renderItem={(post) => (
-              <List.Item key={post.id}>
-                <PostCard
-                  post={post}
-                  onLike={handlePostLiked}
-                  onCommentAdded={handleCommentAdded}
-                />
-              </List.Item>
+              <PostCard
+                key={post.id}
+                post={post}
+                onLike={handlePostLiked}
+                onCommentAdded={handleCommentAdded}
+                formatDate={(date) => {
+                  const now = new Date();
+                  const postDate = new Date(date);
+                  const diff = now - postDate;
+                  if (diff < 24 * 60 * 60 * 1000) {
+                    return formatDistanceToNow(postDate, { addSuffix: true });
+                  } else {
+                    return format(postDate, "MMM d, yyyy");
+                  }
+                }}
+              />
             )}
           />
         </Spin>
       </Content>
-      <AddButton onPostCreated={handlePostCreated} />
       <BackTop className="back-top-left">
         <div className="back-top-inner">
           <UpOutlined />
