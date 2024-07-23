@@ -110,6 +110,9 @@ const UserActivitiesPage = () => {
     );
   };
 
+  const filteredActivities =
+    selectedActivities.length > 0 ? selectedActivities : activities;
+
   const SummarySection = ({ activities }) => {
     const totalDistance = activities.reduce(
       (sum, activity) => sum + activity.distance,
@@ -147,9 +150,7 @@ const UserActivitiesPage = () => {
   };
 
   const ProgressChart = ({ activities }) => {
-    const chartData = (
-      selectedActivities.length > 0 ? selectedActivities : activities
-    )
+    const chartData = filteredActivities
       .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime))
       .map((activity) => ({
         date: formatDate(activity.startDateTime),
@@ -232,6 +233,11 @@ const UserActivitiesPage = () => {
     );
   };
 
+  const paginatedActivities = activities.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   return (
     <Layout className="user-activities-page">
       <Content className="user-activities-content">
@@ -262,10 +268,7 @@ const UserActivitiesPage = () => {
         <Spin spinning={loading}>
           <List
             grid={{ gutter: 16, column: 3 }}
-            dataSource={activities.slice(
-              (currentPage - 1) * pageSize,
-              currentPage * pageSize
-            )}
+            dataSource={paginatedActivities}
             renderItem={(activity) => (
               <List.Item>
                 <Card className="activity-card">
@@ -286,7 +289,7 @@ const UserActivitiesPage = () => {
                   <div className="activity-details">
                     <Text>
                       <EnvironmentOutlined className="detail-icon" /> Start
-                      Location: {activity.startLocation}
+                      Location: {activity.startLocation || "N/A"}
                     </Text>
                     <Text>
                       <FieldTimeOutlined className="detail-icon" /> Duration:{" "}
@@ -298,7 +301,11 @@ const UserActivitiesPage = () => {
                     </Text>
                     <Text>
                       <RiseOutlined className="detail-icon" /> Elevation Gain:{" "}
-                      {activity.elevationGain} ft
+                      {activity.elevationGain || "N/A"} ft
+                    </Text>
+                    <Text>
+                      <CalendarOutlined className="detail-icon" /> Distance:{" "}
+                      {activity.distance.toFixed(2)} miles
                     </Text>
                   </div>
                 </Card>
