@@ -24,6 +24,7 @@ import {
   FireOutlined,
   EnvironmentOutlined,
   CloudOutlined,
+  RiseOutlined,
 } from "@ant-design/icons";
 import { getHeaders } from "../../utils/apiConfig";
 import {
@@ -31,14 +32,15 @@ import {
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
+  CartesianGrid,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
 import "../../styles/UserActivitiesPage.css";
 
 const { Content } = Layout;
-const { Title, Text } = Typography;
+const { Title, Text} = Typography;
 const { Option } = Select;
 
 const UserActivitiesPage = () => {
@@ -121,7 +123,7 @@ const UserActivitiesPage = () => {
 
     return (
       <Card className="summary-section">
-        <Row justify="center" gutter={16}>
+        <Row gutter={16} justify="center">
           <Col span={8}>
             <Statistic
               title="Total Distance"
@@ -145,7 +147,9 @@ const UserActivitiesPage = () => {
   };
 
   const ProgressChart = ({ activities }) => {
-    const chartData = activities
+    const chartData = (
+      selectedActivities.length > 0 ? selectedActivities : activities
+    )
       .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime))
       .map((activity) => ({
         date: formatDate(activity.startDateTime),
@@ -155,15 +159,19 @@ const UserActivitiesPage = () => {
     return (
       <Card className="progress-chart-card">
         <Title level={4}>Running Progress</Title>
-        <ResponsiveContainer width="100%" height={400}>
-          <LineChart
-            data={chartData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-          >
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
-            <YAxis />
+            <YAxis
+              label={{
+                value: "Distance (miles)",
+                angle: -90,
+                position: "insideLeft",
+              }}
+            />
             <Tooltip />
+            <Legend />
             <Line
               type="monotone"
               dataKey="distance"
@@ -182,8 +190,8 @@ const UserActivitiesPage = () => {
       const weatherData = JSON.parse(weather);
       return (
         <Text>
-          <CloudOutlined /> Weather: {Math.round(weatherData.temperature)}°F,{" "}
-          {weatherData.condition}
+          <CloudOutlined className="detail-icon" /> Weather:{" "}
+          {Math.round(weatherData.temperature)}°F, {weatherData.condition}
         </Text>
       );
     } catch (error) {
@@ -209,63 +217,55 @@ const UserActivitiesPage = () => {
         dataIndex: "duration",
         render: (dur) => formatDuration(dur),
       },
-      { title: "Calories", dataIndex: "caloriesBurned" },
       {
-        title: "Weather",
-        dataIndex: "weather",
-        render: (weather) => `${weather?.temperature}°F, ${weather?.condition}`,
+        title: "Calories Burned",
+        dataIndex: "caloriesBurned",
+      },
+      {
+        title: "Elevation Gain",
+        dataIndex: "elevationGain",
       },
     ];
 
     return (
-      <Table
-        dataSource={activities}
-        columns={columns}
-        rowKey="id"
-        pagination={false}
-      />
+      <Table columns={columns} dataSource={activities} pagination={false} />
     );
   };
-
-  const paginatedActivities = activities.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
 
   return (
     <Layout className="user-activities-page">
       <Content className="user-activities-content">
         <Title level={2} className="page-title">
-          Your Running Activities
+          My Activities
         </Title>
         <SummarySection activities={activities} />
         <ProgressChart activities={activities} />
-        <Row justify="space-between" align="middle" className="controls-row">
-          <Col>
-            <Select
-              defaultValue="date"
-              className="sort-select"
-              onChange={handleSortChange}
-            >
-              <Option value="date">Date</Option>
-              <Option value="distance">Distance</Option>
-              <Option value="calories">Calories</Option>
-            </Select>
-          </Col>
-          <Col>
-            <Button
-              className="compare-button"
-              onClick={() => setIsCompareModalVisible(true)}
-              disabled={selectedActivities.length < 2}
-            >
-              Compare Selected Activities
-            </Button>
-          </Col>
-        </Row>
+        <div className="controls-row">
+          <Select
+            defaultValue="date"
+            onChange={handleSortChange}
+            className="sort-select"
+          >
+            <Option value="date">Sort by Date</Option>
+            <Option value="distance">Sort by Distance</Option>
+            <Option value="calories">Sort by Calories</Option>
+          </Select>
+          <Button
+            type="primary"
+            className="compare-button"
+            onClick={() => setIsCompareModalVisible(true)}
+            disabled={selectedActivities.length < 2}
+          >
+            Compare Selected
+          </Button>
+        </div>
         <Spin spinning={loading}>
           <List
-            grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 3 }}
-            dataSource={paginatedActivities}
+            grid={{ gutter: 16, column: 3 }}
+            dataSource={activities.slice(
+              (currentPage - 1) * pageSize,
+              currentPage * pageSize
+            )}
             renderItem={(activity) => (
               <List.Item>
                 <Card className="activity-card">
@@ -285,8 +285,8 @@ const UserActivitiesPage = () => {
                   </div>
                   <div className="activity-details">
                     <Text>
-                      <EnvironmentOutlined className="detail-icon" /> Start:{" "}
-                      {activity.startLocation}
+                      <EnvironmentOutlined className="detail-icon" /> Start
+                      Location: {activity.startLocation}
                     </Text>
                     <Text>
                       <FieldTimeOutlined className="detail-icon" /> Duration:{" "}
@@ -297,7 +297,8 @@ const UserActivitiesPage = () => {
                       {activity.caloriesBurned}
                     </Text>
                     <Text>
-                      <WeatherInfo weather={activity.weather} />
+                      <RiseOutlined className="detail-icon" /> Elevation Gain:{" "}
+                      {activity.elevationGain} ft
                     </Text>
                   </div>
                 </Card>
@@ -305,22 +306,19 @@ const UserActivitiesPage = () => {
             )}
           />
         </Spin>
-        <div className="pagination-container">
-          <Pagination
-            className="activities-pagination"
-            current={currentPage}
-            onChange={setCurrentPage}
-            total={activities.length}
-            pageSize={pageSize}
-          />
-        </div>
+        <Pagination
+          current={currentPage}
+          onChange={setCurrentPage}
+          total={activities.length}
+          pageSize={pageSize}
+          className="activities-pagination"
+        />
         <Modal
           title="Compare Activities"
           visible={isCompareModalVisible}
           onCancel={() => setIsCompareModalVisible(false)}
           footer={null}
           width={800}
-          className="compare-modal"
         >
           <CompareActivities activities={selectedActivities} />
         </Modal>

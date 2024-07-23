@@ -58,54 +58,6 @@
   transform: translateY(-4px);
 }
 
-.activity-card-title {
-  display: flex;
-  align-items: center;
-}
-
-.activity-icon {
-  margin-right: 8px;
-  color: #1890ff;
-}
-
-.activity-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.activity-details .ant-typography {
-  margin-bottom: 8px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.detail-icon {
-  margin-right: 8px;
-  color: #1890ff;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 24px;
-}
-
-.compare-modal .ant-modal-body {
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-@media (max-width: 768px) {
-  .user-activities-content {
-    padding: 16px;
-  }
-
-  .summary-section .ant-statistic {
-    text-align: center;
-    margin-bottom: 16px;
-  }
-}
 .activity-card-header {
   display: flex;
   justify-content: space-between;
@@ -125,4 +77,42 @@
 
 .activity-date-tag {
   margin-left: auto;
+}
+
+.activity-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-details .ant-typography {
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detail-icon {
+  margin-right: 8px;
+  color: #1890ff;
+}
+
+.activities-pagination {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.compare-modal .ant-modal-body {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .user-activities-content {
+    padding: 16px;
+  }
+
+  .summary-section .ant-statistic {
+    text-align: center;
+    margin-bottom: 16px;
+  }
 }
