@@ -853,34 +853,56 @@ app.get("/leaderboard", authenticateToken, async (req, res) => {
   try {
     const allUsers = await prisma.user.findMany({
       select: {
+        id: true,
         username: true,
         completedChallenges: true,
+        previousRanking: true,
+        activities: {
+          select: {
+            distance: true,
+          },
+        },
       },
       orderBy: {
         completedChallenges: "desc",
       },
     });
 
-    const currentUserIndex = allUsers.findIndex(
-      (user) => user.username === req.user.username
-    );
+    const leaderboardData = allUsers.map((user, index) => {
+      const currentRank = index + 1;
+      let trend = 0;
+
+      if (user.previousRanking) {
+        trend = user.previousRanking - currentRank;
+      }
+
+      return {
+        rank: currentRank,
+        username: user.username,
+        completedChallenges: user.completedChallenges,
+        totalDistance: user.activities
+          .reduce((sum, activity) => sum + activity.distance, 0)
+          .toFixed(2),
+        isCurrentUser: user.username === req.user.name,
+        trend: trend,
+      };
+    });
+
     const currentUserRank =
-      currentUserIndex !== -1 ? currentUserIndex + 1 : null;
+      leaderboardData.findIndex((user) => user.isCurrentUser) + 1;
 
-    const leaderboardData = allUsers.slice(0, 10).map((user, index) => ({
-      rank: index + 1,
-      username: user.username,
-      completedChallenges: user.completedChallenges,
-      isCurrentUser: user.username === req.user.username,
-    }));
-
-    if (currentUserRank && currentUserRank > 10) {
-      leaderboardData.push({
-        rank: currentUserRank,
-        username: req.user.username,
-        completedChallenges: allUsers[currentUserIndex].completedChallenges,
-        isCurrentUser: true,
-      });
+    // Update previous rankings less frequently
+    const shouldUpdateRankings = await shouldUpdateLeaderboardRankings();
+    if (shouldUpdateRankings) {
+      await Promise.all(
+        leaderboardData.map(async (user) => {
+          await prisma.user.update({
+            where: { username: user.username },
+            data: { previousRanking: user.rank },
+          });
+        })
+      );
+      await updateLastLeaderboardUpdate();
     }
 
     res.json({
@@ -891,6 +913,29 @@ app.get("/leaderboard", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch leaderboard" });
   }
 });
+
+// Helper functions to manage leaderboard updates
+async function shouldUpdateLeaderboardRankings() {
+  const lastUpdate = await prisma.systemSetting.findUnique({
+    where: { key: "lastLeaderboardUpdate" },
+  });
+
+  if (!lastUpdate) return true;
+
+  const now = new Date();
+  const lastUpdateTime = new Date(lastUpdate.value);
+  const hoursSinceLastUpdate = (now - lastUpdateTime) / (1000 * 60 * 60);
+
+  return hoursSinceLastUpdate >= 1; // Update once per day (currenlty have it for less for testing)
+}
+
+async function updateLastLeaderboardUpdate() {
+  await prisma.systemSetting.upsert({
+    where: { key: "lastLeaderboardUpdate" },
+    update: { value: new Date().toISOString() },
+    create: { key: "lastLeaderboardUpdate", value: new Date().toISOString() },
+  });
+}
 
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});

@@ -5,25 +5,30 @@ import {
   Layout,
   Spin,
   Card,
-  Row,
-  Col,
   Avatar,
-  Tooltip,
   Tag,
-  Divider,
+  Pagination,
+  Select,
   message,
 } from "antd";
-import { TrophyOutlined, CrownOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  TrophyOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+  CrownOutlined,
+} from "@ant-design/icons";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
 import "../../styles/LeaderboardPage.css";
 
-const { Title, Text } = Typography;
 const { Content } = Layout;
+const { Option } = Select;
 
 const LeaderboardPage = ({ currentUser }) => {
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [currentUserRank, setCurrentUserRank] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -57,10 +62,11 @@ const LeaderboardPage = ({ currentUser }) => {
       key: "rank",
       render: (rank, record) => (
         <span
-          className={
+          className={`rank-cell ${
             record.username === currentUser?.name ? "current-user-rank" : ""
-          }
+          }`}
         >
+          {rank <= 3 && <CrownOutlined className={`crown crown-${rank}`} />}
           {rank}
         </span>
       ),
@@ -110,89 +116,42 @@ const LeaderboardPage = ({ currentUser }) => {
         </span>
       ),
     },
+    {
+      title: "Total Distance (miles)",
+      dataIndex: "totalDistance",
+      key: "totalDistance",
+      render: (totalDistance) => parseFloat(totalDistance).toFixed(2),
+    },
+    {
+      title: "Trend",
+      dataIndex: "trend",
+      key: "trend",
+      render: (trend) => (
+        <span>
+          {trend > 0 ? (
+            <>
+              <ArrowUpOutlined style={{ color: "green" }} /> {trend}
+            </>
+          ) : trend < 0 ? (
+            <>
+              <ArrowDownOutlined style={{ color: "red" }} /> {Math.abs(trend)}
+            </>
+          ) : (
+            "-"
+          )}
+        </span>
+      ),
+    },
   ];
 
-  const renderCrownedAvatar = (username, rank, isCurrentUser) => {
-    const crownStyle = {
-      position: "absolute",
-      top: "-12px",
-      right: "-12px",
-      fontSize: "32px",
-      filter: "drop-shadow(0px 0px 2px rgba(0,0,0,0.5))",
-    };
-    let crown;
-    switch (rank) {
-      case 1:
-        crown = <CrownOutlined style={{ ...crownStyle, color: "#FFD700" }} />;
-        break;
-      case 2:
-        crown = <CrownOutlined style={{ ...crownStyle, color: "#C0C0C0" }} />;
-        break;
-      case 3:
-        crown = <CrownOutlined style={{ ...crownStyle, color: "#CD7F32" }} />;
-        break;
-      default:
-        crown = null;
-    }
-
-    return (
-      <div style={{ position: "relative", display: "inline-block" }}>
-        <Avatar size={80} style={{ backgroundColor: generateColor(username) }}>
-          {username.charAt(0).toUpperCase()}
-        </Avatar>
-        {crown}
-        {isCurrentUser && (
-          <UserOutlined
-            style={{
-              position: "absolute",
-              bottom: "-5px",
-              right: "-5px",
-              fontSize: "24px",
-              color: "#1890ff",
-              backgroundColor: "white",
-              borderRadius: "50%",
-              padding: "2px",
-              border: "2px solid #1890ff",
-            }}
-          />
-        )}
-      </div>
-    );
-  };
-
-  const renderUserRank = () => {
-
-    const userInTop10 = leaderboardData.some(
-      (user) => user.username === currentUser?.name
-    );
-    if (!userInTop10 && currentUser) {
-      const userRankData = {
-        rank: currentUserRank || "N/A",
-        username: currentUser.name,
-        completedChallenges: currentUser.completedChallenges || 0,
-      };
-      return (
-        <>
-          <Divider />
-          <Title level={4}>Your Rank</Title>
-          <Table
-            dataSource={[userRankData]}
-            columns={columns}
-            pagination={false}
-            rowClassName="current-user-row"
-          />
-        </>
-      );
-    }
-    return null;
-  };
+  const paginatedData = leaderboardData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
     <Layout className="leaderboard-page">
       <Content className="leaderboard-content">
-        <Title level={2} className="leaderboard-title">
-          <TrophyOutlined /> Leaderboard
-        </Title>
         <Card className="leaderboard-card">
           {loading ? (
             <div className="loading-container">
@@ -200,53 +159,43 @@ const LeaderboardPage = ({ currentUser }) => {
             </div>
           ) : (
             <>
-              <Row gutter={[16, 16]} className="top-three">
-                {leaderboardData.slice(0, 3).map((user, index) => (
-                  <Col xs={24} sm={8} key={user.username}>
-                    <Card
-                      className={`top-three-card rank-${index + 1} ${
-                        user.username === currentUser?.name
-                          ? "current-user"
-                          : ""
-                      }`}
-                    >
-                      {renderCrownedAvatar(
-                        user.username,
-                        index + 1,
-                        user.username === currentUser?.name
-                      )}
-                      <div className="username-container">
-                        <Tooltip title={user.username}>
-                          <Text ellipsis={true} className="username">
-                            {user.username}
-                          </Text>
-                        </Tooltip>
-                      </div>
-                      <Text className="challenge-count">
-                        {user.completedChallenges} challenges
-                      </Text>
-                      {user.username === currentUser?.name && (
-                        <Tag color="blue" className="current-user-tag">
-                          You
-                        </Tag>
-                      )}
-                    </Card>
-                  </Col>
-                ))}
-              </Row>
               <Table
-                dataSource={leaderboardData}
+                dataSource={paginatedData}
                 columns={columns}
                 rowKey="username"
                 pagination={false}
                 className="leaderboard-table"
-                rowClassName={(record) =>
-                  record.username === currentUser?.name
-                    ? "current-user-row"
-                    : ""
+                rowClassName={(record, index) =>
+                  `${index % 10 === 9 ? "tenth-row " : ""}${
+                    record.username === currentUser?.name
+                      ? "current-user-row"
+                      : ""
+                  }${record.rank <= 3 ? `top-${record.rank}` : ""}`
                 }
               />
-              {renderUserRank()}
+              <div className="pagination-container">
+                <Pagination
+                  current={currentPage}
+                  total={leaderboardData.length}
+                  pageSize={pageSize}
+                  onChange={(page) => setCurrentPage(page)}
+                  className="leaderboard-pagination"
+                  showSizeChanger={false} // This hides the default select
+                />
+                <Select
+                  value={pageSize}
+                  onChange={(value) => {
+                    setPageSize(value);
+                    setCurrentPage(1);
+                  }}
+                  className="page-size-selector"
+                >
+                  <Option value={10}>10 / page</Option>
+                  <Option value={20}>20 / page</Option>
+                  <Option value={50}>50 / page</Option>
+                  <Option value={100}>100 / page</Option>
+                </Select>
+              </div>
             </>
           )}
         </Card>
