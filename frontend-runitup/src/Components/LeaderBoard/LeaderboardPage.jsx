@@ -20,7 +20,6 @@ import {
 import { getHeaders, generateColor } from "../../utils/apiConfig";
 import "../../styles/LeaderboardPage.css";
 
-const { Title } = Typography;
 const { Content } = Layout;
 const { Option } = Select;
 
@@ -51,7 +50,6 @@ const LeaderboardPage = ({ currentUser }) => {
       setCurrentUserRank(data.currentUserRank);
     } catch (error) {
       message.error("Error fetching leaderboard:", error);
-      message.error("Error fetching leaderboard:", error);
     } finally {
       setLoading(false);
     }
@@ -61,7 +59,7 @@ const LeaderboardPage = ({ currentUser }) => {
     {
       title: "Rank",
       dataIndex: "rank",
-      key: "rank",genera
+      key: "rank",
       render: (rank, record) => (
         <span
           className={`rank-cell ${
@@ -146,32 +144,10 @@ const LeaderboardPage = ({ currentUser }) => {
     },
   ];
 
-  const renderUserRank = () => {
-
-    const userInTop10 = leaderboardData.some(
-      (user) => user.username === currentUser?.name
-    );
-    if (!userInTop10 && currentUser) {
-      const userRankData = {
-        rank: currentUserRank || "N/A",
-        username: currentUser.name,
-        completedChallenges: currentUser.completedChallenges || 0,
-      };
-      return (
-        <>
-          <Divider />
-          <Title level={4}>Your Rank</Title>
-          <Table
-            dataSource={[userRankData]}
-            columns={columns}
-            pagination={false}
-            rowClassName="current-user-row"
-          />
-        </>
-      );
-    }
-    return null;
-  };
+  const paginatedData = leaderboardData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
     <Layout className="leaderboard-page">
