@@ -61,7 +61,7 @@ const LeaderboardPage = ({ currentUser }) => {
     {
       title: "Rank",
       dataIndex: "rank",
-      key: "rank",
+      key: "rank",genera
       render: (rank, record) => (
         <span
           className={`rank-cell ${
@@ -147,9 +147,6 @@ const LeaderboardPage = ({ currentUser }) => {
   ];
 
   const renderUserRank = () => {
-    console.log("Current user:", currentUser);
-    console.log("Current user rank:", currentUserRank);
-    console.log("Leaderboard data:", leaderboardData);
 
     const userInTop10 = leaderboardData.some(
       (user) => user.username === currentUser?.name
@@ -160,7 +157,6 @@ const LeaderboardPage = ({ currentUser }) => {
         username: currentUser.name,
         completedChallenges: currentUser.completedChallenges || 0,
       };
-      console.log("User rank data:", userRankData);
       return (
         <>
           <Divider />
