@@ -20,7 +20,6 @@ import {
 import { getHeaders, generateColor } from "../../utils/apiConfig";
 import "../../styles/LeaderboardPage.css";
 
-const { Title } = Typography;
 const { Content } = Layout;
 const { Option } = Select;
 
