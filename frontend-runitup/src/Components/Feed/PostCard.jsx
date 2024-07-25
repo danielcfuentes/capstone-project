@@ -52,10 +52,10 @@ const PostCard = ({ post, onLike, onCommentAdded, formatDate }) => {
           onLike(post.id, !isLiked);
         }
       } else {
-        console.error("Failed to update like");
+        message.error("Failed to update like");
       }
     } catch (error) {
-      console.error("Error updating like:", error);
+      message.error("Error updating like:", error);
     }
   };
 
