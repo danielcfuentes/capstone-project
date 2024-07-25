@@ -12,6 +12,7 @@ import {
   Row,
   Col,
   Spin,
+  Modal,
 } from "antd";
 import {
   UserOutlined,
@@ -21,9 +22,10 @@ import {
   ThunderboltOutlined,
   EnvironmentOutlined,
   HeartOutlined,
+  EditOutlined,
+  SaveOutlined,
 } from "@ant-design/icons";
 import { getHeaders } from "../../utils/apiConfig";
-import UserActivities from "./UserActivites";
 import "../../styles/ProfilePage.css";
 
 const { Content } = Layout;
@@ -33,6 +35,9 @@ const { Title, Text } = Typography;
 function ProfilePage({ user, onProfileUpdate }) {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [updatedValues, setUpdatedValues] = useState(null);
 
   useEffect(() => {
     fetchProfile();
@@ -58,14 +63,19 @@ function ProfilePage({ user, onProfileUpdate }) {
     }
   };
 
-  const onFinish = async (values) => {
+  const onFinish = (values) => {
+    setUpdatedValues(values);
+    setConfirmModalVisible(true);
+  };
+
+  const handleConfirmUpdate = async () => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/profile`,
         {
           method: "PUT",
           headers: getHeaders(),
-          body: JSON.stringify(values),
+          body: JSON.stringify(updatedValues),
         }
       );
 
@@ -78,187 +88,179 @@ function ProfilePage({ user, onProfileUpdate }) {
       if (onProfileUpdate) {
         onProfileUpdate(data);
       }
+      setEditMode(false);
+      setConfirmModalVisible(false);
     } catch (error) {
       message.error(`Error updating profile: ${error.message}`);
     }
   };
 
+  const toggleEditMode = () => {
+    setEditMode(!editMode);
+  };
+
   return (
-    <Layout style={{ padding: "100px 0 0 0" }} className="profile-page">
+    <Layout className="profile-page">
       <Content className="profile-content">
-        <Title level={2} className="page-title">
+        <Title level={1} className="page-title">
           {user.name}'s Profile
         </Title>
         <Text type="secondary" className="page-subtitle">
           View and update your information
         </Text>
 
-        <Spin spinning={loading}>
-          <Form
-            form={form}
-            onFinish={onFinish}
-            layout="vertical"
-            className="profile-form"
-          >
-            <Row gutter={24}>
-              <Col xs={24} sm={12}>
-                <Card title="Personal Information" className="info-card">
-                  <Form.Item
-                    name="age"
-                    label="Age"
-                    rules={[
-                      { required: true, message: "Please input your age!" },
-                    ]}
+        <Card className="profile-card">
+          <Spin spinning={loading}>
+            <Form
+              form={form}
+              onFinish={onFinish}
+              layout="vertical"
+              className="profile-form"
+            >
+              <Row gutter={[24, 24]}>
+                <Col xs={24} md={12}>
+                  <Card title="Personal Information" className="info-card">
+                    <Form.Item name="age" label="Age">
+                      <InputNumber
+                        disabled={!editMode}
+                        className="full-width"
+                      />
+                    </Form.Item>
+                    <Form.Item name="gender" label="Gender">
+                      <Select disabled={!editMode}>
+                        <Option value="male">
+                          <ManOutlined /> Male
+                        </Option>
+                        <Option value="female">
+                          <WomanOutlined /> Female
+                        </Option>
+                        <Option value="other">
+                          <UserOutlined /> Other
+                        </Option>
+                      </Select>
+                    </Form.Item>
+                    <Form.Item name="weight" label="Weight (lbs)">
+                      <InputNumber
+                        disabled={!editMode}
+                        className="full-width"
+                      />
+                    </Form.Item>
+                    <Form.Item name="height" label="Height (ft.in)">
+                      <InputNumber
+                        disabled={!editMode}
+                        step={0.01}
+                        className="full-width"
+                      />
+                    </Form.Item>
+                  </Card>
+                </Col>
+                <Col xs={24} md={12}>
+                  <Card title="Running Profile" className="info-card">
+                    <Form.Item name="fitnessLevel" label="Fitness Level">
+                      <Select disabled={!editMode}>
+                        <Option value="beginner">
+                          <ThunderboltOutlined /> Beginner
+                        </Option>
+                        <Option value="intermediate">
+                          <ThunderboltOutlined /> Intermediate
+                        </Option>
+                        <Option value="advanced">
+                          <ThunderboltOutlined /> Advanced
+                        </Option>
+                      </Select>
+                    </Form.Item>
+                    <Form.Item
+                      name="runningExperience"
+                      label="Running Experience"
+                    >
+                      <Select disabled={!editMode}>
+                        <Option value="novice">
+                          <UserOutlined /> Novice
+                        </Option>
+                        <Option value="recreational">
+                          <UserOutlined /> Recreational
+                        </Option>
+                        <Option value="competitive">
+                          <UserOutlined /> Competitive
+                        </Option>
+                      </Select>
+                    </Form.Item>
+                    <Form.Item
+                      name="preferredTerrains"
+                      label="Preferred Terrains"
+                    >
+                      <Select mode="multiple" disabled={!editMode}>
+                        <Option value="road">
+                          <EnvironmentOutlined /> Road
+                        </Option>
+                        <Option value="trail">
+                          <EnvironmentOutlined /> Trail
+                        </Option>
+                        <Option value="track">
+                          <EnvironmentOutlined /> Track
+                        </Option>
+                      </Select>
+                    </Form.Item>
+                    <Form.Item
+                      name="healthConditions"
+                      label="Health Conditions"
+                    >
+                      <Select mode="multiple" disabled={!editMode}>
+                        <Option value="asthma">
+                          <HeartOutlined /> Asthma
+                        </Option>
+                        <Option value="kneeIssues">
+                          <HeartOutlined /> Knee Issues
+                        </Option>
+                        <Option value="backPain">
+                          <HeartOutlined /> Back Pain
+                        </Option>
+                      </Select>
+                    </Form.Item>
+                  </Card>
+                </Col>
+              </Row>
+              {editMode ? (
+                <Form.Item>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    size="large"
+                    block
+                    className="update-button"
+                    icon={<SaveOutlined />}
                   >
-                    <InputNumber min={1} max={120} prefix={<UserOutlined />} />
-                  </Form.Item>
-                  <Form.Item
-                    name="gender"
-                    label="Gender"
-                    rules={[
-                      { required: true, message: "Please select your gender!" },
-                    ]}
-                  >
-                    <Select>
-                      <Option value="male">
-                        <ManOutlined /> Male
-                      </Option>
-                      <Option value="female">
-                        <WomanOutlined /> Female
-                      </Option>
-                      <Option value="other">
-                        <UserOutlined /> Other
-                      </Option>
-                    </Select>
-                  </Form.Item>
-                  <Form.Item
-                    name="weight"
-                    label="Weight (lbs)"
-                    rules={[
-                      { required: true, message: "Please input your weight!" },
-                    ]}
-                  >
-                    <InputNumber
-                      min={1}
-                      max={300}
-                      prefix={<DashboardOutlined />}
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    name="height"
-                    label="Height (ft.in)"
-                    rules={[
-                      { required: true, message: "Please input your height!" },
-                    ]}
-                  >
-                    <InputNumber
-                      min={1}
-                      max={300}
-                      prefix={<DashboardOutlined />}
-                    />
-                  </Form.Item>
-                </Card>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Card title="Running Profile" className="info-card">
-                  <Form.Item
-                    name="fitnessLevel"
-                    label="Fitness Level"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please select your fitness level!",
-                      },
-                    ]}
-                  >
-                    <Select>
-                      <Option value="beginner">
-                        <ThunderboltOutlined /> Beginner
-                      </Option>
-                      <Option value="intermediate">
-                        <ThunderboltOutlined /> Intermediate
-                      </Option>
-                      <Option value="advanced">
-                        <ThunderboltOutlined /> Advanced
-                      </Option>
-                    </Select>
-                  </Form.Item>
-                  <Form.Item
-                    name="runningExperience"
-                    label="Running Experience"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please select your running experience!",
-                      },
-                    ]}
-                  >
-                    <Select>
-                      <Option value="novice">
-                        <UserOutlined /> Novice
-                      </Option>
-                      <Option value="recreational">
-                        <UserOutlined /> Recreational
-                      </Option>
-                      <Option value="competitive">
-                        <UserOutlined /> Competitive
-                      </Option>
-                    </Select>
-                  </Form.Item>
-                  <Form.Item
-                    name="preferredTerrains"
-                    label="Preferred Terrains"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please select your preferred terrains!",
-                      },
-                    ]}
-                  >
-                    <Select mode="multiple">
-                      <Option value="road">
-                        <EnvironmentOutlined /> Road
-                      </Option>
-                      <Option value="trail">
-                        <EnvironmentOutlined /> Trail
-                      </Option>
-                      <Option value="track">
-                        <EnvironmentOutlined /> Track
-                      </Option>
-                    </Select>
-                  </Form.Item>
-                  <Form.Item name="healthConditions" label="Health Conditions">
-                    <Select mode="multiple">
-                      <Option value="asthma">
-                        <HeartOutlined /> Asthma
-                      </Option>
-                      <Option value="kneeIssues">
-                        <HeartOutlined /> Knee Issues
-                      </Option>
-                      <Option value="backPain">
-                        <HeartOutlined /> Back Pain
-                      </Option>
-                    </Select>
-                  </Form.Item>
-                </Card>
-              </Col>
-            </Row>
-            <Form.Item>
-              <Button
-                type="primary"
-                htmlType="submit"
-                size="large"
-                block
-                className="update-button"
-              >
-                Update Profile
-              </Button>
-            </Form.Item>
-          </Form>
-          <Col xs={24} lg={12}>
-            <UserActivities />
-          </Col>
-        </Spin>
+                    Save Changes
+                  </Button>
+                </Form.Item>
+              ) : (
+                <Button
+                  type="primary"
+                  size="large"
+                  block
+                  className="edit-button"
+                  onClick={toggleEditMode}
+                  icon={<EditOutlined />}
+                >
+                  Edit Your Profile
+                </Button>
+              )}
+            </Form>
+          </Spin>
+        </Card>
+
+        <Modal
+          title="Confirm Profile Update"
+          visible={confirmModalVisible}
+          onOk={handleConfirmUpdate}
+          onCancel={() => setConfirmModalVisible(false)}
+          okText="Confirm"
+          cancelText="Cancel"
+        >
+          <p>
+            Are you sure you want to update your profile with these changes?
+          </p>
+        </Modal>
       </Content>
     </Layout>
   );
