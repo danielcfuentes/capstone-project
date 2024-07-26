@@ -3,7 +3,7 @@ import SignUp from "./Components/Authentication/SignUp";
 import LoginPage from "./Components/Authentication/LoginPage";
 import Feed from "./Components/Feed/FeedPage";
 import RoutesPage from "./Components/Routes/RoutesPage";
-// import RecommendationPage from "./Components/Recommendation/RecommendationPage";
+import RecommendationPage from "./Components/Recommendation/RecommendationPage";
 import ProfileSetupPage from "./Components/Profile/ProfileSetupPage";
 import ProfilePage from "./Components/Profile/ProfilePage";
 import { useState, useEffect } from "react";
@@ -48,7 +48,7 @@ function App() {
   const handleLogin = (userData, accessToken, refreshToken) => {
     const userWithChallenges = {
       ...userData,
-      completedChallenges: userData.completedChallenges, // Ensure this is included
+      completedChallenges: userData.completedChallenges,
     };
     setUser(userWithChallenges);
     setAccessToken(accessToken);
@@ -104,7 +104,6 @@ function App() {
         } else {
           message.info("Your challenge progress has been updated.");
         }
-        // You might want to trigger a re-fetch of challenges here
       }
     } catch (error) {
       message.error("Failed to update challenge: " + error.message);
@@ -269,6 +268,17 @@ function App() {
                 isProfileComplete={isProfileComplete}
               >
                 <LeaderboardPage currentUser={user} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/plans"
+            element={
+              <ProtectedRoute
+                isLoggedIn={isLoggedIn}
+                isProfileComplete={isProfileComplete}
+              >
+                <RecommendationPage />
               </ProtectedRoute>
             }
           />

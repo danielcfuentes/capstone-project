@@ -35,6 +35,14 @@ const Header = ({ onLogout, user }) => {
       icon: <TrophyOutlined />,
       link: "/challenges",
     },
+
+    {
+      key: "plans",
+      label: "Plans",
+      icon: <TrophyOutlined />,
+      link: "/plans",
+    },
+
     {
       key: "leaderboard",
       label: "Leaderboard",
