@@ -54,4 +54,21 @@ function createGraph(osmData) {
   return graph;
 }
 
+function findClosestNode(graph, lat, lng) {
+  let closestNode = null;
+  let minDistance = Infinity;
 
+  for (const node of graph.values()) {
+    const distance = turf.distance(
+      turf.point([lng, lat]),
+      turf.point([node.lon, node.lat]),
+      { units: "kilometers" }
+    );
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestNode = node;
+    }
+  }
+
+  return closestNode;
+}
