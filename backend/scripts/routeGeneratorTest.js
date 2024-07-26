@@ -1,8 +1,15 @@
 const assert = require("assert");
+const fs = require("fs");
 const { generateRoute } = require("../routeGenerator");
 
 async function runTests() {
-  console.log("Starting comprehensive route generator tests...");
+  const logStream = fs.createWriteStream("test_log.txt", { flags: "a" });
+
+  function log(message) {
+    logStream.write(message + "\n");
+  }
+
+  log("Starting comprehensive route generator tests...");
 
   const testResults = [];
 
@@ -22,8 +29,8 @@ async function runTests() {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`\n${testName} - Attempt ${attempt}/${maxRetries}`);
-        const routeResult = await generateRoute(lat, lon, distance);
+        log(`\n${testName} - Attempt ${attempt}/${maxRetries}`);
+        const routeResult = await generateRoute(lat, lon, distance, log);
 
         assert(
           routeResult.coordinates.length > 0,
@@ -42,16 +49,16 @@ async function runTests() {
         result.difference = Math.abs(routeResult.distance - distance).toFixed(
           2
         );
-        console.log(`${testName}: PASSED`);
+        log(`${testName}: PASSED`);
         break;
       } catch (error) {
-        console.error(`${testName}: FAILED`);
-        console.error(`  Error: ${error.message}`);
+        log(`${testName}: FAILED`);
+        log(`  Error: ${error.message}`);
         if (attempt < maxRetries) {
-          console.log("  Retrying...");
+          log("  Retrying...");
           await new Promise((resolve) => setTimeout(resolve, 2000));
         } else {
-          console.error(`  All attempts failed. Stack trace:\n${error.stack}`);
+          log(`  All attempts failed. Stack trace:\n${error.stack}`);
         }
       }
     }
@@ -135,10 +142,10 @@ async function runTests() {
     15
   );
 
-  console.log("\nTest 15: Area with no road data");
+  log("\nTest 15: Area with no road data");
   try {
-    await generateRoute(0, 0, 1);
-    console.error("Test 15: FAILED - Expected an error but didn't get one");
+    await generateRoute(0, 0, 1, log);
+    log("Test 15: FAILED - Expected an error but didn't get one");
     testResults.push({
       name: "Test 15: Area with no road data",
       status: "FAILED",
@@ -150,7 +157,7 @@ async function runTests() {
       error.message.includes("No road data found") ||
       error.message.includes("Failed to create graph from road data")
     ) {
-      console.log("Test 15: PASSED - Correctly handled area with no road data");
+      log("Test 15: PASSED - Correctly handled area with no road data");
       testResults.push({
         name: "Test 15: Area with no road data",
         status: "PASSED",
@@ -158,9 +165,9 @@ async function runTests() {
         difference: "N/A",
       });
     } else {
-      console.error("Test 15: FAILED - Unexpected error");
-      console.error(`  Error: ${error.message}`);
-      console.error(`  Stack trace:\n${error.stack}`);
+      log("Test 15: FAILED - Unexpected error");
+      log(`  Error: ${error.message}`);
+      log(`  Stack trace:\n${error.stack}`);
       testResults.push({
         name: "Test 15: Area with no road data",
         status: "FAILED",
@@ -183,21 +190,21 @@ async function runTests() {
     3
   );
 
-  console.log("\nAll tests completed.");
+  log("\nAll tests completed.");
 
   // Display results table
-  console.log("\nTest Results Summary:");
-  console.log(
+  log("\nTest Results Summary:");
+  log(
     "------------------------------------------------------------------------------------------------------------------"
   );
-  console.log(
+  log(
     "| Test Name                                            | Status | Attempts | Difference from Requested (miles) |"
   );
-  console.log(
+  log(
     "------------------------------------------------------------------------------------------------------------------"
   );
   testResults.forEach((result) => {
-    console.log(
+    log(
       `| ${result.name.padEnd(50)} | ${result.status.padEnd(
         6
       )} | ${result.attempts.toString().padEnd(8)} | ${result.difference.padEnd(
@@ -205,18 +212,20 @@ async function runTests() {
       )} |`
     );
   });
-  console.log(
+  log(
     "------------------------------------------------------------------------------------------------------------------"
   );
 
   const passedTests = testResults.filter((r) => r.status === "PASSED").length;
   const totalTests = testResults.length;
-  console.log(
+  log(
     `\nPassed ${passedTests} out of ${totalTests} tests (${(
       (passedTests / totalTests) *
       100
     ).toFixed(2)}% success rate)`
   );
+
+  logStream.end();
 }
 
 runTests().catch(console.error);

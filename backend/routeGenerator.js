@@ -1,7 +1,7 @@
 const turf = require("@turf/turf");
 const axios = require("axios");
 
-async function fetchRoadNetwork(startLat, startLng, radiusKm) {
+async function fetchRoadNetwork(startLat, startLng, radiusKm, log) {
   const query = `
     [out:json];
     (
@@ -21,7 +21,7 @@ async function fetchRoadNetwork(startLat, startLng, radiusKm) {
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching road network:", error.message);
+    log("Error fetching road network:", error.message);
     throw new Error("Failed to fetch road network data");
   }
 }
@@ -84,6 +84,7 @@ function generateCircularRoute(
   graph,
   startNodeId,
   desiredDistanceKm,
+  log,
   tolerance = 0.1
 ) {
   const visited = new Set();
@@ -95,7 +96,7 @@ function generateCircularRoute(
   const maxAttempts = 5000; // Increased max attempts
   let attempts = 0;
 
-  console.log(
+  log(
     `Generating circular route: desired distance = ${desiredDistanceKm.toFixed(
       2
     )} km`
@@ -107,7 +108,7 @@ function generateCircularRoute(
     const currentNode = graph.get(currentNodeId);
 
     if (!currentNode || currentNode.connections.size === 0) {
-      console.log(`Dead end reached at node ${currentNodeId}`);
+      log(`Dead end reached at node ${currentNodeId}`);
       break;
     }
 
@@ -127,7 +128,7 @@ function generateCircularRoute(
     }
 
     if (candidates.length === 0) {
-      console.log(`No valid candidates found for node ${currentNodeId}`);
+      log(`No valid candidates found for node ${currentNodeId}`);
       break;
     }
 
@@ -177,13 +178,13 @@ function generateCircularRoute(
     }
 
     if (attempts % 100 === 0) {
-      console.log(
+      log(
         `Attempt ${attempts}: Current distance = ${totalDistance.toFixed(2)} km`
       );
     }
   }
 
-  console.log(
+  log(
     `Route generation completed: best distance = ${bestTotalDistance.toFixed(
       2
     )} km, attempts = ${attempts}`
@@ -208,41 +209,40 @@ function calculateDistance(node1, node2) {
   );
 }
 
-
-async function generateRoute(startLat, startLng, desiredDistanceMiles) {
+async function generateRoute(startLat, startLng, desiredDistanceMiles, log) {
   const desiredDistanceKm = desiredDistanceMiles * 1.60934;
   const radiusKm = Math.max(desiredDistanceKm * 0.7, 3);
 
   try {
-    console.log(`\nGenerating route:`);
-    console.log(`  Start: (${startLat.toFixed(4)}, ${startLng.toFixed(4)})`);
-    console.log(
+    log(`\nGenerating route:`);
+    log(`  Start: (${startLat.toFixed(4)}, ${startLng.toFixed(4)})`);
+    log(
       `  Desired distance: ${desiredDistanceMiles.toFixed(
         2
       )} miles (${desiredDistanceKm.toFixed(2)} km)`
     );
-    console.log(`  Search radius: ${radiusKm.toFixed(2)} km`);
+    log(`  Search radius: ${radiusKm.toFixed(2)} km`);
 
-    const osmData = await fetchRoadNetwork(startLat, startLng, radiusKm);
+    const osmData = await fetchRoadNetwork(startLat, startLng, radiusKm, log);
 
     if (!osmData.elements || osmData.elements.length === 0) {
       throw new Error("No road data found in the specified area.");
     }
 
-    console.log(`  Road network: ${osmData.elements.length} elements`);
+    log(`  Road network: ${osmData.elements.length} elements`);
     const graph = createGraph(osmData);
 
     if (graph.size === 0) {
       throw new Error("Failed to create graph from road data.");
     }
 
-    console.log(`  Graph: ${graph.size} nodes`);
+    log(`  Graph: ${graph.size} nodes`);
     const startNode = findClosestNode(graph, startLat, startLng);
     if (!startNode) {
       throw new Error("Unable to find a suitable starting point.");
     }
 
-    console.log(
+    log(
       `  Start node: id=${startNode.id}, (${startNode.lat.toFixed(
         4
       )}, ${startNode.lon.toFixed(4)})`
@@ -250,7 +250,8 @@ async function generateRoute(startLat, startLng, desiredDistanceMiles) {
     const { route, totalDistance } = generateCircularRoute(
       graph,
       startNode.id,
-      desiredDistanceKm
+      desiredDistanceKm,
+      log
     );
 
     const coordinates = route
@@ -261,14 +262,14 @@ async function generateRoute(startLat, startLng, desiredDistanceMiles) {
       .filter((coord) => coord !== null);
 
     const resultDistanceMiles = totalDistance / 1.60934;
-    console.log(`\nRoute generated:`);
-    console.log(`  Points: ${coordinates.length}`);
-    console.log(
+    log(`\nRoute generated:`);
+    log(`  Points: ${coordinates.length}`);
+    log(
       `  Distance: ${resultDistanceMiles.toFixed(
         2
       )} miles (${totalDistance.toFixed(2)} km)`
     );
-    console.log(
+    log(
       `  Difference: ${Math.abs(
         resultDistanceMiles - desiredDistanceMiles
       ).toFixed(2)} miles`
@@ -279,7 +280,7 @@ async function generateRoute(startLat, startLng, desiredDistanceMiles) {
       distance: resultDistanceMiles,
     };
   } catch (error) {
-    console.error("\nError in generateRoute:", error.message);
+    log("\nError in generateRoute:", error.message);
     throw error;
   }
 }
