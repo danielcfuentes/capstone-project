@@ -27,17 +27,24 @@ async function runTests() {
       requestedDistance,
       routeDistance: "N/A",
       difference: "N/A",
+      duration: "N/A", // Add duration field
     };
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         log(`\n${testName} - Attempt ${attempt}/${maxRetries}`);
+
+        const startTime = process.hrtime(); // Start timer
         const routeResult = await generateRouteWithAStar(
           lat,
           lon,
           requestedDistance,
           log
         );
+        const endTime = process.hrtime(startTime); // End timer
+
+        const duration = endTime[0] + endTime[1] / 1e9; // Convert to seconds
+        result.duration = `${duration.toFixed(3)} s`;
 
         assert(
           routeResult.coordinates.length > 0,
@@ -152,7 +159,11 @@ async function runTests() {
 
   log("\nTest 15: Area with no road data");
   try {
+    const startTime = process.hrtime(); // Start timer
     await generateRouteWithAStar(0, 0, 1, log);
+    const endTime = process.hrtime(startTime); // End timer
+    const duration = endTime[0] + endTime[1] / 1e9; // Convert to seconds
+
     log("Test 15: FAILED - Expected an error but didn't get one");
     testResults.push({
       name: "Test 15: Area with no road data",
@@ -161,8 +172,12 @@ async function runTests() {
       requestedDistance: 1,
       routeDistance: "N/A",
       difference: "N/A",
+      duration: `${duration.toFixed(3)} s`,
     });
   } catch (error) {
+    const endTime = process.hrtime(); // End timer
+    const duration = endTime[0] + endTime[1] / 1e9; // Convert to seconds
+
     if (
       error.message.includes("No road data found") ||
       error.message.includes("Failed to create graph from road data")
@@ -175,6 +190,7 @@ async function runTests() {
         requestedDistance: 1,
         routeDistance: "N/A",
         difference: "N/A",
+        duration: `${duration.toFixed(3)} s`,
       });
     } else {
       log("Test 15: FAILED - Unexpected error");
@@ -187,6 +203,7 @@ async function runTests() {
         requestedDistance: 1,
         routeDistance: "N/A",
         difference: "N/A",
+        duration: `${duration.toFixed(3)} s`,
       });
     }
   }
@@ -212,7 +229,7 @@ async function runTests() {
     "------------------------------------------------------------------------------------------------------------------"
   );
   log(
-    "| Test Name                                            | Status | Attempts | Requested Distance | Route Distance | Difference from Requested |"
+    "| Test Name                                            | Status | Attempts | Requested Distance | Route Distance | Difference from Requested | Duration |"
   );
   log(
     "------------------------------------------------------------------------------------------------------------------"
@@ -225,7 +242,7 @@ async function runTests() {
         .toString()
         .padEnd(17)} | ${result.routeDistance.padEnd(
         14
-      )} | ${result.difference.padEnd(26)} |`
+      )} | ${result.difference.padEnd(26)} | ${result.duration.padEnd(10)} |`
     );
   });
   log(
