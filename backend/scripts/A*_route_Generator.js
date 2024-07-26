@@ -1,9 +1,9 @@
 const assert = require("assert");
 const fs = require("fs");
-const { generateRoute } = require("../routeGenerator"); // Adjust the path as needed
+const { generateRouteWithAStar } = require("../AStar_route_Generator"); // Adjust the path as needed
 
 async function runTests() {
-  const logStream = fs.createWriteStream("test_log.txt", { flags: "w" }); // Open in write mode to clear the file initially
+  const logStream = fs.createWriteStream("a_star_test.txt", { flags: "w" }); // Open in write mode to clear the file initially
 
   function log(message) {
     logStream.write(message + "\n");
@@ -35,7 +35,7 @@ async function runTests() {
         log(`\n${testName} - Attempt ${attempt}/${maxRetries}`);
 
         const startTime = process.hrtime(); // Start timer
-        const routeResult = await generateRoute(
+        const routeResult = await generateRouteWithAStar(
           lat,
           lon,
           requestedDistance,
@@ -160,7 +160,7 @@ async function runTests() {
   log("\nTest 15: Area with no road data");
   try {
     const startTime = process.hrtime(); // Start timer
-    await generateRoute(0, 0, 1, log);
+    await generateRouteWithAStar(0, 0, 1, log);
     const endTime = process.hrtime(startTime); // End timer
     const duration = endTime[0] + endTime[1] / 1e9; // Convert to seconds
 
