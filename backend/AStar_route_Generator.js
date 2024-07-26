@@ -168,17 +168,27 @@ function aStarAlgorithm(graph, startNodeId, goalNodeId, log) {
 /**
  * Generates a circular route based on the A* algorithm.
  */
-function generateCircularRoute(graph, startNodeId, desiredDistanceKm, log, tolerance = 0.1) {
+function generateCircularRoute(
+  graph,
+  startNodeId,
+  desiredDistanceKm,
+  log,
+  tolerance = 0.1
+) {
   const visited = new Set();
   let bestRoute = null;
-  let bestTotalDistance = 0;
+  let bestTotalDistance = Infinity;
   const route = [startNodeId];
   let currentNodeId = startNodeId;
   let totalDistance = 0;
   const maxAttempts = 5000;
   let attempts = 0;
 
-  log(`Generating circular route: desired distance = ${desiredDistanceKm.toFixed(2)} km`);
+  log(
+    `Generating circular route: desired distance = ${desiredDistanceKm.toFixed(
+      2
+    )} km`
+  );
 
   while (attempts < maxAttempts) {
     attempts++;
@@ -258,23 +268,34 @@ function generateCircularRoute(graph, startNodeId, desiredDistanceKm, log, toler
     if (route.length > 2) {
       const lastPoint = graph.get(route[route.length - 1]);
       const secondLastPoint = graph.get(route[route.length - 2]);
-      if (calculateDistance(lastPoint, secondLastPoint) < 0.01) { // Threshold for redundancy
+      if (calculateDistance(lastPoint, secondLastPoint) < 0.01) {
+        // Threshold for redundancy
         route.pop();
         totalDistance -= calculateDistance(secondLastPoint, lastPoint);
       }
     }
 
     if (attempts % 100 === 0) {
-      log(`Attempt ${attempts}: Current distance = ${totalDistance.toFixed(2)} km`);
+      log(
+        `Attempt ${attempts}: Current distance = ${totalDistance.toFixed(2)} km`
+      );
     }
   }
 
-  log(`Route generation completed: best distance = ${bestTotalDistance.toFixed(2)} km, attempts = ${attempts}`);
+  log(
+    `Route generation completed: best distance = ${bestTotalDistance.toFixed(
+      2
+    )} km, attempts = ${attempts}`
+  );
 
   if (bestRoute) {
     return { route: bestRoute, totalDistance: bestTotalDistance };
   } else {
-    throw new Error(`Unable to generate a suitable route. Best distance: ${bestTotalDistance.toFixed(2)} km, wanted ${desiredDistanceKm.toFixed(2)} km`);
+    throw new Error(
+      `Unable to generate a suitable route. Best distance: ${bestTotalDistance.toFixed(
+        2
+      )} km, wanted ${desiredDistanceKm.toFixed(2)} km`
+    );
   }
 }
 
