@@ -3,12 +3,12 @@ import { Layout, Typography, Tabs, message, Spin, Empty } from "antd";
 import { getHeaders } from "../../utils/apiConfig";
 import ChallengeCard from "./ChallengeCard";
 import PastChallenges from "./PastChallenges";
-import "../../styles/RecommendationPage.css";
+import "../../styles/ChallengesPage.css";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
-const RecommendationPage = () => {
+const ChallengesPage = () => {
   const [activeChallenges, setActiveChallenges] = useState([]);
   const [pastChallenges, setPastChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -122,4 +122,4 @@ const RecommendationPage = () => {
   );
 };
 
-export default RecommendationPage;
+export default ChallengesPage;

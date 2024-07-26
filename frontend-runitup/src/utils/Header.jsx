@@ -33,7 +33,7 @@ const Header = ({ onLogout, user }) => {
       key: "recommendations",
       label: "Challenges",
       icon: <TrophyOutlined />,
-      link: "/recommendations",
+      link: "/challenges",
     },
     {
       key: "leaderboard",

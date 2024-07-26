@@ -472,7 +472,6 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
       activity,
     });
   } catch (error) {
-    console.error("Error saving activity:", error);
     res.status(500).json({
       message: "Error saving activity",
       error: error.message,

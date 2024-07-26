@@ -3,7 +3,7 @@ import SignUp from "./Components/Authentication/SignUp";
 import LoginPage from "./Components/Authentication/LoginPage";
 import Feed from "./Components/Feed/FeedPage";
 import RoutesPage from "./Components/Routes/RoutesPage";
-import RecommendationPage from "./Components/Recommendation/RecommendationPage";
+// import RecommendationPage from "./Components/Recommendation/RecommendationPage";
 import ProfileSetupPage from "./Components/Profile/ProfileSetupPage";
 import ProfilePage from "./Components/Profile/ProfilePage";
 import { useState, useEffect } from "react";
@@ -15,6 +15,7 @@ import UserActivitiesPage from "./Components/Profile/UserActivites";
 import { getHeaders } from "./utils/apiConfig";
 import { message } from "antd";
 import LeaderboardPage from "./Components/LeaderBoard/LeaderboardPage";
+import ChallengesPage from "./Components/Challenges/ChallengesPage";
 
 // Protected route wrapper component
 const ProtectedRoute = ({ children, isLoggedIn, isProfileComplete }) => {
@@ -214,13 +215,13 @@ function App() {
             }
           />
           <Route
-            path="/recommendations"
+            path="/challenges"
             element={
               <ProtectedRoute
                 isLoggedIn={isLoggedIn}
                 isProfileComplete={isProfileComplete}
               >
-                <RecommendationPage user={user} />
+                <ChallengesPage user={user} />
               </ProtectedRoute>
             }
           />
