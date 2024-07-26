@@ -72,3 +72,74 @@ function findClosestNode(graph, lat, lng) {
 
   return closestNode;
 }
+
+function generateCircularRoute(
+  graph,
+  startNodeId,
+  desiredDistanceKm,
+  tolerance = 0.1
+) {
+  const visited = new Set();
+  const route = [startNodeId];
+  let currentNodeId = startNodeId;
+  let totalDistance = 0;
+
+  while (totalDistance < desiredDistanceKm) {
+    visited.add(currentNodeId);
+    const currentNode = graph.get(currentNodeId);
+
+    if (!currentNode || currentNode.connections.size === 0) {
+      break;
+    }
+
+    let nextNodeId = null;
+    let minDistanceDiff = Infinity;
+
+    for (const neighborId of currentNode.connections) {
+      if (!visited.has(neighborId)) {
+        const neighborNode = graph.get(neighborId);
+        const distanceToNeighbor = calculateDistance(currentNode, neighborNode);
+        const newTotalDistance = totalDistance + distanceToNeighbor;
+        const distanceDiff = Math.abs(desiredDistanceKm - newTotalDistance);
+
+        if (distanceDiff < minDistanceDiff) {
+          nextNodeId = neighborId;
+          minDistanceDiff = distanceDiff;
+        }
+      }
+    }
+
+    if (!nextNodeId) {
+      break;
+    }
+
+    const nextNode = graph.get(nextNodeId);
+    totalDistance += calculateDistance(currentNode, nextNode);
+    route.push(nextNodeId);
+    currentNodeId = nextNodeId;
+  }
+
+  // Try to close the loop
+  const startNode = graph.get(startNodeId);
+  const endNode = graph.get(currentNodeId);
+  const closingDistance = calculateDistance(startNode, endNode);
+  totalDistance += closingDistance;
+  route.push(startNodeId);
+
+  if (
+    Math.abs(totalDistance - desiredDistanceKm) <=
+    tolerance * desiredDistanceKm
+  ) {
+    return { route, totalDistance };
+  } else {
+    throw new Error("Unable to generate a suitable circular route");
+  }
+}
+
+function calculateDistance(node1, node2) {
+  return turf.distance(
+    turf.point([node1.lon, node1.lat]),
+    turf.point([node2.lon, node2.lat]),
+    { units: "kilometers" }
+  );
+}
