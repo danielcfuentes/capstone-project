@@ -1,0 +1,75 @@
+.recommendation-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  padding-top: 100px;
+}
+
+.recommendation-form {
+  max-width: 500px;
+  margin: 0 auto 48px;
+  padding: 24px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.recommended-plan-section {
+  margin-bottom: 48px;
+}
+
+.all-plans-section {
+  margin-top: 48px;
+}
+
+.plan-card {
+  height: 100%;
+  transition: all 0.3s;
+}
+
+.plan-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+}
+
+.plan-card.recommended {
+  border: 2px solid #1890ff;
+  position: relative;
+}
+
+.plan-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.recommended-badge {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background-color: #1890ff;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.plan-modal .ant-modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.plan-modal ul {
+  padding-left: 20px;
+}
+
+@media (max-width: 768px) {
+  .recommendation-page {
+    padding: 16px;
+  }
+
+  .recommendation-form {
+    padding: 16px;
+  }
+}
