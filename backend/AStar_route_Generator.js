@@ -127,7 +127,7 @@ function aStarAlgorithm(graph, startNodeId, goalNodeId, log) {
     fScore.set(node.id, Infinity);
   });
   gScore.set(startNodeId, 0);
-  fScore.set(startNodeId, heuristic(graph.get(startNodeId), graph.get(goalNodeId), graph.get(startNodeId)));
+  fScore.set(startNodeId, refinedHeuristic(graph.get(startNodeId), graph.get(goalNodeId), graph.get(startNodeId)));
 
   while (openSet.size > 0) {
     // Get the node in the open set with the lowest fScore
@@ -156,7 +156,7 @@ function aStarAlgorithm(graph, startNodeId, goalNodeId, log) {
       if (tentativeGScore < gScore.get(neighborId)) {
         cameFrom.set(neighborId, current);
         gScore.set(neighborId, tentativeGScore);
-        fScore.set(neighborId, tentativeGScore + heuristic(neighbor, graph.get(goalNodeId), graph.get(startNodeId)));
+        fScore.set(neighborId, tentativeGScore + refinedHeuristic(neighbor, graph.get(goalNodeId), graph.get(startNodeId)));
         openSet.add(neighborId);
       }
     });
@@ -168,27 +168,17 @@ function aStarAlgorithm(graph, startNodeId, goalNodeId, log) {
 /**
  * Generates a circular route based on the A* algorithm.
  */
-function generateCircularRoute(
-  graph,
-  startNodeId,
-  desiredDistanceKm,
-  log,
-  tolerance = 0.1
-) {
+function generateCircularRoute(graph, startNodeId, desiredDistanceKm, log, tolerance = 0.1) {
   const visited = new Set();
   let bestRoute = null;
   let bestTotalDistance = 0;
   const route = [startNodeId];
   let currentNodeId = startNodeId;
   let totalDistance = 0;
-  const maxAttempts = 5000; // Increased max attempts
+  const maxAttempts = 5000;
   let attempts = 0;
 
-  log(
-    `Generating circular route: desired distance = ${desiredDistanceKm.toFixed(
-      2
-    )} km`
-  );
+  log(`Generating circular route: desired distance = ${desiredDistanceKm.toFixed(2)} km`);
 
   while (attempts < maxAttempts) {
     attempts++;
@@ -208,7 +198,6 @@ function generateCircularRoute(
       }));
 
     if (candidates.length === 0) {
-      // If no unvisited neighbors, try to close the loop
       candidates = Array.from(currentNode.connections).map((neighborId) => ({
         id: neighborId,
         distance: calculateDistance(currentNode, graph.get(neighborId)),
@@ -220,7 +209,7 @@ function generateCircularRoute(
       break;
     }
 
-    // Sort candidates by how close they get us to the desired distance
+    // Sort candidates to get closest distance to desired distance
     candidates.sort(
       (a, b) =>
         Math.abs(totalDistance + a.distance - desiredDistanceKm) -
@@ -265,27 +254,27 @@ function generateCircularRoute(
       bestTotalDistance = totalDistance;
     }
 
+    // Remove redundant points by checking distances between consecutive points
+    if (route.length > 2) {
+      const lastPoint = graph.get(route[route.length - 1]);
+      const secondLastPoint = graph.get(route[route.length - 2]);
+      if (calculateDistance(lastPoint, secondLastPoint) < 0.01) { // Threshold for redundancy
+        route.pop();
+        totalDistance -= calculateDistance(secondLastPoint, lastPoint);
+      }
+    }
+
     if (attempts % 100 === 0) {
-      log(
-        `Attempt ${attempts}: Current distance = ${totalDistance.toFixed(2)} km`
-      );
+      log(`Attempt ${attempts}: Current distance = ${totalDistance.toFixed(2)} km`);
     }
   }
 
-  log(
-    `Route generation completed: best distance = ${bestTotalDistance.toFixed(
-      2
-    )} km, attempts = ${attempts}`
-  );
+  log(`Route generation completed: best distance = ${bestTotalDistance.toFixed(2)} km, attempts = ${attempts}`);
 
   if (bestRoute) {
     return { route: bestRoute, totalDistance: bestTotalDistance };
   } else {
-    throw new Error(
-      `Unable to generate a suitable route. Best distance: ${bestTotalDistance.toFixed(
-        2
-      )}km, wanted ${desiredDistanceKm.toFixed(2)}km`
-    );
+    throw new Error(`Unable to generate a suitable route. Best distance: ${bestTotalDistance.toFixed(2)} km, wanted ${desiredDistanceKm.toFixed(2)} km`);
   }
 }
 
