@@ -99,17 +99,16 @@ function calculateDistance(node1, node2) {
 }
 
 /**
- * Heuristic function for A*. Estimates the total distance from a node to the goal node and back to the start node.
+ * Refined heuristic function for A*. Estimates the total distance from a node to the goal node and back to the start node.
  */
-function heuristic(node, goalNode, startNode) {
-  // Estimate distance to the goal node
+function refinedHeuristic(node, goalNode, startNode) {
   const distanceToGoal = calculateDistance(node, goalNode);
-
-  // Estimate distance to return to the start node from the goal node
   const distanceFromGoalToStart = calculateDistance(goalNode, startNode);
 
-  // Combined heuristic: distance to goal + distance from goal to start
-  return distanceToGoal + distanceFromGoalToStart;
+  // Heuristic considers the straight-line distance to the goal and back to start
+  // Additionally, include a penalty to discourage unnecessary loops
+  const penaltyFactor = 0.1; // Adjust as needed
+  return distanceToGoal + distanceFromGoalToStart + penaltyFactor * distanceToGoal;
 }
 
 
