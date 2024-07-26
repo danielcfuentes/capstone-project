@@ -1,0 +1,24 @@
+.challenge-page {
+  background-color: #f0f2f5;
+  padding-top: 60px;
+}
+
+.challenge-content {
+  padding: 24px;
+  max-width: 2000px;
+}
+
+.challenges-grid {
+  display: grid;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .recommendation-content {
+    padding: 16px;
+  }
+
+  .challenges-grid {
+    grid-template-columns: 1fr;
+  }
+}

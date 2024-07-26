@@ -209,7 +209,7 @@ const UserActivitiesPage = () => {
         </Text>
       );
     } catch (error) {
-      console.error("Error parsing weather data:", error);
+      message.error("Error parsing weather data:", error);
       return null;
     }
   };

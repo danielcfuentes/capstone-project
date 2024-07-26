@@ -1,124 +1,103 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Typography, Tabs, message, Spin, Empty } from "antd";
+import { Typography, message } from "antd";
 import { getHeaders } from "../../utils/apiConfig";
-import ChallengeCard from "./ChallengeCard";
-import PastChallenges from "./PastChallenges";
+import RecommendationForm from "./RecommendationForm";
+import PlanCard from "./PlanCard";
+import PlanModal from "./PlanModal";
+import PlanList from "./PlanList";
 import "../../styles/RecommendationPage.css";
 
-const { Content } = Layout;
-const { Title, Text } = Typography;
-const { TabPane } = Tabs;
+const { Title } = Typography;
+
 const RecommendationPage = () => {
-  const [activeChallenges, setActiveChallenges] = useState([]);
-  const [pastChallenges, setPastChallenges] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [timeUntilNextChallenge, setTimeUntilNextChallenge] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [recommendedPlan, setRecommendedPlan] = useState(null);
+  const [allPlans, setAllPlans] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   useEffect(() => {
-    fetchChallenges();
-    const intervalId = setInterval(fetchChallenges, 300000); // Refresh every 5 minutes
-    return () => clearInterval(intervalId);
+    fetchAllPlans();
   }, []);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      const tomorrow = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() + 1
-      );
-      const timeLeft = tomorrow - now;
-      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-      setTimeUntilNextChallenge(`${hours}h ${minutes}m ${seconds}s`);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const fetchChallenges = async () => {
-    setLoading(true);
+  const fetchAllPlans = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_POST_ADDRESS}/challenges`,
+        `${import.meta.env.VITE_POST_ADDRESS}/api/all-plans`,
         {
           headers: getHeaders(),
         }
       );
-      if (!response.ok) throw new Error("Failed to fetch challenges");
+      if (!response.ok) throw new Error("Failed to fetch plans");
       const data = await response.json();
-      setActiveChallenges(
-        data.filter((challenge) => challenge.status === "active")
-      );
-      setPastChallenges(
-        data.filter(
-          (challenge) =>
-            challenge.status === "completed" || challenge.status === "failed"
-        )
-      );
+      setAllPlans(data.plans);
     } catch (error) {
-      message.error("Failed to fetch challenges");
+      message.error("Failed to fetch plans. Please try again.");
+    }
+  };
+
+  const onFinish = async (values) => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/api/recommend-plan`,
+        {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify(values),
+        }
+      );
+
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to fetch recommendation: ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      setRecommendedPlan(data.recommendedPlan);
+    } catch (error) {
+      message.error("Failed to get recommendation. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChallengeUpdate = async (challengeId, newStatus) => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_POST_ADDRESS}/challenges/${challengeId}`,
-        {
-          method: "PUT",
-          headers: getHeaders(),
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
-      if (!response.ok) throw new Error("Failed to update challenge");
-      message.success("Challenge updated successfully");
-      fetchChallenges();
-    } catch (error) {
-      message.error("Failed to update challenge");
-    }
-  };
-
-  const renderChallenges = () => {
-    if (loading) return <Spin size="large" />;
-    if (activeChallenges.length === 0) {
-      return (
-        <Empty
-          description={
-            <span>
-              No current challenges. <br />
-              Next challenges in: {timeUntilNextChallenge}
-            </span>
-          }
-        />
-      );
-    }
-
-    return activeChallenges.map((challenge) => (
-      <ChallengeCard
-        key={challenge.id}
-        challenge={challenge}
-        onUpdate={handleChallengeUpdate}
-      />
-    ));
+  const showPlanDetails = (plan) => {
+    setSelectedPlan(plan);
+    setModalVisible(true);
   };
 
   return (
-    <Layout className="recommendation-page">
-      <Content className="recommendation-content">
-        <Tabs defaultActiveKey="1">
-          <TabPane tab="Current Challenges" key="1">
-            <div className="challenges-grid">{renderChallenges()}</div>
-          </TabPane>
-          <TabPane tab="Past Challenges" key="2">
-            <PastChallenges challenges={pastChallenges} />
-          </TabPane>
-        </Tabs>
-      </Content>
-    </Layout>
+    <div className="recommendation-page">
+      <Title level={2}>Get Your Personalized Running Plan</Title>
+      <RecommendationForm onFinish={onFinish} loading={loading} />
+
+      {recommendedPlan && (
+        <div className="recommended-plan-section">
+          <Title level={3}>Recommended Plan</Title>
+          <PlanCard
+            plan={recommendedPlan}
+            onShowDetails={showPlanDetails}
+            isRecommended={true}
+          />
+        </div>
+      )}
+
+      <PlanList
+        plans={allPlans}
+        onShowDetails={showPlanDetails}
+        recommendedPlanId={recommendedPlan?.id}
+      />
+
+      <PlanModal
+        plan={selectedPlan}
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
+    </div>
   );
 };
 
