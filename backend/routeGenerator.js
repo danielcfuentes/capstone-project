@@ -18,7 +18,6 @@ async function fetchRoadNetwork(startLat, startLng, radiusKm) {
   return response.data;
 }
 
-
 function createGraph(osmData) {
   const graph = new Map();
 
@@ -73,18 +72,16 @@ function findClosestNode(graph, lat, lng) {
   return closestNode;
 }
 
-function generateCircularRoute(
-  graph,
-  startNodeId,
-  desiredDistanceKm,
-  tolerance = 0.1
-) {
+function generateRoute(graph, startNodeId, desiredDistanceKm, tolerance = 0.2) {
   const visited = new Set();
   const route = [startNodeId];
   let currentNodeId = startNodeId;
   let totalDistance = 0;
+  const maxAttempts = 1000;
+  let attempts = 0;
 
-  while (totalDistance < desiredDistanceKm) {
+  while (totalDistance < desiredDistanceKm && attempts < maxAttempts) {
+    attempts++;
     visited.add(currentNodeId);
     const currentNode = graph.get(currentNodeId);
 
@@ -92,39 +89,52 @@ function generateCircularRoute(
       break;
     }
 
-    let nextNodeId = null;
-    let minDistanceDiff = Infinity;
+    let candidates = Array.from(currentNode.connections)
+      .filter((neighborId) => !visited.has(neighborId))
+      .map((neighborId) => ({
+        id: neighborId,
+        distance: calculateDistance(currentNode, graph.get(neighborId)),
+      }));
 
-    for (const neighborId of currentNode.connections) {
-      if (!visited.has(neighborId)) {
-        const neighborNode = graph.get(neighborId);
-        const distanceToNeighbor = calculateDistance(currentNode, neighborNode);
-        const newTotalDistance = totalDistance + distanceToNeighbor;
-        const distanceDiff = Math.abs(desiredDistanceKm - newTotalDistance);
-
-        if (distanceDiff < minDistanceDiff) {
-          nextNodeId = neighborId;
-          minDistanceDiff = distanceDiff;
-        }
-      }
+    if (candidates.length === 0) {
+      // If no unvisited neighbors, try to close the loop
+      candidates = Array.from(currentNode.connections).map((neighborId) => ({
+        id: neighborId,
+        distance: calculateDistance(currentNode, graph.get(neighborId)),
+      }));
     }
 
-    if (!nextNodeId) {
+    if (candidates.length === 0) {
       break;
     }
 
-    const nextNode = graph.get(nextNodeId);
-    totalDistance += calculateDistance(currentNode, nextNode);
-    route.push(nextNodeId);
-    currentNodeId = nextNodeId;
-  }
+    // Sort candidates by how close they get us to the desired distance
+    candidates.sort(
+      (a, b) =>
+        Math.abs(totalDistance + a.distance - desiredDistanceKm) -
+        Math.abs(totalDistance + b.distance - desiredDistanceKm)
+    );
 
-  // Try to close the loop
-  const startNode = graph.get(startNodeId);
-  const endNode = graph.get(currentNodeId);
-  const closingDistance = calculateDistance(startNode, endNode);
-  totalDistance += closingDistance;
-  route.push(startNodeId);
+    const chosen = candidates[0];
+    totalDistance += chosen.distance;
+    route.push(chosen.id);
+    currentNodeId = chosen.id;
+
+    // If we're close enough to the desired distance, try to close the loop
+    if (
+      Math.abs(totalDistance - desiredDistanceKm) <=
+      tolerance * desiredDistanceKm
+    ) {
+      const startNode = graph.get(startNodeId);
+      const endNode = graph.get(currentNodeId);
+      const closingDistance = calculateDistance(startNode, endNode);
+      if (closingDistance <= 0.1 * desiredDistanceKm) {
+        totalDistance += closingDistance;
+        route.push(startNodeId);
+        break;
+      }
+    }
+  }
 
   if (
     Math.abs(totalDistance - desiredDistanceKm) <=
@@ -132,7 +142,11 @@ function generateCircularRoute(
   ) {
     return { route, totalDistance };
   } else {
-    throw new Error("Unable to generate a suitable circular route");
+    throw new Error(
+      `Unable to generate a suitable route. Got ${totalDistance.toFixed(
+        2
+      )}km, wanted ${desiredDistanceKm.toFixed(2)}km`
+    );
   }
 }
 
@@ -144,10 +158,9 @@ function calculateDistance(node1, node2) {
   );
 }
 
-
 async function generateRoute(startLat, startLng, desiredDistanceMiles) {
   const desiredDistanceKm = desiredDistanceMiles * 1.60934;
-  const radiusKm = Math.max(desiredDistanceKm / 2, 3);
+  const radiusKm = Math.max(desiredDistanceKm * 0.7, 3);
 
   const osmData = await fetchRoadNetwork(startLat, startLng, radiusKm);
   const graph = createGraph(osmData);
@@ -161,7 +174,7 @@ async function generateRoute(startLat, startLng, desiredDistanceMiles) {
     throw new Error("Unable to find a suitable starting point.");
   }
 
-  const { route, totalDistance } = generateCircularRoute(
+  const { route, totalDistance } = generateRoute(
     graph,
     startNode.id,
     desiredDistanceKm
