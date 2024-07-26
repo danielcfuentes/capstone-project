@@ -63,8 +63,8 @@ Generating route:
   Start: (37.7749, -122.4194)
   Desired distance: 5.00 miles (8.05 km)
   Search radius: 5.63 km
-  Road network: 157386 elements
-  Graph: 122185 nodes
+  Road network: 157385 elements
+  Graph: 122184 nodes
   Start node: id=11341698899, (37.7749, -122.4194)
 Generating circular route: desired distance = 8.05 km
 Route generation completed: best distance = 7.25 km, attempts = 66
