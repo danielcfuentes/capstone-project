@@ -111,3 +111,57 @@ function heuristic(node, goalNode, startNode) {
   // Combined heuristic: distance to goal + distance from goal to start
   return distanceToGoal + distanceFromGoalToStart;
 }
+
+
+/**
+ * A* algorithm for finding a path with a circular route.
+ */
+function aStarAlgorithm(graph, startNodeId, goalNodeId, log) {
+  const openSet = new Set([startNodeId]);
+  const cameFrom = new Map();
+  const gScore = new Map();
+  const fScore = new Map();
+
+  // Initialize scores
+  graph.forEach((node) => {
+    gScore.set(node.id, Infinity);
+    fScore.set(node.id, Infinity);
+  });
+  gScore.set(startNodeId, 0);
+  fScore.set(startNodeId, heuristic(graph.get(startNodeId), graph.get(goalNodeId), graph.get(startNodeId)));
+
+  while (openSet.size > 0) {
+    // Get the node in the open set with the lowest fScore
+    let current = [...openSet].reduce((a, b) => (fScore.get(a) < fScore.get(b) ? a : b));
+
+    // Check if we reached the goal
+    if (current === goalNodeId) {
+      const path = [];
+      let temp = current;
+      while (cameFrom.has(temp)) {
+        path.push(temp);
+        temp = cameFrom.get(temp);
+      }
+      path.push(startNodeId);
+      path.reverse();
+      return { path, distance: gScore.get(goalNodeId) };
+    }
+
+    openSet.delete(current);
+    const currentNode = graph.get(current);
+
+    currentNode.connections.forEach((neighborId) => {
+      const neighbor = graph.get(neighborId);
+      const tentativeGScore = gScore.get(current) + calculateDistance(currentNode, neighbor);
+
+      if (tentativeGScore < gScore.get(neighborId)) {
+        cameFrom.set(neighborId, current);
+        gScore.set(neighborId, tentativeGScore);
+        fScore.set(neighborId, tentativeGScore + heuristic(neighbor, graph.get(goalNodeId), graph.get(startNodeId)));
+        openSet.add(neighborId);
+      }
+    });
+  }
+
+  throw new Error("No path found");
+}
