@@ -11,11 +11,19 @@ async function fetchRoadNetwork(startLat, startLng, radiusKm) {
     out body;
   `;
 
-  const response = await axios.post(
-    "https://overpass-api.de/api/interpreter",
-    query
-  );
-  return response.data;
+  try {
+    const response = await axios.post(
+      "https://overpass-api.de/api/interpreter",
+      query,
+      {
+        timeout: 10000, // 10 seconds timeout
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching road network:", error.message);
+    throw new Error("Failed to fetch road network data");
+  }
 }
 
 function createGraph(osmData) {
@@ -72,7 +80,12 @@ function findClosestNode(graph, lat, lng) {
   return closestNode;
 }
 
-function generateRoute(graph, startNodeId, desiredDistanceKm, tolerance = 0.2) {
+function generateCircularRoute(
+  graph,
+  startNodeId,
+  desiredDistanceKm,
+  tolerance = 0.2
+) {
   const visited = new Set();
   const route = [startNodeId];
   let currentNodeId = startNodeId;
@@ -162,35 +175,45 @@ async function generateRoute(startLat, startLng, desiredDistanceMiles) {
   const desiredDistanceKm = desiredDistanceMiles * 1.60934;
   const radiusKm = Math.max(desiredDistanceKm * 0.7, 3);
 
-  const osmData = await fetchRoadNetwork(startLat, startLng, radiusKm);
-  const graph = createGraph(osmData);
+  try {
+    const osmData = await fetchRoadNetwork(startLat, startLng, radiusKm);
 
-  if (graph.size === 0) {
-    throw new Error("No road data found in the specified area.");
+    if (!osmData.elements || osmData.elements.length === 0) {
+      throw new Error("No road data found in the specified area.");
+    }
+
+    const graph = createGraph(osmData);
+
+    if (graph.size === 0) {
+      throw new Error("Failed to create graph from road data.");
+    }
+
+    const startNode = findClosestNode(graph, startLat, startLng);
+    if (!startNode) {
+      throw new Error("Unable to find a suitable starting point.");
+    }
+
+    const { route, totalDistance } = generateCircularRoute(
+      graph,
+      startNode.id,
+      desiredDistanceKm
+    );
+
+    const coordinates = route
+      .map((nodeId) => {
+        const node = graph.get(nodeId);
+        return node ? [node.lon, node.lat] : null;
+      })
+      .filter((coord) => coord !== null);
+
+    return {
+      coordinates,
+      distance: totalDistance / 1.60934, // Convert back to miles
+    };
+  } catch (error) {
+    console.error("Error in generateRoute:", error);
+    throw error;
   }
-
-  const startNode = findClosestNode(graph, startLat, startLng);
-  if (!startNode) {
-    throw new Error("Unable to find a suitable starting point.");
-  }
-
-  const { route, totalDistance } = generateRoute(
-    graph,
-    startNode.id,
-    desiredDistanceKm
-  );
-
-  const coordinates = route
-    .map((nodeId) => {
-      const node = graph.get(nodeId);
-      return node ? [node.lon, node.lat] : null;
-    })
-    .filter((coord) => coord !== null);
-
-  return {
-    coordinates,
-    distance: totalDistance / 1.60934, // Convert back to miles
-  };
 }
 
 module.exports = { generateRoute };
