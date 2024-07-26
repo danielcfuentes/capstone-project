@@ -107,8 +107,8 @@ const ChallengesPage = () => {
   };
 
   return (
-    <Layout className="recommendation-page">
-      <Content className="recommendation-content">
+    <Layout className="challenge-page">
+      <Content className="challenge-content">
         <Tabs defaultActiveKey="1">
           <TabPane tab="Current Challenges" key="1">
             <div className="challenges-grid">{renderChallenges()}</div>
