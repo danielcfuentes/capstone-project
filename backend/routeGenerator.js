@@ -143,3 +143,41 @@ function calculateDistance(node1, node2) {
     { units: "kilometers" }
   );
 }
+
+
+async function generateRoute(startLat, startLng, desiredDistanceMiles) {
+  const desiredDistanceKm = desiredDistanceMiles * 1.60934;
+  const radiusKm = Math.max(desiredDistanceKm / 2, 3);
+
+  const osmData = await fetchRoadNetwork(startLat, startLng, radiusKm);
+  const graph = createGraph(osmData);
+
+  if (graph.size === 0) {
+    throw new Error("No road data found in the specified area.");
+  }
+
+  const startNode = findClosestNode(graph, startLat, startLng);
+  if (!startNode) {
+    throw new Error("Unable to find a suitable starting point.");
+  }
+
+  const { route, totalDistance } = generateCircularRoute(
+    graph,
+    startNode.id,
+    desiredDistanceKm
+  );
+
+  const coordinates = route
+    .map((nodeId) => {
+      const node = graph.get(nodeId);
+      return node ? [node.lon, node.lat] : null;
+    })
+    .filter((coord) => coord !== null);
+
+  return {
+    coordinates,
+    distance: totalDistance / 1.60934, // Convert back to miles
+  };
+}
+
+module.exports = { generateRoute };
