@@ -15,6 +15,8 @@ app.use(cors());
 // 4. Add a cron job to generate challenges weekly (you'll need to install a cron library)
 const cron = require("node-cron");
 
+const { generateRoute } = require("./routeGenerator");
+
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
@@ -1070,6 +1072,24 @@ async function updateLastLeaderboardUpdate() {
     create: { key: "lastLeaderboardUpdate", value: new Date().toISOString() },
   });
 }
+
+
+app.post("/generate-route", authenticateToken, async (req, res) => {
+  try {
+    const { startLat, startLng, distance } = req.body;
+
+    if (!startLat || !startLng || !distance) {
+      return res.status(400).json({ error: "Missing required parameters" });
+    }
+
+    const route = await generateRoute(startLat, startLng, distance);
+
+    res.json(route);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
