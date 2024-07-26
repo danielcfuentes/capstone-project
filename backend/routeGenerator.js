@@ -214,32 +214,38 @@ async function generateRoute(startLat, startLng, desiredDistanceMiles) {
   const radiusKm = Math.max(desiredDistanceKm * 0.7, 3);
 
   try {
+    console.log(`\nGenerating route:`);
+    console.log(`  Start: (${startLat.toFixed(4)}, ${startLng.toFixed(4)})`);
     console.log(
-      `Fetching road network for (${startLat}, ${startLng}) with radius ${radiusKm.toFixed(
+      `  Desired distance: ${desiredDistanceMiles.toFixed(
         2
-      )} km`
+      )} miles (${desiredDistanceKm.toFixed(2)} km)`
     );
+    console.log(`  Search radius: ${radiusKm.toFixed(2)} km`);
+
     const osmData = await fetchRoadNetwork(startLat, startLng, radiusKm);
 
     if (!osmData.elements || osmData.elements.length === 0) {
       throw new Error("No road data found in the specified area.");
     }
 
-    console.log(`Creating graph from ${osmData.elements.length} elements`);
+    console.log(`  Road network: ${osmData.elements.length} elements`);
     const graph = createGraph(osmData);
 
     if (graph.size === 0) {
       throw new Error("Failed to create graph from road data.");
     }
 
-    console.log(`Graph created with ${graph.size} nodes`);
+    console.log(`  Graph: ${graph.size} nodes`);
     const startNode = findClosestNode(graph, startLat, startLng);
     if (!startNode) {
       throw new Error("Unable to find a suitable starting point.");
     }
 
     console.log(
-      `Starting node found: id=${startNode.id}, lat=${startNode.lat}, lon=${startNode.lon}`
+      `  Start node: id=${startNode.id}, (${startNode.lat.toFixed(
+        4
+      )}, ${startNode.lon.toFixed(4)})`
     );
     const { route, totalDistance } = generateCircularRoute(
       graph,
@@ -254,12 +260,26 @@ async function generateRoute(startLat, startLng, desiredDistanceMiles) {
       })
       .filter((coord) => coord !== null);
 
+    const resultDistanceMiles = totalDistance / 1.60934;
+    console.log(`\nRoute generated:`);
+    console.log(`  Points: ${coordinates.length}`);
+    console.log(
+      `  Distance: ${resultDistanceMiles.toFixed(
+        2
+      )} miles (${totalDistance.toFixed(2)} km)`
+    );
+    console.log(
+      `  Difference: ${Math.abs(
+        resultDistanceMiles - desiredDistanceMiles
+      ).toFixed(2)} miles`
+    );
+
     return {
       coordinates,
-      distance: totalDistance / 1.60934, // Convert back to miles
+      distance: resultDistanceMiles,
     };
   } catch (error) {
-    console.error("Error in generateRoute:", error);
+    console.error("\nError in generateRoute:", error.message);
     throw error;
   }
 }

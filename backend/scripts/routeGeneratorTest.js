@@ -13,20 +13,8 @@ async function runTests() {
   ) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(
-          `${testName}: Generating ${distance}-mile route at (${lat}, ${lon}) - Attempt ${attempt}`
-        );
+        console.log(`\n${testName} - Attempt ${attempt}/${maxRetries}`);
         const result = await generateRoute(lat, lon, distance);
-        console.log(`${testName} result:`);
-        console.log(
-          `  - Generated route with ${result.coordinates.length} points`
-        );
-        console.log(`  - Actual distance: ${result.distance.toFixed(2)} miles`);
-        console.log(
-          `  - Difference from requested: ${Math.abs(
-            result.distance - distance
-          ).toFixed(2)} miles`
-        );
 
         assert(result.coordinates.length > 0, "Route should have coordinates");
         assert(
@@ -36,49 +24,53 @@ async function runTests() {
           )}) should be close to ${distance} miles`
         );
 
-        console.log(`${testName} passed`);
-        return; // Test passed, exit the retry loop
+        console.log(`${testName}: PASSED`);
+        return;
       } catch (error) {
-        console.error(`${testName} failed (Attempt ${attempt}):`);
-        console.error(`  - Error message: ${error.message}`);
-        if (attempt === maxRetries) {
-          console.error(`  - Stack trace: ${error.stack}`);
+        console.error(`${testName}: FAILED`);
+        console.error(`  Error: ${error.message}`);
+        if (attempt < maxRetries) {
+          console.log("  Retrying...");
+          await new Promise((resolve) => setTimeout(resolve, 2000));
         } else {
-          console.log("Retrying...");
-          await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+          console.error(`  All attempts failed. Stack trace:\n${error.stack}`);
         }
       }
     }
   }
 
-  // Test case 1: Generate a route in a well-mapped urban area
-  await testRouteGeneration("Test 1", 40.7128, -74.006, 3); // NYC coordinates, 3-mile route
+  await testRouteGeneration("Test 1: NYC (3-mile route)", 40.7128, -74.006, 3);
+  await testRouteGeneration(
+    "Test 2: Rural Vermont (2-mile route)",
+    44.5588,
+    -72.5778,
+    2
+  );
+  await testRouteGeneration(
+    "Test 3: London (0.5-mile route)",
+    51.5074,
+    -0.1278,
+    0.5
+  );
 
-  // Test case 2: Generate a route in a less densely mapped area
-  await testRouteGeneration("Test 2", 44.5588, -72.5778, 2); // Rural Vermont coordinates, 2-mile route
-
-  // Test case 3: Attempt to generate a very short route
-  await testRouteGeneration("Test 3", 51.5074, -0.1278, 0.5); // London coordinates, 0.5-mile route
-
-  // Test case 4: Attempt to generate a route in an area with no road data
+  console.log("\nTest 4: Area with no road data");
   try {
-    console.log("Test 4: Generating route in an area with no road data");
-    await generateRoute(0, 0, 1); // Middle of the ocean
-    console.error("Test 4 failed: Expected an error but didn't get one");
+    await generateRoute(0, 0, 1);
+    console.error("Test 4: FAILED - Expected an error but didn't get one");
   } catch (error) {
     if (
       error.message.includes("No road data found") ||
       error.message.includes("Failed to create graph from road data")
     ) {
-      console.log("Test 4 passed: Correctly handled area with no road data");
+      console.log("Test 4: PASSED - Correctly handled area with no road data");
     } else {
-      console.error("Test 4 failed: Unexpected error");
-      console.error(`  - Error message: ${error.message}`);
-      console.error(`  - Stack trace: ${error.stack}`);
+      console.error("Test 4: FAILED - Unexpected error");
+      console.error(`  Error: ${error.message}`);
+      console.error(`  Stack trace:\n${error.stack}`);
     }
   }
 
-  console.log("All tests completed.");
+  console.log("\nAll tests completed.");
 }
 
 runTests().catch(console.error);
