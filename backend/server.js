@@ -293,8 +293,6 @@ app.get("/profile", authenticateToken, async (req, res) => {
 // Endpoint to recommend a running plan based on user data and goals
 app.post("/api/recommend-plan", authenticateToken, async (req, res) => {
   try {
-    console.log("Received request body:", req.body);
-    console.log("Authenticated user:", req.user); // Log the authenticated user
 
     const { preferredDistance, goalTime } = req.body;
 
@@ -326,7 +324,6 @@ app.post("/api/recommend-plan", authenticateToken, async (req, res) => {
         },
       },
     });
-    console.log("Found user:", user); // Log the user data
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -355,10 +352,7 @@ app.post("/api/recommend-plan", authenticateToken, async (req, res) => {
       healthConditions: user.healthConditions || [],
     };
 
-    console.log("User profile for recommendation:", fullUserProfile);
-
     const recommendedPlan = recommendPlan(fullUserProfile);
-    console.log("Recommended plan:", recommendedPlan); // Log the plan before sending
 
     if (recommendedPlan) {
       res.json({ recommendedPlan });
@@ -366,7 +360,6 @@ app.post("/api/recommend-plan", authenticateToken, async (req, res) => {
       res.status(404).json({ message: "No suitable plan found" });
     }
   } catch (error) {
-    console.error("Error recommending plan:", error);
     res.status(500).json({ message: "Error recommending plan" });
   }
 });
@@ -404,7 +397,6 @@ app.get("/api/all-plans", authenticateToken, (req, res) => {
   try {
     res.json({ plans: runningPlans });
   } catch (error) {
-    console.error("Error fetching all plans:", error);
     res.status(500).json({ message: "Error fetching all plans" });
   }
 });

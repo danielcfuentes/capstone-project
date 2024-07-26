@@ -32,7 +32,6 @@ const RecommendationPage = () => {
       const data = await response.json();
       setAllPlans(data.plans);
     } catch (error) {
-      console.error("Error fetching plans:", error);
       message.error("Failed to fetch plans. Please try again.");
     }
   };
@@ -40,8 +39,6 @@ const RecommendationPage = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      console.log("Submitting values:", values); // Log the values being sent
-
       const response = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/api/recommend-plan`,
         {
@@ -51,21 +48,17 @@ const RecommendationPage = () => {
         }
       );
 
-      console.log("Response status:", response.status); // Log the response status
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Error response:", errorText); // Log the error response
         throw new Error(
           `Failed to fetch recommendation: ${response.statusText}`
         );
       }
 
       const data = await response.json();
-      console.log("Received data:", data); // Log the received data
       setRecommendedPlan(data.recommendedPlan);
     } catch (error) {
-      console.error("Error details:", error); // Log the full error object
       message.error("Failed to get recommendation. Please try again.");
     } finally {
       setLoading(false);
