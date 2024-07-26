@@ -152,6 +152,7 @@ model UserActivity {
   startLocation    String? // New field for the starting location name
   createdAt        DateTime @default(now())
   runId            String   @unique
+  weather          String?
 }
 
 model ActiveRun {

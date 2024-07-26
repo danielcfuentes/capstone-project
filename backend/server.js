@@ -292,7 +292,6 @@ app.get("/user-activities", authenticateToken, async (req, res) => {
     const activities = await prisma.userActivity.findMany({
       where: { userId: req.user.id },
       orderBy: { startDateTime: "desc" },
-      take: 10, // Limit to 10 most recent activities
     });
     res.json(activities);
   } catch (error) {
@@ -385,15 +384,33 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
     // Calculate average pace
     const averagePace = durationInSeconds / 60 / parseFloat(distance);
 
+    // Fetch weather data
+    const weatherResponse = await axios.get(
+      "https://api.openweathermap.org/data/2.5/weather",
+      {
+        params: {
+          lat: startCoordinate[1],
+          lon: startCoordinate[0],
+          appid: process.env.OPENWEATHER_API_KEY,
+          units: "imperial",
+        },
+      }
+    );
+
+    const weatherData = {
+      temperature: weatherResponse.data.main.temp,
+      condition: weatherResponse.data.weather[0].main,
+    };
+
     const activity = await prisma.userActivity.create({
       data: {
         runId,
         userId: user.id,
         activityType: "Run",
         startDateTime: new Date(),
-        duration: durationInSeconds,
+        duration: parseInt(duration),
         distance: parseFloat(distance),
-        averagePace: averagePace,
+        averagePace: parseFloat(duration) / 60 / parseFloat(distance),
         elevationGain: elevationData?.gain || 0,
         elevationLoss: elevationData?.loss || 0,
         caloriesBurned: calculateCaloriesBurned(
@@ -403,10 +420,11 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
         ),
         startLatitude: startCoordinate[1],
         startLongitude: startCoordinate[0],
-        endLatitude: endCoordinate[1],
-        endLongitude: endCoordinate[0],
-        routeCoordinates: JSON.stringify(parsedRouteCoordinates),
+        endLatitude: routeCoordinates[routeCoordinates.length - 1][1],
+        endLongitude: routeCoordinates[routeCoordinates.length - 1][0],
+        routeCoordinates: JSON.stringify(routeCoordinates),
         startLocation,
+        weather: JSON.stringify(weatherData),
       },
     });
 
@@ -449,10 +467,12 @@ app.post("/save-route-activity", authenticateToken, async (req, res) => {
     }
 
     res.json({
-      message: "Activity saved and challenges updated successfully",
+      message:
+        "Activity saved with weather data and challenges updated successfully",
       activity,
     });
   } catch (error) {
+    console.error("Error saving activity:", error);
     res.status(500).json({
       message: "Error saving activity",
       error: error.message,
