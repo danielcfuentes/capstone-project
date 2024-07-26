@@ -3,7 +3,7 @@ const fs = require("fs");
 const { generateRoute } = require("../routeGenerator");
 
 async function runTests() {
-  const logStream = fs.createWriteStream("test_log.txt", { flags: "a" });
+  const logStream = fs.createWriteStream("test_log.txt", { flags: "w" }); // Open in write mode to clear the file initially
 
   function log(message) {
     logStream.write(message + "\n");
