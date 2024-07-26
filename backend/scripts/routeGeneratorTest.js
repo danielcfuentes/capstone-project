@@ -17,38 +17,46 @@ async function runTests() {
     testName,
     lat,
     lon,
-    distance,
+    requestedDistance,
     maxRetries = 3
   ) {
     let result = {
       name: testName,
       status: "FAILED",
       attempts: maxRetries,
+      requestedDistance,
+      routeDistance: "N/A",
       difference: "N/A",
     };
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         log(`\n${testName} - Attempt ${attempt}/${maxRetries}`);
-        const routeResult = await generateRoute(lat, lon, distance, log);
+        const routeResult = await generateRoute(
+          lat,
+          lon,
+          requestedDistance,
+          log
+        );
 
         assert(
           routeResult.coordinates.length > 0,
           "Route should have coordinates"
         );
-        const allowedDeviation = Math.max(0.75, distance * 0.25);
+        const allowedDeviation = Math.max(0.75, requestedDistance * 0.25);
         assert(
-          Math.abs(routeResult.distance - distance) < allowedDeviation,
+          Math.abs(routeResult.distance - requestedDistance) < allowedDeviation,
           `Route distance (${routeResult.distance.toFixed(
             2
-          )}) should be within 25% or 0.75 miles of ${distance} miles`
+          )}) should be within 25% or 0.75 miles of ${requestedDistance} miles`
         );
 
         result.status = "PASSED";
         result.attempts = attempt;
-        result.difference = Math.abs(routeResult.distance - distance).toFixed(
-          2
-        );
+        result.routeDistance = routeResult.distance.toFixed(2);
+        result.difference = Math.abs(
+          routeResult.distance - requestedDistance
+        ).toFixed(2);
         log(`${testName}: PASSED`);
         break;
       } catch (error) {
@@ -150,6 +158,8 @@ async function runTests() {
       name: "Test 15: Area with no road data",
       status: "FAILED",
       attempts: 1,
+      requestedDistance: 1,
+      routeDistance: "N/A",
       difference: "N/A",
     });
   } catch (error) {
@@ -162,6 +172,8 @@ async function runTests() {
         name: "Test 15: Area with no road data",
         status: "PASSED",
         attempts: 1,
+        requestedDistance: 1,
+        routeDistance: "N/A",
         difference: "N/A",
       });
     } else {
@@ -172,6 +184,8 @@ async function runTests() {
         name: "Test 15: Area with no road data",
         status: "FAILED",
         attempts: 1,
+        requestedDistance: 1,
+        routeDistance: "N/A",
         difference: "N/A",
       });
     }
@@ -198,7 +212,7 @@ async function runTests() {
     "------------------------------------------------------------------------------------------------------------------"
   );
   log(
-    "| Test Name                                            | Status | Attempts | Difference from Requested (miles) |"
+    "| Test Name                                            | Status | Attempts | Requested Distance | Route Distance | Difference from Requested |"
   );
   log(
     "------------------------------------------------------------------------------------------------------------------"
@@ -207,9 +221,11 @@ async function runTests() {
     log(
       `| ${result.name.padEnd(50)} | ${result.status.padEnd(
         6
-      )} | ${result.attempts.toString().padEnd(8)} | ${result.difference.padEnd(
-        32
-      )} |`
+      )} | ${result.attempts.toString().padEnd(8)} | ${result.requestedDistance
+        .toString()
+        .padEnd(17)} | ${result.routeDistance.padEnd(
+        14
+      )} | ${result.difference.padEnd(26)} |`
     );
   });
   log(

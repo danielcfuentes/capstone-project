@@ -360,3 +360,365 @@ Test Results Summary:
 ------------------------------------------------------------------------------------------------------------------
 
 Passed 17 out of 17 tests (100.00% success rate)
+Starting comprehensive route generator tests...
+
+Test 1: NYC (3-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (40.7128, -74.0060)
+  Desired distance: 3.00 miles (4.83 km)
+  Search radius: 3.38 km
+  Road network: 107941 elements
+  Graph: 82831 nodes
+  Start node: id=9368823842, (40.7129, -74.0059)
+Generating circular route: desired distance = 4.83 km
+Attempt 100: Current distance = 3.44 km
+Route generation completed: best distance = 4.38 km, attempts = 123
+
+Route generated:
+  Points: 125
+  Distance: 2.72 miles (4.38 km)
+  Difference: 0.28 miles
+Test 1: NYC (3-mile route): PASSED
+
+Test 2: Rural Vermont (2-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (44.5588, -72.5778)
+  Desired distance: 2.00 miles (3.22 km)
+  Search radius: 3.00 km
+  Road network: 6705 elements
+  Graph: 6034 nodes
+  Start node: id=204687735, (44.5594, -72.5783)
+Generating circular route: desired distance = 3.22 km
+Attempt 100: Current distance = 1.13 km
+Attempt 200: Current distance = 2.04 km
+Route generation completed: best distance = 2.90 km, attempts = 267
+
+Route generated:
+  Points: 269
+  Distance: 1.80 miles (2.90 km)
+  Difference: 0.20 miles
+Test 2: Rural Vermont (2-mile route): PASSED
+
+Test 3: London (0.5-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (51.5074, -0.1278)
+  Desired distance: 0.50 miles (0.80 km)
+  Search radius: 3.00 km
+  Road network: 118037 elements
+  Graph: 86158 nodes
+  Start node: id=10771270118, (51.5074, -0.1279)
+Generating circular route: desired distance = 0.80 km
+Route generation completed: best distance = 0.73 km, attempts = 73
+
+Route generated:
+  Points: 75
+  Distance: 0.45 miles (0.73 km)
+  Difference: 0.05 miles
+Test 3: London (0.5-mile route): PASSED
+
+Test 4: San Francisco (5-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (37.7749, -122.4194)
+  Desired distance: 5.00 miles (8.05 km)
+  Search radius: 5.63 km
+  Road network: 157386 elements
+  Graph: 122185 nodes
+  Start node: id=11341698899, (37.7749, -122.4194)
+Generating circular route: desired distance = 8.05 km
+Route generation completed: best distance = 7.25 km, attempts = 66
+
+Route generated:
+  Points: 68
+  Distance: 4.51 miles (7.25 km)
+  Difference: 0.49 miles
+Test 4: San Francisco (5-mile route): PASSED
+
+Test 5: Tokyo (10-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (35.6762, 139.6503)
+  Desired distance: 10.00 miles (16.09 km)
+  Search radius: 11.27 km
+  Road network: 769755 elements
+  Graph: 597526 nodes
+  Start node: id=420160750, (35.6762, 139.6501)
+Generating circular route: desired distance = 16.09 km
+Attempt 100: Current distance = 4.29 km
+Attempt 200: Current distance = 9.29 km
+Attempt 300: Current distance = 14.29 km
+Route generation completed: best distance = 14.49 km, attempts = 304
+
+Route generated:
+  Points: 306
+  Distance: 9.00 miles (14.49 km)
+  Difference: 1.00 miles
+Test 5: Tokyo (10-mile route): PASSED
+
+Test 6: Paris (1-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (48.8566, 2.3522)
+  Desired distance: 1.00 miles (1.61 km)
+  Search radius: 3.00 km
+  Road network: 217719 elements
+  Graph: 170925 nodes
+  Start node: id=1027021548, (48.8569, 2.3521)
+Generating circular route: desired distance = 1.61 km
+Attempt 100: Current distance = 0.49 km
+Attempt 200: Current distance = 0.97 km
+Route generation completed: best distance = 1.46 km, attempts = 299
+
+Route generated:
+  Points: 301
+  Distance: 0.91 miles (1.46 km)
+  Difference: 0.09 miles
+Test 6: Paris (1-mile route): PASSED
+
+Test 7: Suburban Chicago (4-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (42.0654, -87.9368)
+  Desired distance: 4.00 miles (6.44 km)
+  Search radius: 4.51 km
+  Road network: 49626 elements
+  Graph: 39909 nodes
+  Start node: id=7685557504, (42.0658, -87.9370)
+Generating circular route: desired distance = 6.44 km
+Attempt 100: Current distance = 3.48 km
+Route generation completed: best distance = 5.80 km, attempts = 145
+
+Route generated:
+  Points: 147
+  Distance: 3.61 miles (5.80 km)
+  Difference: 0.39 miles
+Test 7: Suburban Chicago (4-mile route): PASSED
+
+Test 8: Rural Australia (6-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (-33.8688, 151.2093)
+  Desired distance: 6.00 miles (9.66 km)
+  Search radius: 6.76 km
+  Road network: 225649 elements
+  Graph: 176097 nodes
+  Start node: id=6477161901, (-33.8688, 151.2092)
+Generating circular route: desired distance = 9.66 km
+Attempt 100: Current distance = 2.20 km
+Attempt 200: Current distance = 4.46 km
+Attempt 300: Current distance = 6.71 km
+Route generation completed: best distance = 8.70 km, attempts = 387
+
+Route generated:
+  Points: 389
+  Distance: 5.40 miles (8.70 km)
+  Difference: 0.60 miles
+Test 8: Rural Australia (6-mile route): PASSED
+
+Test 9: Rocky Mountains (3-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (40.3772, -105.5217)
+  Desired distance: 3.00 miles (4.83 km)
+  Search radius: 3.38 km
+  Road network: 25257 elements
+  Graph: 23223 nodes
+  Start node: id=51284397, (40.3772, -105.5216)
+Generating circular route: desired distance = 4.83 km
+Attempt 100: Current distance = 1.55 km
+Attempt 200: Current distance = 2.65 km
+Attempt 300: Current distance = 3.75 km
+Route generation completed: best distance = 4.35 km, attempts = 339
+
+Route generated:
+  Points: 341
+  Distance: 2.70 miles (4.35 km)
+  Difference: 0.30 miles
+Test 9: Rocky Mountains (3-mile route): PASSED
+
+Test 10: Swiss Alps (2-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (46.5197, 7.9597)
+  Desired distance: 2.00 miles (3.22 km)
+  Search radius: 3.00 km
+  Road network: 453 elements
+  Graph: 447 nodes
+  Start node: id=1435708412, (46.5262, 7.9447)
+Generating circular route: desired distance = 3.22 km
+Route generation completed: best distance = 2.92 km, attempts = 69
+
+Route generated:
+  Points: 71
+  Distance: 1.81 miles (2.92 km)
+  Difference: 0.19 miles
+Test 10: Swiss Alps (2-mile route): PASSED
+
+Test 11: Miami Beach (1.5-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (25.7907, -80.1300)
+  Desired distance: 1.50 miles (2.41 km)
+  Search radius: 3.00 km
+  Road network: 29950 elements
+  Graph: 24347 nodes
+  Start node: id=99387269, (25.7907, -80.1300)
+Generating circular route: desired distance = 2.41 km
+Attempt 100: Current distance = 1.36 km
+Attempt 200: Current distance = 1.77 km
+Route generation completed: best distance = 2.18 km, attempts = 255
+
+Route generated:
+  Points: 257
+  Distance: 1.35 miles (2.18 km)
+  Difference: 0.15 miles
+Test 11: Miami Beach (1.5-mile route): PASSED
+
+Test 12: Greek Islands (2.5-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (37.4467, 25.3289)
+  Desired distance: 2.50 miles (4.02 km)
+  Search radius: 3.00 km
+  Road network: 17346 elements
+  Graph: 16169 nodes
+  Start node: id=1162533825, (37.4467, 25.3289)
+Generating circular route: desired distance = 4.02 km
+Attempt 100: Current distance = 1.58 km
+Attempt 200: Current distance = 2.50 km
+Route generation completed: best distance = 3.62 km, attempts = 299
+
+Route generated:
+  Points: 301
+  Distance: 2.25 miles (3.62 km)
+  Difference: 0.25 miles
+Test 12: Greek Islands (2.5-mile route): PASSED
+
+Test 13: Central Park NYC (0.2-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (40.7829, -73.9654)
+  Desired distance: 0.20 miles (0.32 km)
+  Search radius: 3.00 km
+  Road network: 65968 elements
+  Graph: 49677 nodes
+  Start node: id=1382339089, (40.7825, -73.9657)
+Generating circular route: desired distance = 0.32 km
+Route generation completed: best distance = 0.29 km, attempts = 20
+
+Route generated:
+  Points: 22
+  Distance: 0.18 miles (0.29 km)
+  Difference: 0.02 miles
+Test 13: Central Park NYC (0.2-mile route): PASSED
+
+Test 14: Los Angeles (15-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (34.0522, -118.2437)
+  Desired distance: 15.00 miles (24.14 km)
+  Search radius: 16.90 km
+  Road network: 813035 elements
+  Graph: 649626 nodes
+  Start node: id=6471204765, (34.0522, -118.2436)
+Generating circular route: desired distance = 24.14 km
+Attempt 100: Current distance = 2.43 km
+Attempt 200: Current distance = 3.58 km
+Attempt 300: Current distance = 4.72 km
+Attempt 400: Current distance = 5.86 km
+Attempt 500: Current distance = 7.00 km
+Attempt 600: Current distance = 8.14 km
+Attempt 700: Current distance = 9.28 km
+Attempt 800: Current distance = 10.42 km
+Attempt 900: Current distance = 11.57 km
+Attempt 1000: Current distance = 12.71 km
+Attempt 1100: Current distance = 13.85 km
+Attempt 1200: Current distance = 14.99 km
+Attempt 1300: Current distance = 16.13 km
+Attempt 1400: Current distance = 17.27 km
+Attempt 1500: Current distance = 18.41 km
+Attempt 1600: Current distance = 19.56 km
+Attempt 1700: Current distance = 20.70 km
+Route generation completed: best distance = 21.73 km, attempts = 1770
+
+Route generated:
+  Points: 1772
+  Distance: 13.51 miles (21.73 km)
+  Difference: 1.49 miles
+Test 14: Los Angeles (15-mile route): PASSED
+
+Test 15: Area with no road data
+
+Generating route:
+  Start: (0.0000, 0.0000)
+  Desired distance: 1.00 miles (1.61 km)
+  Search radius: 3.00 km
+
+Error in generateRoute:
+Test 15: PASSED - Correctly handled area with no road data
+
+Test 16: Very dense urban area (Beijing 1-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (39.9042, 116.4074)
+  Desired distance: 1.00 miles (1.61 km)
+  Search radius: 3.00 km
+  Road network: 22677 elements
+  Graph: 17636 nodes
+  Start node: id=4716204929, (39.9053, 116.4059)
+Generating circular route: desired distance = 1.61 km
+Route generation completed: best distance = 1.67 km, attempts = 18
+
+Route generated:
+  Points: 20
+  Distance: 1.04 miles (1.67 km)
+  Difference: 0.04 miles
+Test 16: Very dense urban area (Beijing 1-mile route): PASSED
+
+Test 17: Island (Honolulu 3-mile route) - Attempt 1/3
+
+Generating route:
+  Start: (21.3069, -157.8583)
+  Desired distance: 3.00 miles (4.83 km)
+  Search radius: 3.38 km
+  Road network: 28909 elements
+  Graph: 23148 nodes
+  Start node: id=682204897, (21.3068, -157.8584)
+Generating circular route: desired distance = 4.83 km
+Route generation completed: best distance = 4.37 km, attempts = 100
+
+Route generated:
+  Points: 102
+  Distance: 2.71 miles (4.37 km)
+  Difference: 0.29 miles
+Test 17: Island (Honolulu 3-mile route): PASSED
+
+All tests completed.
+
+Test Results Summary:
+------------------------------------------------------------------------------------------------------------------
+| Test Name                                            | Status | Attempts | Requested Distance | Route Distance | Difference from Requested |
+------------------------------------------------------------------------------------------------------------------
+| Test 1: NYC (3-mile route)                         | PASSED | 1        | 3                 | 2.72           | 0.28                       |
+| Test 2: Rural Vermont (2-mile route)               | PASSED | 1        | 2                 | 1.80           | 0.20                       |
+| Test 3: London (0.5-mile route)                    | PASSED | 1        | 0.5               | 0.45           | 0.05                       |
+| Test 4: San Francisco (5-mile route)               | PASSED | 1        | 5                 | 4.51           | 0.49                       |
+| Test 5: Tokyo (10-mile route)                      | PASSED | 1        | 10                | 9.00           | 1.00                       |
+| Test 6: Paris (1-mile route)                       | PASSED | 1        | 1                 | 0.91           | 0.09                       |
+| Test 7: Suburban Chicago (4-mile route)            | PASSED | 1        | 4                 | 3.61           | 0.39                       |
+| Test 8: Rural Australia (6-mile route)             | PASSED | 1        | 6                 | 5.40           | 0.60                       |
+| Test 9: Rocky Mountains (3-mile route)             | PASSED | 1        | 3                 | 2.70           | 0.30                       |
+| Test 10: Swiss Alps (2-mile route)                 | PASSED | 1        | 2                 | 1.81           | 0.19                       |
+| Test 11: Miami Beach (1.5-mile route)              | PASSED | 1        | 1.5               | 1.35           | 0.15                       |
+| Test 12: Greek Islands (2.5-mile route)            | PASSED | 1        | 2.5               | 2.25           | 0.25                       |
+| Test 13: Central Park NYC (0.2-mile route)         | PASSED | 1        | 0.2               | 0.18           | 0.02                       |
+| Test 14: Los Angeles (15-mile route)               | PASSED | 1        | 15                | 13.51          | 1.49                       |
+| Test 15: Area with no road data                    | PASSED | 1        | 1                 | N/A            | N/A                        |
+| Test 16: Very dense urban area (Beijing 1-mile route) | PASSED | 1        | 1                 | 1.04           | 0.04                       |
+| Test 17: Island (Honolulu 3-mile route)            | PASSED | 1        | 3                 | 2.71           | 0.29                       |
+------------------------------------------------------------------------------------------------------------------
+
+Passed 17 out of 17 tests (100.00% success rate)
