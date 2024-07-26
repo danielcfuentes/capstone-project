@@ -340,6 +340,8 @@ async function generateRouteWithAStar(startLat, startLng, desiredDistanceMiles, 
         4
       )}, ${startNode.lon.toFixed(4)})`
     );
+
+    // Generate a circular route
     const { route, totalDistance } = generateCircularRoute(
       graph,
       startNode.id,
