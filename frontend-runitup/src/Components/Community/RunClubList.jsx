@@ -12,7 +12,7 @@ import {
 } from "antd";
 import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
-import { getHeaders } from "../../utils/apiConfig";
+import { getHeaders, generateColor } from "../../utils/apiConfig";
 
 const RunClubList = () => {
   const [clubs, setClubs] = useState([]);
@@ -71,7 +71,11 @@ const RunClubList = () => {
     }
   };
 
-  const handleJoinClub = async (clubId) => {
+  const handleJoinClub = async (clubId, ownerId) => {
+    if (ownerId === currentUserId) {
+      message.info("You already own this club");
+      return;
+    }
     try {
       const response = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/run-clubs/${clubId}/join`,
@@ -107,16 +111,24 @@ const RunClubList = () => {
                 <Link to={`/community/run-clubs/${club.id}`}>{club.name}</Link>
               }
               extra={
-                <Button onClick={() => handleJoinClub(club.id)}>Join</Button>
+                club.owner.id !== currentUserId && (
+                  <Button
+                    onClick={() => handleJoinClub(club.id, club.owner.id)}
+                  >
+                    Join
+                  </Button>
+                )
               }
             >
               <Card.Meta
                 avatar={
                   <Avatar
-                    src={
-                      club.logo ? `data:image/jpeg;base64,${club.logo}` : null
-                    }
-                  />
+                    style={{
+                      backgroundColor: generateColor(club.owner.username),
+                    }}
+                  >
+                    {club.owner.username[0].toUpperCase()}
+                  </Avatar>
                 }
                 title={`Location: ${club.location}`}
                 description={
