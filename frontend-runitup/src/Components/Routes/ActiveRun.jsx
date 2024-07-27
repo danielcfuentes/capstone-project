@@ -9,6 +9,7 @@ import {
   Typography,
   message,
   Spin,
+  Modal,
 } from "antd";
 import {
   AimOutlined,
@@ -136,11 +137,23 @@ const ActiveRun = ({ handleRunCompletion }) => {
       // Call handleRunCompletion to update challenges
       await handleRunCompletion(completeData.userActivity);
 
-      message.success("Run completed and challenges updated successfully!");
-      navigate("/recommendations"); // Navigate to recommendations page to show updated challenges
+      message.success("Run completed successfully!");
+
+      // Show modal asking if user wants to make a post
+      Modal.confirm({
+        title: "Share Your Run",
+        content: "Would you like to make a post about your run?",
+        onOk() {
+          navigate("/create-run-post", {
+            state: { runData: completeData.userActivity },
+          });
+        },
+        onCancel() {
+          navigate("/recommendations");
+        },
+      });
     } catch (error) {
       message.error(`Error completing run: ${error.message}`);
-    } finally {
       setIsCompleting(false);
     }
   };
