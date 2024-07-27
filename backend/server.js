@@ -1113,18 +1113,39 @@ app.post("/run-clubs", authenticateToken, async (req, res) => {
   }
 });
 
-// Get all run clubs
+// Update the GET /run-clubs route to include member count, owner info, and user membership status
 app.get("/run-clubs", authenticateToken, async (req, res) => {
   try {
+    console.log("Fetching run clubs for user:", req.user.id);
     const clubs = await prisma.runClub.findMany({
       include: {
         owner: { select: { username: true } },
         _count: { select: { members: true } },
+        members: {
+          where: { username: req.user.name },
+          select: { username: true },
+        },
       },
     });
-    res.json(clubs);
+
+    console.log("Fetched clubs:", clubs);
+
+    const clubsWithMembershipStatus = clubs.map((club) => ({
+      ...club,
+      isUserMember: club.members.length > 0,
+      members: undefined, // Remove the members array from the response
+    }));
+
+    res.json(clubsWithMembershipStatus);
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch run clubs" });
+    console.error("Error in /run-clubs route:", error);
+    res
+      .status(500)
+      .json({
+        error: "Failed to fetch run clubs",
+        details: error.message,
+        stack: error.stack,
+      });
   }
 });
 
@@ -1320,7 +1341,7 @@ app.get("/user/owned-clubs", authenticateToken, async (req, res) => {
 });
 
 // Fetch messages for a run club
-router.get('/run-clubs/:clubId/messages', authenticateToken, async (req, res) => {
+app.get('/run-clubs/:clubId/messages', authenticateToken, async (req, res) => {
   try {
     const messages = await prisma.message.findMany({
       where: { clubId: parseInt(req.params.clubId) },
@@ -1335,7 +1356,7 @@ router.get('/run-clubs/:clubId/messages', authenticateToken, async (req, res) =>
 });
 
 // Send a message in a run club
-router.post('/run-clubs/:clubId/messages', authenticateToken, async (req, res) => {
+app.post('/run-clubs/:clubId/messages', authenticateToken, async (req, res) => {
   const { content } = req.body;
   if (!content) {
     return res.status(400).json({ error: 'Message content cannot be empty' });

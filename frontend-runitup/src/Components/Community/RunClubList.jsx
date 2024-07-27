@@ -16,46 +16,36 @@ import { getHeaders } from "../../utils/apiConfig";
 
 const RunClubList = ({ user }) => {
   const [clubs, setClubs] = useState([]);
-  const [userClubs, setUserClubs] = useState([]); // Track user's clubs
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [error, setError] = useState(null);
   const [form] = Form.useForm();
 
   useEffect(() => {
     fetchClubs();
-    fetchUserClubs(); // Fetch user's clubs
-  }, [user]);
+  }, []);
 
-  const fetchClubs = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_POST_ADDRESS}/run-clubs`,
-        {
-          headers: getHeaders(),
+    const fetchClubs = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_POST_ADDRESS}/run-clubs`,
+          {
+            headers: getHeaders(),
+          }
+        );
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to fetch run clubs");
         }
-      );
-      if (!response.ok) throw new Error("Failed to fetch run clubs");
-      const data = await response.json();
-      setClubs(data);
-    } catch (error) {
-      message.error("Failed to fetch run clubs");
-    }
-  };
+        const data = await response.json();
+        setClubs(data);
+        setError(null);
+      } catch (error) {
+        console.error("Error fetching run clubs:", error);
+        setError(error.message);
+        message.error("Failed to fetch run clubs");
+      }
+    };
 
-  const fetchUserClubs = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_POST_ADDRESS}/user/owned-clubs`,
-        {
-          headers: getHeaders(),
-        }
-      );
-      if (!response.ok) throw new Error("Failed to fetch user clubs");
-      const data = await response.json();
-      setUserClubs(data.map((club) => club.id)); // Track club IDs user is part of
-    } catch (error) {
-      message.error("Failed to fetch user clubs");
-    }
-  };
 
   const handleJoinOrLeaveClub = async (clubId, action) => {
     try {
@@ -71,8 +61,26 @@ const RunClubList = ({ user }) => {
       message.success(
         `Successfully ${action === "join" ? "joined" : "left"} the run club`
       );
-      await fetchClubs(); // Fetch updated list of clubs
-      await fetchUserClubs(); // Update user's club list
+
+      // Update local state
+      setClubs(
+        clubs.map((club) => {
+          if (club.id === clubId) {
+            return {
+              ...club,
+              _count: {
+                ...club._count,
+                members:
+                  action === "join"
+                    ? club._count.members + 1
+                    : club._count.members - 1,
+              },
+              isUserMember: action === "join",
+            };
+          }
+          return club;
+        })
+      );
     } catch (error) {
       message.error(`Failed to ${action} run club`);
     }
@@ -107,7 +115,6 @@ const RunClubList = ({ user }) => {
         grid={{ gutter: 16, column: 3 }}
         dataSource={clubs}
         renderItem={(club) => {
-          const isUserInClub = userClubs.includes(club.id);
           const isOwner = club.owner.username === user.name;
 
           return (
@@ -124,12 +131,12 @@ const RunClubList = ({ user }) => {
                       onClick={() =>
                         handleJoinOrLeaveClub(
                           club.id,
-                          isUserInClub ? "leave" : "join"
+                          club.isUserMember ? "leave" : "join"
                         )
                       }
                       disabled={isOwner}
                     >
-                      {isUserInClub ? "Leave" : "Join"}
+                      {club.isUserMember ? "Leave" : "Join"}
                     </Button>
                   )
                 }
