@@ -11,6 +11,7 @@ import {
   message,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import { Link } from "react-router-dom";
 import { getHeaders } from "../../utils/apiConfig";
 
 const { Option } = Select;
@@ -29,7 +30,7 @@ const EventList = () => {
   const fetchEvents = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_POST_ADDRESS}/events`,
+        `${import.meta.env.VITE_POST_ADDRESS}/run-clubs/events`,
         {
           headers: getHeaders(),
         }
@@ -97,7 +98,12 @@ const EventList = () => {
         dataSource={events}
         renderItem={(event) => (
           <List.Item>
-            <Card title={event.title} extra={<Button>Join</Button>}>
+            <Card
+              title={
+                <Link to={`/community/events/${event.id}`}>{event.title}</Link>
+              }
+              extra={<Button>Join</Button>}
+            >
               <p>{event.description}</p>
               <p>Date: {new Date(event.date).toLocaleString()}</p>
               <p>Location: {event.location}</p>

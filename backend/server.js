@@ -1264,5 +1264,22 @@ app.get("/run-clubs/:id/members", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch run club members" });
   }
 });
+
+// Get all events across all run clubs
+app.get("/run-clubs/events", authenticateToken, async (req, res) => {
+  try {
+    const events = await prisma.event.findMany({
+      include: {
+        club: {
+          select: { name: true }
+        }
+      },
+      orderBy: { date: 'asc' },
+    });
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch events" });
+  }
+});
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
