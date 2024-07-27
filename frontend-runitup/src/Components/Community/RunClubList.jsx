@@ -1,16 +1,33 @@
 import React, { useState, useEffect } from "react";
-import { List, Card, Avatar, Button, Modal, Form, Input, message } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
-import { Link } from "react-router-dom"; // Import Link
+import {
+  List,
+  Card,
+  Avatar,
+  Button,
+  Modal,
+  Form,
+  Input,
+  message,
+  Tooltip,
+} from "antd";
+import {
+  PlusOutlined,
+  UserAddOutlined,
+  UserDeleteOutlined,
+  CrownOutlined,
+} from "@ant-design/icons";
+import { Link } from "react-router-dom";
 import { getHeaders } from "../../utils/apiConfig";
 
-const RunClubList = () => {
+const RunClubList = ({user}) => {
   const [clubs, setClubs] = useState([]);
+  const [userClubs, setUserClubs] = useState([]); // Track user's clubs
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
 
   useEffect(() => {
     fetchClubs();
+    fetchUserClubs(); // Fetch user's clubs
   }, []);
 
   const fetchClubs = async () => {
@@ -26,6 +43,42 @@ const RunClubList = () => {
       setClubs(data);
     } catch (error) {
       message.error("Failed to fetch run clubs");
+    }
+  };
+
+  const fetchUserClubs = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/user/owned-clubs`,
+        {
+          headers: getHeaders(),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch user clubs");
+      const data = await response.json();
+      setUserClubs(data.map((club) => club.id)); // Track club IDs user is part of
+    } catch (error) {
+      message.error("Failed to fetch user clubs");
+    }
+  };
+
+  const handleJoinOrLeaveClub = async (clubId, action) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/run-clubs/${clubId}/${action}`,
+        {
+          method: "POST",
+          headers: getHeaders(),
+        }
+      );
+      if (!response.ok) throw new Error(`Failed to ${action} run club`);
+      message.success(
+        `Successfully ${action === "join" ? "joined" : "left"} the run club`
+      );
+      fetchClubs();
+      fetchUserClubs(); // Update user's club list
+    } catch (error) {
+      message.error(`Failed to ${action} run club`);
     }
   };
 
@@ -57,21 +110,46 @@ const RunClubList = () => {
       <List
         grid={{ gutter: 16, column: 3 }}
         dataSource={clubs}
-        renderItem={(club) => (
-          <List.Item>
-            <Card
-              title={<Link to={`/run-clubs/${club.id}`}>{club.name}</Link>} // Link to RunClubDetail
-              extra={<Button>Join</Button>}
-            >
-              <Card.Meta
-                avatar={<Avatar src={`data:image/jpeg;base64,${club.logo}`} />}
-                title={`Location: ${club.location}`}
-                description={`Members: ${club._count.members} | Owner: ${club.owner.username}`} // Display owner and other details
-              />
-              <p>{club.description}</p> {/* Display description */}
-            </Card>
-          </List.Item>
-        )}
+        renderItem={(club) => {
+          const isUserInClub = userClubs.includes(club.id);
+          const isOwner = club.owner.username === user.name; // Replace with the actual logic to check ownership
+
+          return (
+            <List.Item>
+              <Card
+                title={<Link to={`/run-clubs/${club.id}`}>{club.name}</Link>}
+                extra={
+                  isOwner ? (
+                    <Tooltip title="You are the owner">
+                      <CrownOutlined style={{ color: "gold" }} />
+                    </Tooltip>
+                  ) : (
+                    <Button
+                      onClick={() =>
+                        handleJoinOrLeaveClub(
+                          club.id,
+                          isUserInClub ? "leave" : "join"
+                        )
+                      }
+                      disabled={isOwner}
+                    >
+                      {isUserInClub ? "Leave" : "Join"}
+                    </Button>
+                  )
+                }
+              >
+                <Card.Meta
+                  avatar={
+                    <Avatar src={`data:image/jpeg;base64,${club.logo}`} />
+                  }
+                  title={`Location: ${club.location}`}
+                  description={`Members: ${club._count.members} | Owner: ${club.owner.username}`}
+                />
+                <p>{club.description}</p>
+              </Card>
+            </List.Item>
+          );
+        }}
       />
       <Modal
         title="Create Run Club"

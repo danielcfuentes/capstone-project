@@ -1128,17 +1128,20 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
   }
 });
 
-// Join a run club
-app.post("/run-clubs/:id/join", authenticateToken, async (req, res) => {
+// Endpoint to join a club
+app.post("/run-clubs/:clubId/join", authenticateToken, async (req, res) => {
   try {
-    const { id } = req.params;
-    await prisma.runClub.update({
-      where: { id: parseInt(id) },
-      data: { members: { connect: { id: req.user.id } } },
+    // Logic to add the user to the club
+    await prisma.clubMember.create({
+      data: {
+        clubId: parseInt(req.params.clubId),
+        userId: req.user.id,
+      },
     });
-    res.json({ message: "Successfully joined the run club" });
+    res.status(200).json({ message: "Joined club successfully" });
   } catch (error) {
-    res.status(500).json({ error: "Failed to join run club" });
+    console.error("Error joining club:", error);
+    res.status(500).json({ error: "Failed to join club" });
   }
 });
 
@@ -1303,6 +1306,23 @@ app.get("/user/owned-clubs", authenticateToken, async (req, res) => {
         error: "Failed to fetch user owned clubs",
         details: error.message,
       });
+  }
+});
+
+// Endpoint to leave a club
+app.post("/run-clubs/:clubId/leave", authenticateToken, async (req, res) => {
+  try {
+    // Logic to remove the user from the club
+    await prisma.clubMember.deleteMany({
+      where: {
+        clubId: parseInt(req.params.clubId),
+        userId: req.user.id,
+      },
+    });
+    res.status(200).json({ message: "Left club successfully" });
+  } catch (error) {
+    console.error("Error leaving club:", error);
+    res.status(500).json({ error: "Failed to leave club" });
   }
 });
 
