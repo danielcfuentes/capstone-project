@@ -4,13 +4,29 @@
   padding: 24px;
 }
 
-.map-preview {
-  margin-bottom: 16px;
-  border: 1px solid #d9d9d9;
-  border-radius: 2px;
+.map-container-post {
+  height: 400px;
+  margin-bottom: 24px;
+  border-radius: 8px;
   overflow: hidden;
+  display: none; /* Hide the map container as we're using an image */
+}
+
+.route-preview {
+  width: 100%;
+  height: auto;
+  margin-bottom: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .ant-upload-picture-card-wrapper {
   margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .create-run-post-card {
+    margin: 12px;
+    padding: 16px;
+  }
 }

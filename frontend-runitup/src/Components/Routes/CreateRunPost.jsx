@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Form,
@@ -14,6 +14,12 @@ import { PictureOutlined, SendOutlined } from "@ant-design/icons";
 import { getAuthHeaders } from "../../utils/apiConfig";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import {
+  initializeMap,
+  addRouteToMap,
+  fitMapToRouteWithStart,
+  getElevationData,
+} from "../../utils/mapUtils";
 import "../../styles/CreateRunPost.css";
 
 const { TextArea } = Input;
@@ -27,55 +33,43 @@ const CreateRunPost = () => {
   const navigate = useNavigate();
   const [fileList, setFileList] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const mapContainer = useRef(null);
+  const [map, setMap] = useState(null);
   const [mapImage, setMapImage] = useState(null);
 
   const { runData } = location.state || {};
 
   useEffect(() => {
     if (runData && runData.routeCoordinates) {
-      generateMapImage(JSON.parse(runData.routeCoordinates));
+      const coordinates = JSON.parse(runData.routeCoordinates);
+      renderRouteMap(coordinates);
     }
   }, [runData]);
 
-  const generateMapImage = async (coordinates) => {
-    const map = new mapboxgl.Map({
-      container: document.createElement("div"),
+  const renderRouteMap = async (coordinates) => {
+    const newMap = new mapboxgl.Map({
+      container: mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v11",
       center: coordinates[0],
       zoom: 12,
+      interactive: false,
     });
 
-    map.on("load", () => {
-      map.addSource("route", {
-        type: "geojson",
-        data: {
-          type: "Feature",
-          properties: {},
-          geometry: {
-            type: "LineString",
-            coordinates: coordinates,
-          },
-        },
-      });
+    newMap.on("load", async () => {
+      const elevationData = await getElevationData(coordinates);
+      addRouteToMap(newMap, { coordinates }, elevationData.elevationProfile);
 
-      map.addLayer({
-        id: "route",
-        type: "line",
-        source: "route",
-        layout: {
-          "line-join": "round",
-          "line-cap": "round",
-        },
-        paint: {
-          "line-color": "#1890ff",
-          "line-width": 8,
-        },
-      });
+      const bounds = coordinates.reduce((bounds, coord) => {
+        return bounds.extend(coord);
+      }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
 
+      newMap.fitBounds(bounds, { padding: 50, duration: 0 });
+
+      // Wait for the map to render completely
       setTimeout(() => {
-        const mapImage = map.getCanvas().toDataURL();
+        const mapImage = newMap.getCanvas().toDataURL();
         setMapImage(mapImage);
-        map.remove();
+        newMap.remove(); // Remove the map instance after capturing
       }, 1000);
     });
   };
@@ -87,7 +81,7 @@ const CreateRunPost = () => {
     formData.append("content", values.content);
     formData.append("runId", runData.id);
 
-    // Append map image
+    // Append the map image
     if (mapImage) {
       const mapBlob = await fetch(mapImage).then((r) => r.blob());
       formData.append("images", mapBlob, "run-map.png");
@@ -136,6 +130,10 @@ const CreateRunPost = () => {
   return (
     <Card className="create-run-post-card">
       <Title level={2}>Share Your Run</Title>
+      <div ref={mapContainer} className="map-container-post" />
+      {mapImage && (
+        <img src={mapImage} alt="Run route" className="route-preview" />
+      )}
       <Form form={form} onFinish={handleSubmit} layout="vertical">
         <Form.Item
           name="title"
@@ -152,11 +150,6 @@ const CreateRunPost = () => {
             autoSize={{ minRows: 4, maxRows: 8 }}
           />
         </Form.Item>
-        {mapImage && (
-          <div className="map-preview">
-            <img src={mapImage} alt="Run route" style={{ width: "100%" }} />
-          </div>
-        )}
         <Form.Item>
           <Upload
             listType="picture-card"
