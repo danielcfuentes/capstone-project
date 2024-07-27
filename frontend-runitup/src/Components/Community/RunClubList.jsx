@@ -60,14 +60,15 @@ const RunClubList = () => {
         renderItem={(club) => (
           <List.Item>
             <Card
-              title={<Link to={`/run-clubs/${club.id}`}>{club.name}</Link>} // Add Link to RunClubDetail
+              title={<Link to={`/run-clubs/${club.id}`}>{club.name}</Link>} // Link to RunClubDetail
               extra={<Button>Join</Button>}
             >
               <Card.Meta
                 avatar={<Avatar src={`data:image/jpeg;base64,${club.logo}`} />}
                 title={`Location: ${club.location}`}
-                description={`Members: ${club._count.members}`}
+                description={`Members: ${club._count.members} | Owner: ${club.owner.username}`} // Display owner and other details
               />
+              <p>{club.description}</p> {/* Display description */}
             </Card>
           </List.Item>
         )}
