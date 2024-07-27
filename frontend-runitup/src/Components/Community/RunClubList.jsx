@@ -10,16 +10,11 @@ import {
   message,
   Tooltip,
 } from "antd";
-import {
-  PlusOutlined,
-  UserAddOutlined,
-  UserDeleteOutlined,
-  CrownOutlined,
-} from "@ant-design/icons";
+import { PlusOutlined, CrownOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import { getHeaders } from "../../utils/apiConfig";
 
-const RunClubList = ({user}) => {
+const RunClubList = ({ user }) => {
   const [clubs, setClubs] = useState([]);
   const [userClubs, setUserClubs] = useState([]); // Track user's clubs
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -28,7 +23,7 @@ const RunClubList = ({user}) => {
   useEffect(() => {
     fetchClubs();
     fetchUserClubs(); // Fetch user's clubs
-  }, []);
+  }, [user]);
 
   const fetchClubs = async () => {
     try {
@@ -72,11 +67,12 @@ const RunClubList = ({user}) => {
         }
       );
       if (!response.ok) throw new Error(`Failed to ${action} run club`);
+
       message.success(
         `Successfully ${action === "join" ? "joined" : "left"} the run club`
       );
-      fetchClubs();
-      fetchUserClubs(); // Update user's club list
+      await fetchClubs(); // Fetch updated list of clubs
+      await fetchUserClubs(); // Update user's club list
     } catch (error) {
       message.error(`Failed to ${action} run club`);
     }
@@ -112,7 +108,7 @@ const RunClubList = ({user}) => {
         dataSource={clubs}
         renderItem={(club) => {
           const isUserInClub = userClubs.includes(club.id);
-          const isOwner = club.owner.username === user.name; // Replace with the actual logic to check ownership
+          const isOwner = club.owner.username === user.name;
 
           return (
             <List.Item>

@@ -1128,11 +1128,10 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
   }
 });
 
-// Endpoint to join a club
+// Route to join a club
 app.post("/run-clubs/:clubId/join", authenticateToken, async (req, res) => {
   try {
-    // Logic to add the user to the club
-    await prisma.clubMember.create({
+    await prisma.ClubMember.create({
       data: {
         clubId: parseInt(req.params.clubId),
         userId: req.user.id,
@@ -1140,8 +1139,22 @@ app.post("/run-clubs/:clubId/join", authenticateToken, async (req, res) => {
     });
     res.status(200).json({ message: "Joined club successfully" });
   } catch (error) {
-    console.error("Error joining club:", error);
     res.status(500).json({ error: "Failed to join club" });
+  }
+});
+
+// Route to leave a club
+app.post("/run-clubs/:clubId/leave", authenticateToken, async (req, res) => {
+  try {
+    await prisma.ClubMember.deleteMany({
+      where: {
+        clubId: parseInt(req.params.clubId),
+        userId: req.user.id,
+      },
+    });
+    res.status(200).json({ message: "Left club successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to leave club" });
   }
 });
 
@@ -1178,7 +1191,6 @@ app.post("/run-clubs/:id/events", authenticateToken, async (req, res) => {
 
     res.status(201).json(newEvent);
   } catch (error) {
-    console.error("Error creating event:", error);
     res
       .status(500)
       .json({ error: "Failed to create event", details: error.message });
@@ -1280,7 +1292,6 @@ app.get("/run-clubs/events", authenticateToken, async (req, res) => {
     });
     res.json(events);
   } catch (error) {
-    console.error("Error fetching events:", error);
     res
       .status(500)
       .json({
@@ -1299,7 +1310,6 @@ app.get("/user/owned-clubs", authenticateToken, async (req, res) => {
     });
     res.json(userOwnedClubs);
   } catch (error) {
-    console.error("Error fetching user owned clubs:", error);
     res
       .status(500)
       .json({
@@ -1309,22 +1319,6 @@ app.get("/user/owned-clubs", authenticateToken, async (req, res) => {
   }
 });
 
-// Endpoint to leave a club
-app.post("/run-clubs/:clubId/leave", authenticateToken, async (req, res) => {
-  try {
-    // Logic to remove the user from the club
-    await prisma.clubMember.deleteMany({
-      where: {
-        clubId: parseInt(req.params.clubId),
-        userId: req.user.id,
-      },
-    });
-    res.status(200).json({ message: "Left club successfully" });
-  } catch (error) {
-    console.error("Error leaving club:", error);
-    res.status(500).json({ error: "Failed to leave club" });
-  }
-});
 
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
