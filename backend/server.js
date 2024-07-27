@@ -1288,5 +1288,23 @@ app.get("/run-clubs/events", authenticateToken, async (req, res) => {
   }
 });
 
+app.get("/user/owned-clubs", authenticateToken, async (req, res) => {
+  try {
+    const userOwnedClubs = await prisma.runClub.findMany({
+      where: { ownerId: req.user.id },
+      select: { id: true, name: true },
+    });
+    res.json(userOwnedClubs);
+  } catch (error) {
+    console.error("Error fetching user owned clubs:", error);
+    res
+      .status(500)
+      .json({
+        error: "Failed to fetch user owned clubs",
+        details: error.message,
+      });
+  }
+});
+
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
