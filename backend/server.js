@@ -1319,6 +1319,43 @@ app.get("/user/owned-clubs", authenticateToken, async (req, res) => {
   }
 });
 
+// Fetch messages for a run club
+router.get('/run-clubs/:clubId/messages', authenticateToken, async (req, res) => {
+  try {
+    const messages = await prisma.message.findMany({
+      where: { clubId: parseInt(req.params.clubId) },
+      include: { sender: true },
+      orderBy: { timestamp: 'asc' },
+    });
+    res.json(messages);
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages', details: error.message });
+  }
+});
+
+// Send a message in a run club
+router.post('/run-clubs/:clubId/messages', authenticateToken, async (req, res) => {
+  const { content } = req.body;
+  if (!content) {
+    return res.status(400).json({ error: 'Message content cannot be empty' });
+  }
+
+  try {
+    const message = await prisma.message.create({
+      data: {
+        content,
+        senderId: req.user.id,
+        clubId: parseInt(req.params.clubId),
+        timestamp: new Date(),
+      },
+    });
+    res.status(201).json(message);
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ error: 'Failed to send message', details: error.message });
+  }
+});
 
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
