@@ -1148,9 +1148,19 @@ app.post("/run-clubs/:id/events", authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { title, description, date, location } = req.body;
 
-    const club = await prisma.runClub.findUnique({ where: { id: parseInt(id) } });
-    if (club.ownerId !== req.user.id) {
-      return res.status(403).json({ error: "Only club owners can create events" });
+    const club = await prisma.runClub.findUnique({
+      where: { id: parseInt(id) },
+      include: { owner: true },
+    });
+
+    if (!club) {
+      return res.status(404).json({ error: "Run club not found" });
+    }
+
+    if (club.owner.id !== req.user.id) {
+      return res
+        .status(403)
+        .json({ error: "Only club owners can create events" });
     }
 
     const newEvent = await prisma.event.create({
@@ -1165,21 +1175,10 @@ app.post("/run-clubs/:id/events", authenticateToken, async (req, res) => {
 
     res.status(201).json(newEvent);
   } catch (error) {
-    res.status(500).json({ error: "Failed to create event" });
-  }
-});
-
-// Get events for a run club
-app.get("/run-clubs/:id/events", authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const events = await prisma.event.findMany({
-      where: { clubId: parseInt(id) },
-      orderBy: { date: "asc" },
-    });
-    res.json(events);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch events" });
+    console.error("Error creating event:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to create event", details: error.message });
   }
 });
 
@@ -1271,15 +1270,23 @@ app.get("/run-clubs/events", authenticateToken, async (req, res) => {
     const events = await prisma.event.findMany({
       include: {
         club: {
-          select: { name: true }
-        }
+          select: { name: true },
+        },
       },
-      orderBy: { date: 'asc' },
+      orderBy: { date: "asc" },
     });
     res.json(events);
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch events" });
+    console.error("Error fetching events:", error);
+    res
+      .status(500)
+      .json({
+        error: "Failed to fetch events",
+        details: error.message,
+        stack: error.stack,
+      });
   }
 });
+
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});

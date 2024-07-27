@@ -21,6 +21,7 @@ const EventList = () => {
   const [clubs, setClubs] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [userOwnedClubs, setUserOwnedClubs] = useState([]);
 
   useEffect(() => {
     fetchEvents();
@@ -56,6 +57,21 @@ const EventList = () => {
       setClubs(data);
     } catch (error) {
       message.error("Failed to fetch run clubs");
+    }
+  };
+  const fetchUserOwnedClubs = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/user/owned-clubs`,
+        {
+          headers: getHeaders(),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch user owned clubs");
+      const data = await response.json();
+      setUserOwnedClubs(data);
+    } catch (error) {
+      message.error("Failed to fetch user owned clubs");
     }
   };
 
@@ -147,7 +163,7 @@ const EventList = () => {
             rules={[{ required: true, message: "Please select a run club" }]}
           >
             <Select placeholder="Select Run Club">
-              {clubs.map((club) => (
+              {userOwnedClubs.map((club) => (
                 <Option key={club.id} value={club.id}>
                   {club.name}
                 </Option>
