@@ -309,7 +309,7 @@ function App() {
             }
           />
           <Route
-            path="/community/run-clubs/:id"
+            path="/run-clubs/:id"
             element={
               <ProtectedRoute
                 isLoggedIn={isLoggedIn}
