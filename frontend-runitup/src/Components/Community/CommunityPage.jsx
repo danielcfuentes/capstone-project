@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Layout, Typography, Tabs } from "antd";
 import RunClubList from "./RunClubList";
 import EventList from "./EventList";
+import "../../styles/CommunityPage.css"
 
 const { Content } = Layout;
 const { Title } = Typography;
