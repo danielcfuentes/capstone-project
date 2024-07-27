@@ -1128,6 +1128,19 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
   }
 });
 
+// Join a run club
+app.post("/run-clubs/:id/join", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.runClub.update({
+      where: { id: parseInt(id) },
+      data: { members: { connect: { id: req.user.id } } },
+    });
+    res.json({ message: "Successfully joined the run club" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to join run club" });
+  }
+});
 
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
