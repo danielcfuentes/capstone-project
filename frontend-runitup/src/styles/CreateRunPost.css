@@ -1,0 +1,16 @@
+.create-run-post-card {
+  max-width: 800px;
+  margin: 24px auto;
+  padding: 24px;
+}
+
+.map-preview {
+  margin-bottom: 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ant-upload-picture-card-wrapper {
+  margin-bottom: 16px;
+}
