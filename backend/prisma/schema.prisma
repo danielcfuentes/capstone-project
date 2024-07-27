@@ -44,7 +44,7 @@ model User {
   memberOf            RunClub[]         @relation("ClubMembers")
   participatingEvents Event[]           @relation("EventParticipants")
   ClubMember          ClubMember[]
-  Message             Message[]
+  messages            Message[]
 }
 
 model Token {
@@ -214,7 +214,7 @@ model RunClub {
   members     User[]       @relation("ClubMembers")
   events      Event[]
   ClubMember  ClubMember[]
-  Message     Message[]
+  messages    Message[]
 }
 
 model Event {
