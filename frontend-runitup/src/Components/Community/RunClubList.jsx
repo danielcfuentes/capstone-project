@@ -14,7 +14,7 @@ import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
 
-const RunClubList = () => {
+const RunClubList = ({ user }) => {
   const [clubs, setClubs] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
@@ -71,8 +71,8 @@ const RunClubList = () => {
     }
   };
 
-  const handleJoinClub = async (clubId, ownerId) => {
-    if (ownerId === currentUserId) {
+  const handleJoinClub = async (clubId, ownerName) => {
+    if (ownerName === user.name) {
       message.info("You already own this club");
       return;
     }
@@ -111,9 +111,9 @@ const RunClubList = () => {
                 <Link to={`/community/run-clubs/${club.id}`}>{club.name}</Link>
               }
               extra={
-                club.owner.id !== currentUserId && (
+                club.owner.username !== user.name && (
                   <Button
-                    onClick={() => handleJoinClub(club.id, club.owner.id)}
+                    onClick={() => handleJoinClub(club.id, club.owner.username)}
                   >
                     Join
                   </Button>

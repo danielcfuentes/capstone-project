@@ -8,7 +8,7 @@ const { Content } = Layout;
 const { Title } = Typography;
 const { TabPane } = Tabs;
 
-const CommunityPage = () => {
+const CommunityPage = ({currentUser}) => {
   const [activeTab, setActiveTab] = useState("1");
 
   return (
@@ -17,7 +17,7 @@ const CommunityPage = () => {
         <Title level={2}>Running Community</Title>
         <Tabs activeKey={activeTab} onChange={setActiveTab}>
           <TabPane tab="Run Clubs" key="1">
-            <RunClubList />
+            <RunClubList user = {currentUser}/>
           </TabPane>
           <TabPane tab="Events" key="2">
             <EventList />

@@ -304,7 +304,7 @@ function App() {
                 isLoggedIn={isLoggedIn}
                 isProfileComplete={isProfileComplete}
               >
-                <CommunityPage />
+                <CommunityPage currentUser={user} />
               </ProtectedRoute>
             }
           />
