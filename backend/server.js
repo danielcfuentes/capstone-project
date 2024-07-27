@@ -1091,5 +1091,28 @@ app.post("/generate-route", authenticateToken, async (req, res) => {
 });
 
 
+// Create a new run club
+app.post("/run-clubs", authenticateToken, async (req, res) => {
+  try {
+    const { name, description, location } = req.body;
+    const logo = req.file ? req.file.buffer : null;
+
+    const newClub = await prisma.runClub.create({
+      data: {
+        name,
+        description,
+        location,
+        logo,
+        ownerId: req.user.id,
+      },
+    });
+
+    res.status(201).json(newClub);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create run club" });
+  }
+});
+
+
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
