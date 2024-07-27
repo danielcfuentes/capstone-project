@@ -1142,5 +1142,46 @@ app.post("/run-clubs/:id/join", authenticateToken, async (req, res) => {
   }
 });
 
+// Create an event for a run club
+app.post("/run-clubs/:id/events", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, date, location } = req.body;
+
+    const club = await prisma.runClub.findUnique({ where: { id: parseInt(id) } });
+    if (club.ownerId !== req.user.id) {
+      return res.status(403).json({ error: "Only club owners can create events" });
+    }
+
+    const newEvent = await prisma.event.create({
+      data: {
+        title,
+        description,
+        date: new Date(date),
+        location,
+        clubId: parseInt(id),
+      },
+    });
+
+    res.status(201).json(newEvent);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create event" });
+  }
+});
+
+// Get events for a run club
+app.get("/run-clubs/:id/events", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const events = await prisma.event.findMany({
+      where: { clubId: parseInt(id) },
+      orderBy: { date: "asc" },
+    });
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch events" });
+  }
+});
+
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
