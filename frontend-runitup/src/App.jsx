@@ -16,6 +16,7 @@ import { getHeaders } from "./utils/apiConfig";
 import { message } from "antd";
 import LeaderboardPage from "./Components/LeaderBoard/LeaderboardPage";
 import ChallengesPage from "./Components/Challenges/ChallengesPage";
+import CreateRunPost from "./Components/Routes/CreateRunPost";
 
 // Protected route wrapper component
 const ProtectedRoute = ({ children, isLoggedIn, isProfileComplete }) => {
@@ -279,6 +280,17 @@ function App() {
                 isProfileComplete={isProfileComplete}
               >
                 <RecommendationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-run-post"
+            element={
+              <ProtectedRoute
+                isLoggedIn={isLoggedIn}
+                isProfileComplete={isProfileComplete}
+              >
+                <CreateRunPost />
               </ProtectedRoute>
             }
           />
