@@ -11,6 +11,7 @@ import {
   message,
 } from "antd";
 import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
+import { Link } from "react-router-dom";
 import { getHeaders } from "../../utils/apiConfig";
 
 const RunClubList = () => {
@@ -102,7 +103,9 @@ const RunClubList = () => {
         renderItem={(club) => (
           <List.Item>
             <Card
-              title={club.name}
+              title={
+                <Link to={`/community/run-clubs/${club.id}`}>{club.name}</Link>
+              }
               extra={
                 <Button onClick={() => handleJoinClub(club.id)}>Join</Button>
               }
