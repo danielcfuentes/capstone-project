@@ -19,6 +19,7 @@ import ChallengesPage from "./Components/Challenges/ChallengesPage";
 import CreateRunPost from "./Components/Routes/CreateRunPost";
 import CommunityPage from "./Components/Community/CommunityPage";
 import RunClubDetail from "./Components/Community/RunClubDetail";
+import EventDetail from "./Components/Community/EventDetail";
 
 // Protected route wrapper component
 const ProtectedRoute = ({ children, isLoggedIn, isProfileComplete }) => {
@@ -315,6 +316,17 @@ function App() {
                 isProfileComplete={isProfileComplete}
               >
                 <RunClubDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/community/events/:id"
+            element={
+              <ProtectedRoute
+                isLoggedIn={isLoggedIn}
+                isProfileComplete={isProfileComplete}
+              >
+                <EventDetail />
               </ProtectedRoute>
             }
           />
