@@ -315,7 +315,7 @@ function App() {
                 isLoggedIn={isLoggedIn}
                 isProfileComplete={isProfileComplete}
               >
-                <RunClubDetail />
+                <RunClubDetail currentUser={user} />
               </ProtectedRoute>
             }
           />

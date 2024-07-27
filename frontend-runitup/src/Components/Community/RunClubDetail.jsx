@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Card, Avatar, message, Button } from "antd";
+import { Card, Avatar, message, Button, Tabs } from "antd";
 import { getHeaders } from "../../utils/apiConfig";
+import ClubChat from "./ClubChat";
 
-const RunClubDetail = () => {
+const { TabPane } = Tabs;
+
+const RunClubDetail = ({ currentUser }) => {
   const { id } = useParams();
   const [club, setClub] = useState(null);
 
@@ -30,14 +33,30 @@ const RunClubDetail = () => {
   if (!club) return <div>Loading...</div>;
 
   return (
-    <Card title={club.name} extra={<Button>Join</Button>}>
-      <Card.Meta
-        avatar={<Avatar src={`data:image/jpeg;base64,${club.logo}`} />}
-        title={`Location: ${club.location}`}
-        description={`Members: ${club._count.members}`}
-      />
-      <p>{club.description}</p>
-    </Card>
+    <div style={{ padding: "20px" }}>
+      <Card title={club.name} extra={<Button>Join</Button>}>
+        <Card.Meta
+          avatar={<Avatar src={`data:image/jpeg;base64,${club.logo}`} />}
+          title={`Location: ${club.location}`}
+          description={`Members: ${club._count.members}`}
+        />
+        <p>{club.description}</p>
+      </Card>
+
+      <Tabs defaultActiveKey="1" style={{ marginTop: "20px" }}>
+        <TabPane tab="Discussion" key="1">
+          <ClubChat clubId={id} currentUser={currentUser} />
+        </TabPane>
+        <TabPane tab="Events" key="2">
+          {/* Add events component here */}
+          <p>Club events will be displayed here.</p>
+        </TabPane>
+        <TabPane tab="Members" key="3">
+          {/* Add members list component here */}
+          <p>Club members will be listed here.</p>
+        </TabPane>
+      </Tabs>
+    </div>
   );
 };
 
