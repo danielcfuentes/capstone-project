@@ -139,19 +139,26 @@ const ActiveRun = ({ handleRunCompletion }) => {
 
       message.success("Run completed successfully!");
 
-      // Show modal asking if user wants to make a post
-      Modal.confirm({
-        title: "Share Your Run",
-        content: "Would you like to make a post about your run?",
-        onOk() {
-          navigate("/create-run-post", {
-            state: { runData: completeData.userActivity },
-          });
-        },
-        onCancel() {
-          navigate("/recommendations");
-        },
+      // Navigate to recommendations first
+      navigate("/challenges", {
+        state: { runData: completeData.userActivity },
       });
+
+      // Show modal asking if user wants to make a post
+      setTimeout(() => {
+        Modal.confirm({
+          title: "Share Your Run",
+          content: "Would you like to make a post about your run?",
+          onOk() {
+            navigate("/create-run-post", {
+              state: { runData: completeData.userActivity },
+            });
+          },
+          onCancel() {
+            navigate("/challenges");
+          },
+        });
+      }, 500);
     } catch (error) {
       message.error(`Error completing run: ${error.message}`);
       setIsCompleting(false);
