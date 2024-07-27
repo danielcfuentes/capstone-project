@@ -1091,5 +1091,234 @@ app.post("/generate-route", authenticateToken, async (req, res) => {
 });
 
 
+// Create a new run club
+app.post("/run-clubs", authenticateToken, async (req, res) => {
+  try {
+    const { name, description, location } = req.body;
+    const logo = req.file ? req.file.buffer : null;
+
+    const newClub = await prisma.runClub.create({
+      data: {
+        name,
+        description,
+        location,
+        logo,
+        ownerId: req.user.id,
+      },
+    });
+
+    res.status(201).json(newClub);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create run club" });
+  }
+});
+
+// Get all run clubs
+app.get("/run-clubs", authenticateToken, async (req, res) => {
+  try {
+    const clubs = await prisma.runClub.findMany({
+      include: {
+        owner: { select: { username: true } },
+        _count: { select: { members: true } },
+      },
+    });
+    res.json(clubs);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch run clubs" });
+  }
+});
+
+// Route to join a club
+app.post("/run-clubs/:clubId/join", authenticateToken, async (req, res) => {
+  try {
+    await prisma.ClubMember.create({
+      data: {
+        clubId: parseInt(req.params.clubId),
+        userId: req.user.id,
+      },
+    });
+    res.status(200).json({ message: "Joined club successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to join club" });
+  }
+});
+
+// Route to leave a club
+app.post("/run-clubs/:clubId/leave", authenticateToken, async (req, res) => {
+  try {
+    await prisma.ClubMember.deleteMany({
+      where: {
+        clubId: parseInt(req.params.clubId),
+        userId: req.user.id,
+      },
+    });
+    res.status(200).json({ message: "Left club successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to leave club" });
+  }
+});
+
+// Create an event for a run club
+app.post("/run-clubs/:id/events", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, date, location } = req.body;
+
+    const club = await prisma.runClub.findUnique({
+      where: { id: parseInt(id) },
+      include: { owner: true },
+    });
+
+    if (!club) {
+      return res.status(404).json({ error: "Run club not found" });
+    }
+
+    if (club.owner.id !== req.user.id) {
+      return res
+        .status(403)
+        .json({ error: "Only club owners can create events" });
+    }
+
+    const newEvent = await prisma.event.create({
+      data: {
+        title,
+        description,
+        date: new Date(date),
+        location,
+        clubId: parseInt(id),
+      },
+    });
+
+    res.status(201).json(newEvent);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Failed to create event", details: error.message });
+  }
+});
+
+// Get run club events
+app.get("/run-clubs/:id/events", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const events = await prisma.event.findMany({
+      where: { clubId: parseInt(id) },
+      orderBy: { date: 'asc' },
+    });
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch run club events" });
+  }
+});
+
+// Join an event
+app.post("/events/:id/join", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const event = await prisma.event.update({
+      where: { id: parseInt(id) },
+      data: {
+        participants: {
+          connect: { id: req.user.id },
+        },
+      },
+    });
+    res.json({ message: "Successfully joined the event" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to join the event" });
+  }
+});
+
+// Leave an event
+app.post("/events/:id/leave", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const event = await prisma.event.update({
+      where: { id: parseInt(id) },
+      data: {
+        participants: {
+          disconnect: { id: req.user.id },
+        },
+      },
+    });
+    res.json({ message: "Successfully left the event" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to leave the event" });
+  }
+});
+
+// Get run club details
+app.get("/run-clubs/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const club = await prisma.runClub.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        owner: { select: { username: true } },
+        _count: { select: { members: true } },
+      },
+    });
+    if (!club) return res.status(404).json({ error: "Run club not found" });
+    res.json(club);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch run club details" });
+  }
+});
+
+// Get run club members
+app.get("/run-clubs/:id/members", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const members = await prisma.user.findMany({
+      where: { memberOf: { some: { id: parseInt(id) } } },
+      select: { id: true, username: true },
+    });
+    res.json(members);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch run club members" });
+  }
+});
+
+// Get all events across all run clubs
+app.get("/run-clubs/events", authenticateToken, async (req, res) => {
+  try {
+    const events = await prisma.event.findMany({
+      include: {
+        club: {
+          select: { name: true },
+        },
+      },
+      orderBy: { date: "asc" },
+    });
+    res.json(events);
+  } catch (error) {
+    res
+      .status(500)
+      .json({
+        error: "Failed to fetch events",
+        details: error.message,
+        stack: error.stack,
+      });
+  }
+});
+
+app.get("/user/owned-clubs", authenticateToken, async (req, res) => {
+  try {
+    const userOwnedClubs = await prisma.runClub.findMany({
+      where: { ownerId: req.user.id },
+      select: { id: true, name: true },
+    });
+    res.json(userOwnedClubs);
+  } catch (error) {
+    res
+      .status(500)
+      .json({
+        error: "Failed to fetch user owned clubs",
+        details: error.message,
+      });
+  }
+});
+
+
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
