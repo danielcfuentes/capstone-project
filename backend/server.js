@@ -1183,5 +1183,86 @@ app.get("/run-clubs/:id/events", authenticateToken, async (req, res) => {
   }
 });
 
+// Get run club events
+app.get("/run-clubs/:id/events", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const events = await prisma.event.findMany({
+      where: { clubId: parseInt(id) },
+      orderBy: { date: 'asc' },
+    });
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch run club events" });
+  }
+});
+
+// Join an event
+app.post("/events/:id/join", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const event = await prisma.event.update({
+      where: { id: parseInt(id) },
+      data: {
+        participants: {
+          connect: { id: req.user.id },
+        },
+      },
+    });
+    res.json({ message: "Successfully joined the event" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to join the event" });
+  }
+});
+
+// Leave an event
+app.post("/events/:id/leave", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const event = await prisma.event.update({
+      where: { id: parseInt(id) },
+      data: {
+        participants: {
+          disconnect: { id: req.user.id },
+        },
+      },
+    });
+    res.json({ message: "Successfully left the event" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to leave the event" });
+  }
+});
+
+// Get run club details
+app.get("/run-clubs/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const club = await prisma.runClub.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        owner: { select: { username: true } },
+        _count: { select: { members: true } },
+      },
+    });
+    if (!club) return res.status(404).json({ error: "Run club not found" });
+    res.json(club);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch run club details" });
+  }
+});
+
+// Get run club members
+app.get("/run-clubs/:id/members", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const members = await prisma.user.findMany({
+      where: { memberOf: { some: { id: parseInt(id) } } },
+      select: { id: true, username: true },
+    });
+    res.json(members);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch run club members" });
+  }
+});
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
