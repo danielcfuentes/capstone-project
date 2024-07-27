@@ -1113,6 +1113,21 @@ app.post("/run-clubs", authenticateToken, async (req, res) => {
   }
 });
 
+// Get all run clubs
+app.get("/run-clubs", authenticateToken, async (req, res) => {
+  try {
+    const clubs = await prisma.runClub.findMany({
+      include: {
+        owner: { select: { username: true } },
+        _count: { select: { members: true } },
+      },
+    });
+    res.json(clubs);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch run clubs" });
+  }
+});
+
 
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
