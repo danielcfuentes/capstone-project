@@ -107,7 +107,7 @@ const CreateRunPost = () => {
       }
 
       message.success("Run post created successfully!");
-      navigate("/feed");
+      navigate("/feed", { state: { scrollToTop: true } });
     } catch (error) {
       message.error("Error creating run post");
     } finally {
