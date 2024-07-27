@@ -40,6 +40,8 @@ model User {
   Like                Like[]
   Comment             Comment[]
   previousRanking     Int?
+  ownedClubs RunClub[] @relation("OwnedClubs")
+  memberOf   RunClub[] @relation("ClubMembers")
 }
 
 model Token {
@@ -194,4 +196,30 @@ model Challenge {
 model SystemSetting {
   key   String @id
   value String
+}
+
+model RunClub {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  logo        Bytes?
+  location    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  ownerId     Int
+  owner       User     @relation("OwnedClubs", fields: [ownerId], references: [id])
+  members     User[]   @relation("ClubMembers")
+  events      Event[]
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  date        DateTime
+  location    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  clubId      Int
+  club        RunClub  @relation(fields: [clubId], references: [id])
 }
