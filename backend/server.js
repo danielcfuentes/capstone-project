@@ -1116,7 +1116,6 @@ app.post("/run-clubs", authenticateToken, async (req, res) => {
 // Update the GET /run-clubs route to include member count, owner info, and user membership status
 app.get("/run-clubs", authenticateToken, async (req, res) => {
   try {
-    console.log("Fetching run clubs for user:", req.user.id);
     const clubs = await prisma.runClub.findMany({
       include: {
         owner: { select: { username: true } },
@@ -1128,7 +1127,6 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
       },
     });
 
-    console.log("Fetched clubs:", clubs);
 
     const clubsWithMembershipStatus = clubs.map((club) => ({
       ...club,
@@ -1138,7 +1136,6 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
 
     res.json(clubsWithMembershipStatus);
   } catch (error) {
-    console.error("Error in /run-clubs route:", error);
     res
       .status(500)
       .json({
@@ -1350,7 +1347,6 @@ app.get('/run-clubs/:clubId/messages', authenticateToken, async (req, res) => {
     });
     res.json(messages);
   } catch (error) {
-    console.error('Error fetching messages:', error);
     res.status(500).json({ error: 'Failed to fetch messages', details: error.message });
   }
 });
@@ -1373,7 +1369,6 @@ app.post('/run-clubs/:clubId/messages', authenticateToken, async (req, res) => {
     });
     res.status(201).json(message);
   } catch (error) {
-    console.error('Error sending message:', error);
     res.status(500).json({ error: 'Failed to send message', details: error.message });
   }
 });
@@ -1387,7 +1382,6 @@ app.get('/run-clubs/:clubId/members', authenticateToken, async (req, res) => {
     });
     res.json(members.map(member => member.User));
   } catch (error) {
-    console.error('Error fetching club members:', error);
     res.status(500).json({ error: 'Failed to fetch club members', details: error.message });
   }
 });
@@ -1415,7 +1409,6 @@ app.get('/run-clubs/:clubId/statistics', authenticateToken, async (req, res) => 
       totalActivities: activities.length,
     });
   } catch (error) {
-    console.error('Error fetching club statistics:', error);
     res.status(500).json({ error: 'Failed to fetch club statistics', details: error.message });
   }
 });
@@ -1441,7 +1434,6 @@ app.get("/run-clubs/:clubId/events", authenticateToken, async (req, res) => {
 
     res.json(eventsWithParticipantCount);
   } catch (error) {
-    console.error("Error fetching club events:", error);
     res
       .status(500)
       .json({ error: "Failed to fetch club events", details: error.message });

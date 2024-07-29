@@ -47,7 +47,6 @@ const RunClubList = ({ user }) => {
       setClubs(data);
       setError(null);
     } catch (error) {
-      console.error("Error fetching run clubs:", error);
       setError(error.message);
       message.error("Failed to fetch run clubs");
     }

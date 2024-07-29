@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, Statistic, Row, Col, Spin } from "antd";
+import { Card, Statistic, Row, Col, Spin, message } from "antd";
 import {
   DashboardOutlined,
   FireOutlined,
@@ -27,7 +27,7 @@ const ClubStatistics = ({ clubId }) => {
       const data = await response.json();
       setStats(data);
     } catch (error) {
-      console.error("Error fetching statistics:", error);
+      message.error("Error fetching statistics:", error);
     } finally {
       setLoading(false);
     }

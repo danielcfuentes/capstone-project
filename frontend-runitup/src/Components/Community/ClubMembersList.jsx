@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { List, Avatar, Typography } from "antd";
+import { List, Avatar, Typography, message } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
 
@@ -25,7 +25,7 @@ const ClubMembersList = ({ clubId, currentUser }) => {
       const data = await response.json();
       setMembers(data);
     } catch (error) {
-      console.error("Error fetching members:", error);
+      message.error("Error fetching members:", error);
     } finally {
       setLoading(false);
     }

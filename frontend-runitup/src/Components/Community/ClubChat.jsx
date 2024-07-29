@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Input, Button, Avatar, Typography, Spin } from "antd";
+import { Input, Button, Avatar, Typography, Spin, message } from "antd";
 import { SendOutlined } from "@ant-design/icons";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
 
@@ -35,7 +35,6 @@ const ClubChat = ({ clubId, currentUser }) => {
       setMessages(data);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching messages:", error);
       setLoading(false);
     }
   };
@@ -55,7 +54,7 @@ const ClubChat = ({ clubId, currentUser }) => {
       setNewMessage("");
       fetchMessages();
     } catch (error) {
-      console.error("Error sending message:", error);
+      message.error("Error sending message:", error);
     }
   };
 

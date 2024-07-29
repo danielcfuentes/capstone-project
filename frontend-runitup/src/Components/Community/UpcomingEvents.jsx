@@ -32,7 +32,7 @@ const UpcomingEvents = ({ clubId }) => {
       );
       setEvents(upcomingEvents);
     } catch (error) {
-      console.error("Error fetching events:", error);
+        message.error
     } finally {
       setLoading(false);
     }
