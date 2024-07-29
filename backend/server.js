@@ -1092,7 +1092,7 @@ app.post("/generate-route", authenticateToken, async (req, res) => {
 
 
 // Create a new run club
-app.post("/run-clubs", authenticateToken, async (req, res) => {
+app.post("/run-clubs", authenticateToken, upload.single('logo'), async (req, res) => {
   try {
     const { name, description, location } = req.body;
     const logo = req.file ? req.file.buffer : null;
@@ -1109,11 +1109,12 @@ app.post("/run-clubs", authenticateToken, async (req, res) => {
 
     res.status(201).json(newClub);
   } catch (error) {
+    console.error("Error creating run club:", error);
     res.status(500).json({ error: "Failed to create run club" });
   }
 });
 
-// Update the GET /run-clubs route to include member count, owner info, and user membership status
+// Get all run clubs
 app.get("/run-clubs", authenticateToken, async (req, res) => {
   try {
     const clubs = await prisma.runClub.findMany({
@@ -1121,12 +1122,11 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
         owner: { select: { username: true } },
         _count: { select: { members: true } },
         members: {
-          where: { username: req.user.name },
-          select: { username: true },
+          where: { id: req.user.id },
+          select: { id: true },
         },
       },
     });
-
 
     const clubsWithMembershipStatus = clubs.map((club) => ({
       ...club,
@@ -1136,42 +1136,45 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
 
     res.json(clubsWithMembershipStatus);
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        error: "Failed to fetch run clubs",
-        details: error.message,
-        stack: error.stack,
-      });
+    console.error("Error fetching run clubs:", error);
+    res.status(500).json({ error: "Failed to fetch run clubs" });
   }
 });
 
-// Route to join a club
+// Join a club
 app.post("/run-clubs/:clubId/join", authenticateToken, async (req, res) => {
   try {
-    await prisma.ClubMember.create({
+    const { clubId } = req.params;
+    await prisma.runClub.update({
+      where: { id: parseInt(clubId) },
       data: {
-        clubId: parseInt(req.params.clubId),
-        userId: req.user.id,
+        members: {
+          connect: { id: req.user.id },
+        },
       },
     });
     res.status(200).json({ message: "Joined club successfully" });
   } catch (error) {
+    console.error("Error joining club:", error);
     res.status(500).json({ error: "Failed to join club" });
   }
 });
 
-// Route to leave a club
+// Leave a club
 app.post("/run-clubs/:clubId/leave", authenticateToken, async (req, res) => {
   try {
-    await prisma.ClubMember.deleteMany({
-      where: {
-        clubId: parseInt(req.params.clubId),
-        userId: req.user.id,
+    const { clubId } = req.params;
+    await prisma.runClub.update({
+      where: { id: parseInt(clubId) },
+      data: {
+        members: {
+          disconnect: { id: req.user.id },
+        },
       },
     });
     res.status(200).json({ message: "Left club successfully" });
   } catch (error) {
+    console.error("Error leaving club:", error);
     res.status(500).json({ error: "Failed to leave club" });
   }
 });

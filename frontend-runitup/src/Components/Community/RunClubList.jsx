@@ -24,7 +24,6 @@ import "../../styles/RunClubList.css";
 const RunClubList = ({ user }) => {
   const [clubs, setClubs] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [error, setError] = useState(null);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -40,14 +39,11 @@ const RunClubList = ({ user }) => {
         }
       );
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch run clubs");
+        throw new Error("Failed to fetch run clubs");
       }
       const data = await response.json();
       setClubs(data);
-      setError(null);
     } catch (error) {
-      setError(error.message);
       message.error("Failed to fetch run clubs");
     }
   };
@@ -66,25 +62,7 @@ const RunClubList = ({ user }) => {
       message.success(
         `Successfully ${action === "join" ? "joined" : "left"} the run club`
       );
-
-      setClubs(
-        clubs.map((club) => {
-          if (club.id === clubId) {
-            return {
-              ...club,
-              _count: {
-                ...club._count,
-                members:
-                  action === "join"
-                    ? club._count.members + 1
-                    : club._count.members - 1,
-              },
-              isUserMember: action === "join",
-            };
-          }
-          return club;
-        })
-      );
+      fetchClubs(); // Refetch clubs to update the state
     } catch (error) {
       message.error(`Failed to ${action} run club`);
     }
@@ -92,12 +70,20 @@ const RunClubList = ({ user }) => {
 
   const handleCreateClub = async (values) => {
     try {
+      const formData = new FormData();
+      formData.append("name", values.name);
+      formData.append("description", values.description);
+      formData.append("location", values.location);
+      if (values.logo && values.logo[0]) {
+        formData.append("logo", values.logo[0].originFileObj);
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/run-clubs`,
         {
           method: "POST",
           headers: getHeaders(),
-          body: JSON.stringify(values),
+          body: formData,
         }
       );
       if (!response.ok) throw new Error("Failed to create run club");
