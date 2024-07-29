@@ -1378,5 +1378,61 @@ app.post('/run-clubs/:clubId/messages', authenticateToken, async (req, res) => {
   }
 });
 
+// Fetch club members
+app.get('/run-clubs/:clubId/members', authenticateToken, async (req, res) => {
+  try {
+    const members = await prisma.clubMember.findMany({
+      where: { clubId: parseInt(req.params.clubId) },
+      include: { User: { select: { username: true } } },
+    });
+    res.json(members.map(member => member.User));
+  } catch (error) {
+    console.error('Error fetching club members:', error);
+    res.status(500).json({ error: 'Failed to fetch club members', details: error.message });
+  }
+});
+
+// Fetch club statistics
+app.get('/run-clubs/:clubId/statistics', authenticateToken, async (req, res) => {
+  try {
+    const clubMembers = await prisma.clubMember.findMany({
+      where: { clubId: parseInt(req.params.clubId) },
+      select: { userId: true },
+    });
+    const memberIds = clubMembers.map(member => member.userId);
+
+    const activities = await prisma.userActivity.findMany({
+      where: { userId: { in: memberIds } },
+    });
+
+    const totalDistance = activities.reduce((sum, activity) => sum + activity.distance, 0);
+    const totalDuration = activities.reduce((sum, activity) => sum + activity.duration, 0);
+    const averagePace = totalDistance > 0 ? (totalDuration / 60) / totalDistance : 0;
+
+    res.json({
+      totalDistance: parseFloat(totalDistance.toFixed(2)),
+      averagePace: parseFloat(averagePace.toFixed(2)),
+      totalActivities: activities.length,
+    });
+  } catch (error) {
+    console.error('Error fetching club statistics:', error);
+    res.status(500).json({ error: 'Failed to fetch club statistics', details: error.message });
+  }
+});
+
+// Fetch club events
+app.get('/run-clubs/:clubId/events', authenticateToken, async (req, res) => {
+  try {
+    const events = await prisma.event.findMany({
+      where: { clubId: parseInt(req.params.clubId) },
+      orderBy: { date: 'asc' },
+    });
+    res.json(events);
+  } catch (error) {
+    console.error('Error fetching club events:', error);
+    res.status(500).json({ error: 'Failed to fetch club events', details: error.message });
+  }
+});
+
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
