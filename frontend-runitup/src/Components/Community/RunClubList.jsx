@@ -152,13 +152,6 @@ const RunClubList = ({ user }) => {
                     </Button>
                   )
                 }
-                cover={
-                  <img
-                    alt={club.name}
-                    src={`data:image/jpeg;base64,${club.logo}`}
-                    style={{ height: 200, objectFit: "cover" }}
-                  />
-                }
               >
                 <Card.Meta
                   title={club.location}
