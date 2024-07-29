@@ -44,6 +44,7 @@ model User {
   memberOf            RunClub[]         @relation("ClubMembers")
   participatingEvents Event[]           @relation("EventParticipants")
   ClubMember          ClubMember[]
+  Message             Message[]
 }
 
 model Token {
@@ -213,6 +214,7 @@ model RunClub {
   members     User[]       @relation("ClubMembers")
   events      Event[]
   ClubMember  ClubMember[]
+  Message     Message[]
 }
 
 model Event {
@@ -234,4 +236,14 @@ model ClubMember {
   userId Int
   Club   RunClub @relation(fields: [clubId], references: [id])
   User   User    @relation(fields: [userId], references: [id])
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  senderId  Int
+  sender    User     @relation(fields: [senderId], references: [id])
+  clubId    Int
+  club      RunClub  @relation(fields: [clubId], references: [id])
+  timestamp DateTime @default(now())
 }
