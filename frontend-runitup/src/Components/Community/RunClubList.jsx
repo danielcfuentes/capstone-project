@@ -62,7 +62,22 @@ const RunClubList = ({ user }) => {
       message.success(
         `Successfully ${action === "join" ? "joined" : "left"} the run club`
       );
-      fetchClubs(); // Refetch clubs to update the state
+
+      // Update local state
+      setClubs((prevClubs) =>
+        prevClubs.map((club) =>
+          club.id === clubId
+            ? {
+                ...club,
+                isUserMember: action === "join",
+                _count: {
+                  ...club._count,
+                  members: club._count.members + (action === "join" ? 1 : -1),
+                },
+              }
+            : club
+        )
+      );
     } catch (error) {
       message.error(`Failed to ${action} run club`);
     }
