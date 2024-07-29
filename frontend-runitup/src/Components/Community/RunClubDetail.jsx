@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Card, Avatar, message, Button, Tabs } from "antd";
+import { Card, Avatar, message, Button, Tabs, Layout } from "antd";
 import { getHeaders } from "../../utils/apiConfig";
 import ClubChat from "./ClubChat";
 import ClubMembersList from "./ClubMembersList";
 import ClubStatistics from "./ClubStatistics";
 import UpcomingEvents from "./UpcomingEvents";
+import "../../styles/RunClubList.css";
 
 const { TabPane } = Tabs;
+const { Content } = Layout;
 
 const RunClubDetail = ({ currentUser }) => {
   const { id } = useParams();
   const [club, setClub] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchClubDetail();
@@ -30,36 +33,47 @@ const RunClubDetail = ({ currentUser }) => {
       setClub(data);
     } catch (error) {
       message.error("Failed to fetch run club details");
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!club) return <div>Loading...</div>;
+  if (loading) return <div>Loading...</div>;
+  if (!club) return <div>Club not found</div>;
 
   return (
-    <div style={{ padding: "20px" }}>
-      <Card title={club.name} extra={<Button>Join</Button>}>
-        <Card.Meta
-          avatar={<Avatar src={`data:image/jpeg;base64,${club.logo}`} />}
-          title={`Location: ${club.location}`}
-          description={`Members: ${club._count.members}`}
-        />
-        <p>{club.description}</p>
-      </Card>
+    <Layout className="run-club-detail">
+      <Content>
+        <Card
+          title={club.name}
+          extra={<Button type="primary">Join</Button>}
+          style={{ marginBottom: 20 }}
+        >
+          <Card.Meta
+            avatar={
+              <Avatar src={`data:image/jpeg;base64,${club.logo}`} size={64} />
+            }
+            title={`Location: ${club.location}`}
+            description={`Members: ${club._count.members}`}
+          />
+          <p style={{ marginTop: 16 }}>{club.description}</p>
+        </Card>
 
-      <ClubStatistics clubId={id} />
+        <ClubStatistics clubId={id} />
 
-      <Tabs defaultActiveKey="1" style={{ marginTop: "20px" }}>
-        <TabPane tab="Discussion" key="1">
-          <ClubChat clubId={id} currentUser={currentUser} />
-        </TabPane>
-        <TabPane tab="Events" key="2">
-          <UpcomingEvents clubId={id} />
-        </TabPane>
-        <TabPane tab="Members" key="3">
-          <ClubMembersList clubId={id} />
-        </TabPane>
-      </Tabs>
-    </div>
+        <Tabs defaultActiveKey="1" style={{ marginTop: 20 }}>
+          <TabPane tab="Discussion" key="1">
+            <ClubChat clubId={id} currentUser={currentUser} />
+          </TabPane>
+          <TabPane tab="Events" key="2">
+            <UpcomingEvents clubId={id} />
+          </TabPane>
+          <TabPane tab="Members" key="3">
+            <ClubMembersList clubId={id} currentUser={currentUser} />
+          </TabPane>
+        </Tabs>
+      </Content>
+    </Layout>
   );
 };
 

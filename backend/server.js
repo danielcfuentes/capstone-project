@@ -1421,16 +1421,30 @@ app.get('/run-clubs/:clubId/statistics', authenticateToken, async (req, res) => 
 });
 
 // Fetch club events
-app.get('/run-clubs/:clubId/events', authenticateToken, async (req, res) => {
+app.get("/run-clubs/:clubId/events", authenticateToken, async (req, res) => {
   try {
     const events = await prisma.event.findMany({
       where: { clubId: parseInt(req.params.clubId) },
-      orderBy: { date: 'asc' },
+      include: {
+        participants: {
+          select: { id: true },
+        },
+      },
+      orderBy: { date: "asc" },
     });
-    res.json(events);
+
+    const eventsWithParticipantCount = events.map((event) => ({
+      ...event,
+      participantCount: event.participants.length,
+      participants: undefined, // Remove the participants array from the response
+    }));
+
+    res.json(eventsWithParticipantCount);
   } catch (error) {
-    console.error('Error fetching club events:', error);
-    res.status(500).json({ error: 'Failed to fetch club events', details: error.message });
+    console.error("Error fetching club events:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to fetch club events", details: error.message });
   }
 });
 

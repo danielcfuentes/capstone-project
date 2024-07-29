@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { List, Input, Button, Avatar, Typography } from "antd";
+import { Input, Button, Avatar, Typography, Spin } from "antd";
 import { SendOutlined } from "@ant-design/icons";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
 
@@ -8,11 +8,13 @@ const { Text } = Typography;
 const ClubChat = ({ clubId, currentUser }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   useEffect(() => {
     fetchMessages();
-    const intervalId = setInterval(fetchMessages, 5000); // Fetch messages every 5 seconds
+    const intervalId = setInterval(fetchMessages, 5000);
     return () => clearInterval(intervalId);
   }, [clubId]);
 
@@ -31,8 +33,10 @@ const ClubChat = ({ clubId, currentUser }) => {
       if (!response.ok) throw new Error("Failed to fetch messages");
       const data = await response.json();
       setMessages(data);
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching messages:", error);
+      setLoading(false);
     }
   };
 
@@ -59,39 +63,52 @@ const ClubChat = ({ clubId, currentUser }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const handleScroll = () => {
+    if (chatContainerRef.current.scrollTop === 0) {
+      // Load more messages when scrolled to top
+      // Implement pagination logic here
+    }
+  };
+
   return (
-    <div style={{ height: "400px", display: "flex", flexDirection: "column" }}>
-      <List
-        style={{ flexGrow: 1, overflow: "auto", padding: "10px" }}
-        dataSource={messages}
-        renderItem={(message) => (
-          <List.Item>
-            <List.Item.Meta
-              avatar={
-                <Avatar
-                  style={{
-                    backgroundColor: generateColor(message.sender.username),
-                  }}
-                >
-                  {message.sender.username[0].toUpperCase()}
-                </Avatar>
-              }
-              title={message.sender.username}
-              description={
-                <>
-                  <Text>{message.content}</Text>
-                  <br />
-                  <Text type="secondary" style={{ fontSize: "12px" }}>
-                    {new Date(message.timestamp).toLocaleString()}
-                  </Text>
-                </>
-              }
-            />
-          </List.Item>
+    <div className="club-chat">
+      <div
+        className="chat-messages"
+        ref={chatContainerRef}
+        onScroll={handleScroll}
+      >
+        {loading ? (
+          <Spin size="large" />
+        ) : (
+          messages.map((message) => (
+            <div
+              key={message.id}
+              className={`message ${
+                message.sender.username === currentUser.name
+                  ? "message-right"
+                  : "message-left"
+              }`}
+            >
+              <Avatar
+                style={{
+                  backgroundColor: generateColor(message.sender.username),
+                }}
+              >
+                {message.sender.username[0].toUpperCase()}
+              </Avatar>
+              <div>
+                <Text strong>{message.sender.username}</Text>
+                <p>{message.content}</p>
+                <Text type="secondary" style={{ fontSize: "12px" }}>
+                  {new Date(message.timestamp).toLocaleString()}
+                </Text>
+              </div>
+            </div>
+          ))
         )}
-      />
-      <div ref={messagesEndRef} />
-      <div style={{ display: "flex", padding: "10px" }}>
+        <div ref={messagesEndRef} />
+      </div>
+      <div className="chat-input">
         <Input
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}

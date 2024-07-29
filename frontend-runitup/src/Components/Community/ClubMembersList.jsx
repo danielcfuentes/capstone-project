@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { List, Avatar, Typography } from "antd";
+import { UserOutlined } from "@ant-design/icons";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
 
 const { Title } = Typography;
 
-const ClubMembersList = ({ clubId }) => {
+const ClubMembersList = ({ clubId, currentUser }) => {
   const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchMembers();
@@ -24,13 +26,16 @@ const ClubMembersList = ({ clubId }) => {
       setMembers(data);
     } catch (error) {
       console.error("Error fetching members:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div>
+    <div className="members-list">
       <Title level={4}>Club Members</Title>
       <List
+        loading={loading}
         itemLayout="horizontal"
         dataSource={members}
         renderItem={(member) => (
@@ -39,11 +44,17 @@ const ClubMembersList = ({ clubId }) => {
               avatar={
                 <Avatar
                   style={{ backgroundColor: generateColor(member.username) }}
+                  icon={<UserOutlined />}
                 >
                   {member.username[0].toUpperCase()}
                 </Avatar>
               }
-              title={member.username}
+              title={
+                <span className={member.username === currentUser.name ? "current-user" : ""}>
+                  {member.username}
+                  {member.username === currentUser.name && " (You)"}
+                </span>
+              }
             />
           </List.Item>
         )}
