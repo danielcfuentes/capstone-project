@@ -3,6 +3,9 @@ import { useParams } from "react-router-dom";
 import { Card, Avatar, message, Button, Tabs } from "antd";
 import { getHeaders } from "../../utils/apiConfig";
 import ClubChat from "./ClubChat";
+import ClubMembersList from "./ClubMembersList";
+import ClubStatistics from "./ClubStatistics";
+import UpcomingEvents from "./UpcomingEvents";
 
 const { TabPane } = Tabs;
 
@@ -43,17 +46,17 @@ const RunClubDetail = ({ currentUser }) => {
         <p>{club.description}</p>
       </Card>
 
+      <ClubStatistics clubId={id} />
+
       <Tabs defaultActiveKey="1" style={{ marginTop: "20px" }}>
         <TabPane tab="Discussion" key="1">
           <ClubChat clubId={id} currentUser={currentUser} />
         </TabPane>
         <TabPane tab="Events" key="2">
-          {/* Add events component here */}
-          <p>Club events will be displayed here.</p>
+          <UpcomingEvents clubId={id} />
         </TabPane>
         <TabPane tab="Members" key="3">
-          {/* Add members list component here */}
-          <p>Club members will be listed here.</p>
+          <ClubMembersList clubId={id} />
         </TabPane>
       </Tabs>
     </div>
