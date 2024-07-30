@@ -1469,5 +1469,28 @@ app.get("/run-clubs/:clubId/events", authenticateToken, async (req, res) => {
   }
 });
 
+// Helper function to calculate club statistics
+async function calculateClubStatistics(clubId) {
+  const clubMembers = await prisma.clubMember.findMany({
+    where: { clubId: parseInt(clubId) },
+    select: { userId: true },
+  });
+  const memberIds = clubMembers.map(member => member.userId);
+
+  const activities = await prisma.userActivity.findMany({
+    where: { userId: { in: memberIds } },
+  });
+
+  const totalDistance = activities.reduce((sum, activity) => sum + activity.distance, 0);
+  const totalDuration = activities.reduce((sum, activity) => sum + activity.duration, 0);
+  const averagePace = totalDistance > 0 ? (totalDuration / 60) / totalDistance : 0;
+
+  return {
+    totalDistance: parseFloat(totalDistance.toFixed(2)),
+    averagePace: parseFloat(averagePace.toFixed(2)),
+    totalActivities: activities.length,
+  };
+}
+
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
