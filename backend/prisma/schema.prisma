@@ -215,6 +215,7 @@ model RunClub {
   events      Event[]
   ClubMember  ClubMember[]
   messages    Message[]
+  memberCount Int          @default(0) // Add this line
 }
 
 model Event {
