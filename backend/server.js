@@ -1115,11 +1115,13 @@ app.post("/run-clubs", authenticateToken, async (req, res) => {
 // Get all run clubs
 app.get("/run-clubs", authenticateToken, async (req, res) => {
   try {
+    console.log("User ID:", req.user.id); // Add this line to debug
+
     const clubs = await prisma.runClub.findMany({
       include: {
         owner: { select: { username: true } },
         _count: { select: { members: true } },
-        members: {
+        ClubMember: {
           where: { userId: req.user.id },
           select: { userId: true },
         },
@@ -1128,14 +1130,18 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
 
     const clubsWithMembershipStatus = clubs.map((club) => ({
       ...club,
-      isUserMember: club.members.length > 0,
-      members: undefined, // Remove the members array from the response
+      isUserMember: club.ClubMember.length > 0,
+      ClubMember: undefined, // Remove the ClubMember array from the response
     }));
 
     res.json(clubsWithMembershipStatus);
   } catch (error) {
     console.error("Error fetching run clubs:", error);
-    res.status(500).json({ error: "Failed to fetch run clubs" });
+    res.status(500).json({
+      error: "Failed to fetch run clubs",
+      details: error.message,
+      stack: error.stack,
+    });
   }
 });
 
@@ -1300,19 +1306,21 @@ app.get("/run-clubs/:id", authenticateToken, async (req, res) => {
       where: { id: parseInt(id) },
       include: {
         owner: { select: { username: true } },
-        _count: { select: { members: true } },
-        members: {
+        _count: { select: { ClubMember: true } },
+        ClubMember: {
           where: { userId: req.user.id },
           select: { userId: true },
         },
       },
     });
+
     if (!club) return res.status(404).json({ error: "Run club not found" });
 
     const clubWithMembershipStatus = {
       ...club,
-      isUserMember: club.members.length > 0,
-      members: undefined, // Remove the members array from the response
+      isUserMember: club.ClubMember.length > 0,
+      memberCount: club._count.ClubMember,
+      ClubMember: undefined, // Remove the ClubMember array from the response
     };
 
     res.json(clubWithMembershipStatus);
