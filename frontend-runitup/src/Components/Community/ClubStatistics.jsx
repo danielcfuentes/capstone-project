@@ -7,12 +7,13 @@ import {
 } from "@ant-design/icons";
 import { getHeaders } from "../../utils/apiConfig";
 
-const ClubStatistics = ({ clubId, membershipChanged }) => {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+const ClubStatistics = ({ clubId, membershipChanged, stats, setStats }) => {
+  const [loading, setLoading] = useState(!stats);
 
   useEffect(() => {
-    fetchStats();
+    if (!stats) {
+      fetchStats();
+    }
   }, [clubId, membershipChanged]);
 
   const fetchStats = async () => {

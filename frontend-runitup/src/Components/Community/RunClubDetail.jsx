@@ -16,6 +16,7 @@ const RunClubDetail = ({ currentUser }) => {
   const [club, setClub] = useState(null);
   const [loading, setLoading] = useState(true);
   const [membershipChanged, setMembershipChanged] = useState(false);
+  const [clubStats, setClubStats] = useState(null);
 
   useEffect(() => {
     fetchClubDetail();
@@ -54,9 +55,10 @@ const RunClubDetail = ({ currentUser }) => {
       message.success(data.message);
       setClub((prevClub) => ({
         ...prevClub,
-        isUserMember: action === "join",
+        isUserMember: data.isUserMember,
         _count: { members: data.updatedClub._count.members },
       }));
+      setClubStats(data.updatedStats);
       setMembershipChanged((prev) => !prev);
     } catch (error) {
       message.error(`Failed to ${action} run club`);
@@ -92,8 +94,12 @@ const RunClubDetail = ({ currentUser }) => {
           <p style={{ marginTop: 16 }}>{club.description}</p>
         </Card>
 
-        <ClubStatistics clubId={id} membershipChanged={membershipChanged} />
-
+        <ClubStatistics
+          clubId={id}
+          membershipChanged={membershipChanged}
+          stats={clubStats}
+          setStats={setClubStats}
+        />
         <Tabs defaultActiveKey="1" style={{ marginTop: 20 }}>
           <TabPane tab="Discussion" key="1">
             <ClubChat clubId={id} currentUser={currentUser} />

@@ -1120,12 +1120,9 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
         owner: { select: { username: true } },
         _count: { select: { members: true } },
         members: {
-          where: { id: req.user.id },
-          select: { id: true },
+          where: { userId: req.user.id },
+          select: { userId: true },
         },
-      },
-      orderBy: {
-        createdAt: "asc", // This ensures consistent ordering
       },
     });
 
@@ -1141,7 +1138,6 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch run clubs" });
   }
 });
-
 
 // Join a club
 app.post("/run-clubs/:clubId/join", authenticateToken, async (req, res) => {
@@ -1167,6 +1163,7 @@ app.post("/run-clubs/:clubId/join", authenticateToken, async (req, res) => {
       message: "Joined club successfully",
       updatedClub: updatedClub,
       updatedStats: updatedStats,
+      isUserMember: true
     });
   } catch (error) {
     console.error("Error joining club:", error);
@@ -1198,6 +1195,7 @@ app.post("/run-clubs/:clubId/leave", authenticateToken, async (req, res) => {
       message: "Left club successfully",
       updatedClub: updatedClub,
       updatedStats: updatedStats,
+      isUserMember: false
     });
   } catch (error) {
     console.error("Error leaving club:", error);
@@ -1303,11 +1301,23 @@ app.get("/run-clubs/:id", authenticateToken, async (req, res) => {
       include: {
         owner: { select: { username: true } },
         _count: { select: { members: true } },
+        members: {
+          where: { userId: req.user.id },
+          select: { userId: true },
+        },
       },
     });
     if (!club) return res.status(404).json({ error: "Run club not found" });
-    res.json(club);
+
+    const clubWithMembershipStatus = {
+      ...club,
+      isUserMember: club.members.length > 0,
+      members: undefined, // Remove the members array from the response
+    };
+
+    res.json(clubWithMembershipStatus);
   } catch (error) {
+    console.error("Error fetching run club details:", error);
     res.status(500).json({ error: "Failed to fetch run club details" });
   }
 });

@@ -43,7 +43,7 @@ model User {
   ownedClubs          RunClub[]         @relation("OwnedClubs")
   memberOf            RunClub[]         @relation("ClubMembers")
   participatingEvents Event[]           @relation("EventParticipants")
-  ClubMember          ClubMember[]
+  memberships         ClubMember[]
   messages            Message[]
 }
 
@@ -235,7 +235,7 @@ model ClubMember {
   clubId Int
   userId Int
   Club   RunClub @relation(fields: [clubId], references: [id])
-  User   User    @relation(fields: [userId], references: [id])
+  user   User    @relation(fields: [userId], references: [id])
 }
 
 model Message {
