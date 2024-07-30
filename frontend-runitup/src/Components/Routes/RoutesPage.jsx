@@ -465,7 +465,6 @@ const RoutesPage = () => {
           onFinish={handleSubmit}
           layout="inline"
           className="route-form"
-          initialValues={{ startLocation: lastLocation }}
         >
           <Form.Item
             name="startLocation"
@@ -473,7 +472,10 @@ const RoutesPage = () => {
               { required: true, message: "Please enter a starting location" },
             ]}
           >
-            <LocationSearch placeholder="Starting Location" />
+            <LocationSearch
+              placeholder="Starting Location"
+              value={lastLocation}
+            />
           </Form.Item>
           <Form.Item
             name="distance"
