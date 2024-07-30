@@ -1116,7 +1116,6 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
 
     res.json(clubsWithMembershipStatus);
   } catch (error) {
-    console.error("Error fetching run clubs:", error);
     res.status(500).json({ error: "Failed to fetch run clubs" });
   }
 });
@@ -1148,7 +1147,6 @@ app.get("/run-clubs/:id", authenticateToken, async (req, res) => {
 
     res.json(clubWithMembershipStatus);
   } catch (error) {
-    console.error("Error fetching run club details:", error);
     res.status(500).json({ error: "Failed to fetch run club details" });
   }
 });
@@ -1176,7 +1174,6 @@ app.post("/run-clubs/:clubId/join", authenticateToken, async (req, res) => {
       isUserMember: true
     });
   } catch (error) {
-    console.error("Error joining club:", error);
     res.status(500).json({ error: "Failed to join club" });
   }
 });
@@ -1204,7 +1201,6 @@ app.post("/run-clubs/:clubId/leave", authenticateToken, async (req, res) => {
       isUserMember: false
     });
   } catch (error) {
-    console.error("Error leaving club:", error);
     res.status(500).json({ error: "Failed to leave club" });
   }
 });
@@ -1233,7 +1229,6 @@ app.post("/run-clubs", authenticateToken, async (req, res) => {
 
     res.status(201).json(newClub);
   } catch (error) {
-    console.error("Error creating run club:", error);
     res.status(500).json({ error: "Failed to create run club" });
   }
 });
@@ -1260,7 +1255,6 @@ app.get("/run-clubs/:clubId/events", authenticateToken, async (req, res) => {
 
     res.json(formattedEvents);
   } catch (error) {
-    console.error("Error fetching events:", error);
     res.status(500).json({ error: "Failed to fetch events" });
   }
 });
@@ -1292,7 +1286,6 @@ app.post("/run-clubs/:clubId/events", authenticateToken, async (req, res) => {
 
     res.status(201).json(newEvent);
   } catch (error) {
-    console.error("Error creating event:", error);
     res.status(500).json({ error: "Failed to create event" });
   }
 });
@@ -1346,7 +1339,6 @@ app.post("/events/:eventId/rsvp", authenticateToken, async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Error updating RSVP:", error);
     res.status(500).json({ error: "Failed to update RSVP" });
   }
 });
@@ -1364,7 +1356,6 @@ app.get("/run-clubs/:clubId/messages", authenticateToken, async (req, res) => {
     });
     res.json(messages);
   } catch (error) {
-    console.error("Error fetching chat messages:", error);
     res.status(500).json({ error: "Failed to fetch chat messages" });
   }
 });
@@ -1384,7 +1375,6 @@ app.post("/run-clubs/:clubId/messages", authenticateToken, async (req, res) => {
     });
     res.status(201).json(newMessage);
   } catch (error) {
-    console.error("Error sending message:", error);
     res.status(500).json({ error: "Failed to send message" });
   }
 });
@@ -1405,10 +1395,11 @@ app.get("/run-clubs/:clubId/members", authenticateToken, async (req, res) => {
     }));
     res.json(formattedMembers);
   } catch (error) {
-    console.error("Error fetching club members:", error);
     res.status(500).json({ error: "Failed to fetch club members" });
   }
 });
+
+const MINUTES_PER_HOUR = 60;
 
 // Club Statistics
 
@@ -1428,7 +1419,7 @@ app.get("/run-clubs/:clubId/statistics", authenticateToken, async (req, res) => 
 
     const totalDistance = activities.reduce((sum, activity) => sum + activity.distance, 0);
     const totalDuration = activities.reduce((sum, activity) => sum + activity.duration, 0);
-    const averagePace = totalDistance > 0 ? (totalDuration / 60) / totalDistance : 0;
+    const averagePace = totalDistance > 0 ? (totalDuration / MINUTES_PER_HOUR) / totalDistance : 0;
 
     const stats = {
       totalDistance: parseFloat(totalDistance.toFixed(2)),
@@ -1438,7 +1429,6 @@ app.get("/run-clubs/:clubId/statistics", authenticateToken, async (req, res) => 
 
     res.json(stats);
   } catch (error) {
-    console.error("Error fetching club statistics:", error);
     res.status(500).json({ error: "Failed to fetch club statistics" });
   }
 });
