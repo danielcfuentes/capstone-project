@@ -1532,8 +1532,8 @@ app.get("/run-clubs/:clubId/events", authenticateToken, async (req, res) => {
       include: {
         _count: { select: { participants: true } },
         participants: {
-          where: { userId: req.user.id },
-          select: { userId: true },
+          where: { id: req.user.id },
+          select: { id: true },
         },
       },
     });
@@ -1557,12 +1557,17 @@ app.get("/run-clubs/:clubId/events", authenticateToken, async (req, res) => {
 app.post("/events/:eventId/rsvp", authenticateToken, async (req, res) => {
   try {
     const { eventId } = req.params;
-    await prisma.rSVP.create({
+    const userId = req.user.id;
+
+    await prisma.event.update({
+      where: { id: parseInt(eventId) },
       data: {
-        eventId: parseInt(eventId),
-        userId: req.user.id,
-      },
+        participants: {
+          connect: { id: userId }
+        }
+      }
     });
+
     res.status(200).json({ message: "RSVP successful" });
   } catch (error) {
     console.error("Error RSVPing to event:", error);
@@ -1574,12 +1579,17 @@ app.post("/events/:eventId/rsvp", authenticateToken, async (req, res) => {
 app.delete("/events/:eventId/rsvp", authenticateToken, async (req, res) => {
   try {
     const { eventId } = req.params;
-    await prisma.rSVP.deleteMany({
-      where: {
-        eventId: parseInt(eventId),
-        userId: req.user.id,
-      },
+    const userId = req.user.id;
+
+    await prisma.event.update({
+      where: { id: parseInt(eventId) },
+      data: {
+        participants: {
+          disconnect: { id: userId }
+        }
+      }
     });
+
     res.status(200).json({ message: "RSVP cancelled successfully" });
   } catch (error) {
     console.error("Error cancelling RSVP:", error);
