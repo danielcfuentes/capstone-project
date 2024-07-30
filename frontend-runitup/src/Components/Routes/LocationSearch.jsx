@@ -1,11 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AutoComplete } from "antd";
 import mapboxgl from "mapbox-gl";
 
-const LocationSearch = ({ placeholder, onChange }) => {
+const LocationSearch = ({ placeholder, onChange, value }) => {
   const [options, setOptions] = useState([]);
+  const [inputValue, setInputValue] = useState(value || "");
+
+  useEffect(() => {
+    setInputValue(value || "");
+  }, [value]);
 
   const handleSearch = async (value) => {
+    setInputValue(value);
     if (value.length > 2) {
       try {
         const response = await fetch(
@@ -30,6 +36,7 @@ const LocationSearch = ({ placeholder, onChange }) => {
   };
 
   const handleSelect = (value) => {
+    setInputValue(value);
     if (onChange) {
       onChange(value);
     }
@@ -40,6 +47,8 @@ const LocationSearch = ({ placeholder, onChange }) => {
       options={options}
       onSearch={handleSearch}
       onSelect={handleSelect}
+      onChange={setInputValue}
+      value={inputValue}
       placeholder={placeholder}
       style={{ width: 300 }}
     />
