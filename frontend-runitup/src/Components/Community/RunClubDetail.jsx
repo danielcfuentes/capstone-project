@@ -66,13 +66,14 @@ const RunClubDetail = ({ currentUser }) => {
     return <div>Club not found</div>;
   }
 
+  const isOwner = club.owner.username === currentUser.name;
   return (
     <Layout className="run-club-detail">
       <Content>
         <Card
           title={club.name}
           extra={
-            club.ownerId !== currentUser.id && (
+            !isOwner && (
               <Button onClick={handleJoinLeave}>
                 {club.isUserMember ? "Leave" : "Join"}
               </Button>
@@ -93,7 +94,7 @@ const RunClubDetail = ({ currentUser }) => {
           <TabPane tab="Events" key="2">
             <UpcomingEvents
               clubId={id}
-              isOwner={club.ownerId === currentUser.id}
+              isOwner={isOwner}
               currentUser={currentUser}
             />
           </TabPane>
