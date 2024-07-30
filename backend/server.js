@@ -1149,24 +1149,25 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
 app.post("/run-clubs/:clubId/join", authenticateToken, async (req, res) => {
   try {
     const { clubId } = req.params;
-    await prisma.clubMember.create({
-      data: {
-        clubId: parseInt(clubId),
-        userId: req.user.id,
-      },
-    });
+    await prisma.$transaction(async (prisma) => {
+      await prisma.clubMember.create({
+        data: {
+          clubId: parseInt(clubId),
+          userId: req.user.id,
+        },
+      });
 
-    const updatedClub = await prisma.runClub.findUnique({
-      where: { id: parseInt(clubId) },
-      include: {
-        _count: { select: { ClubMember: true } },
-      },
-    });
+      const updatedClub = await prisma.runClub.update({
+        where: { id: parseInt(clubId) },
+        data: { memberCount: { increment: 1 } },
+        select: { memberCount: true },
+      });
 
-    res.status(200).json({
-      message: "Joined club successfully",
-      memberCount: updatedClub._count.ClubMember,
-      isUserMember: true,
+      res.status(200).json({
+        message: "Joined club successfully",
+        memberCount: updatedClub.memberCount,
+        isUserMember: true,
+      });
     });
   } catch (error) {
     console.error("Error joining club:", error);
@@ -1178,24 +1179,25 @@ app.post("/run-clubs/:clubId/join", authenticateToken, async (req, res) => {
 app.post("/run-clubs/:clubId/leave", authenticateToken, async (req, res) => {
   try {
     const { clubId } = req.params;
-    await prisma.clubMember.deleteMany({
-      where: {
-        clubId: parseInt(clubId),
-        userId: req.user.id,
-      },
-    });
+    await prisma.$transaction(async (prisma) => {
+      await prisma.clubMember.deleteMany({
+        where: {
+          clubId: parseInt(clubId),
+          userId: req.user.id,
+        },
+      });
 
-    const updatedClub = await prisma.runClub.findUnique({
-      where: { id: parseInt(clubId) },
-      include: {
-        _count: { select: { ClubMember: true } },
-      },
-    });
+      const updatedClub = await prisma.runClub.update({
+        where: { id: parseInt(clubId) },
+        data: { memberCount: { decrement: 1 } },
+        select: { memberCount: true },
+      });
 
-    res.status(200).json({
-      message: "Left club successfully",
-      memberCount: updatedClub._count.ClubMember,
-      isUserMember: false,
+      res.status(200).json({
+        message: "Left club successfully",
+        memberCount: updatedClub.memberCount,
+        isUserMember: false,
+      });
     });
   } catch (error) {
     console.error("Error leaving club:", error);
