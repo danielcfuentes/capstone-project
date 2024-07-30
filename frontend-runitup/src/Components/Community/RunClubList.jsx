@@ -32,7 +32,6 @@ const RunClubList = ({ currentUser }) => {
       setClubs(data);
     } catch (error) {
       message.error("Failed to fetch run clubs");
-      console.error("Error fetching clubs:", error);
     } finally {
       setLoading(false);
     }
