@@ -18,10 +18,6 @@ const ClubChat = ({ clubId, currentUser }) => {
     return () => clearInterval(intervalId);
   }, [clubId]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const fetchMessages = async () => {
     try {
       const response = await fetch(
@@ -34,6 +30,7 @@ const ClubChat = ({ clubId, currentUser }) => {
       const data = await response.json();
       setMessages(data);
       setLoading(false);
+      scrollToBottom(); // Add this line here
     } catch (error) {
       setLoading(false);
     }
