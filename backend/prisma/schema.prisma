@@ -45,6 +45,8 @@ model User {
   participatingEvents Event[]           @relation("EventParticipants")
   memberships         ClubMember[]
   messages            Message[]
+  RSVP                RSVP[]
+  Event               Event[]
 }
 
 model Token {
@@ -228,7 +230,19 @@ model Event {
   updatedAt    DateTime @updatedAt
   clubId       Int
   club         RunClub  @relation(fields: [clubId], references: [id])
-  participants User[]   @relation("EventParticipants")
+  participants RSVP[]
+  userId       Int?
+  User         User?    @relation(fields: [userId], references: [id])
+}
+
+model RSVP {
+  id      Int   @id @default(autoincrement())
+  eventId Int
+  userId  Int
+  event   Event @relation(fields: [eventId], references: [id])
+  user    User  @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
 }
 
 model ClubMember {

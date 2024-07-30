@@ -1461,33 +1461,6 @@ app.get(
   }
 );
 
-// Fetch club events
-app.get("/run-clubs/:clubId/events", authenticateToken, async (req, res) => {
-  try {
-    const events = await prisma.event.findMany({
-      where: { clubId: parseInt(req.params.clubId) },
-      include: {
-        participants: {
-          select: { id: true },
-        },
-      },
-      orderBy: { date: "asc" },
-    });
-
-    const eventsWithParticipantCount = events.map((event) => ({
-      ...event,
-      participantCount: event.participants.length,
-      participants: undefined, // Remove the participants array from the response
-    }));
-
-    res.json(eventsWithParticipantCount);
-  } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to fetch club events", details: error.message });
-  }
-});
-
 // Helper function to calculate club statistics
 async function calculateClubStatistics(clubId) {
   const clubMembers = await prisma.clubMember.findMany({
@@ -1517,6 +1490,102 @@ async function calculateClubStatistics(clubId) {
     totalActivities: activities.length,
   };
 }
+
+// Create a new event
+app.post("/run-clubs/:clubId/events", authenticateToken, async (req, res) => {
+  try {
+    const { clubId } = req.params;
+    const { title, description, date, location } = req.body;
+
+    const club = await prisma.runClub.findUnique({
+      where: { id: parseInt(clubId) },
+      select: { ownerId: true },
+    });
+
+    if (club.ownerId !== req.user.id) {
+      return res.status(403).json({ error: "Only club owners can create events" });
+    }
+
+    const newEvent = await prisma.event.create({
+      data: {
+        title,
+        description,
+        date: new Date(date),
+        location,
+        clubId: parseInt(clubId),
+      },
+    });
+
+    res.status(201).json(newEvent);
+  } catch (error) {
+    console.error("Error creating event:", error);
+    res.status(500).json({ error: "Failed to create event" });
+  }
+});
+
+// Get club events
+app.get("/run-clubs/:clubId/events", authenticateToken, async (req, res) => {
+  try {
+    const { clubId } = req.params;
+    const events = await prisma.event.findMany({
+      where: { clubId: parseInt(clubId) },
+      include: {
+        _count: { select: { participants: true } },
+        participants: {
+          where: { userId: req.user.id },
+          select: { userId: true },
+        },
+      },
+    });
+
+    const formattedEvents = events.map(event => ({
+      ...event,
+      participantCount: event._count.participants,
+      isUserRSVPd: event.participants.length > 0,
+      _count: undefined,
+      participants: undefined,
+    }));
+
+    res.json(formattedEvents);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ error: "Failed to fetch events" });
+  }
+});
+
+// RSVP to an event
+app.post("/events/:eventId/rsvp", authenticateToken, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    await prisma.rSVP.create({
+      data: {
+        eventId: parseInt(eventId),
+        userId: req.user.id,
+      },
+    });
+    res.status(200).json({ message: "RSVP successful" });
+  } catch (error) {
+    console.error("Error RSVPing to event:", error);
+    res.status(500).json({ error: "Failed to RSVP to event" });
+  }
+});
+
+// Cancel RSVP
+app.delete("/events/:eventId/rsvp", authenticateToken, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    await prisma.rSVP.deleteMany({
+      where: {
+        eventId: parseInt(eventId),
+        userId: req.user.id,
+      },
+    });
+    res.status(200).json({ message: "RSVP cancelled successfully" });
+  } catch (error) {
+    console.error("Error cancelling RSVP:", error);
+    res.status(500).json({ error: "Failed to cancel RSVP" });
+  }
+});
 
 // Start the server and log that the cron job is set up
 app.listen(PORT, () => {});
