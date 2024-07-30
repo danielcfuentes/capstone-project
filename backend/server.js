@@ -1386,6 +1386,8 @@ app.get('/run-clubs/:clubId/members', authenticateToken, async (req, res) => {
   }
 });
 
+const MINUTES_PER_HOUR = 60;
+
 // Fetch club statistics
 app.get('/run-clubs/:clubId/statistics', authenticateToken, async (req, res) => {
   try {
@@ -1401,7 +1403,7 @@ app.get('/run-clubs/:clubId/statistics', authenticateToken, async (req, res) => 
 
     const totalDistance = activities.reduce((sum, activity) => sum + activity.distance, 0);
     const totalDuration = activities.reduce((sum, activity) => sum + activity.duration, 0);
-    const averagePace = totalDistance > 0 ? (totalDuration / 60) / totalDistance : 0;
+    const averagePace = totalDistance > 0 ? (totalDuration / MINUTES_PER_HOUR) / totalDistance : 0;
 
     res.json({
       totalDistance: parseFloat(totalDistance.toFixed(2)),
