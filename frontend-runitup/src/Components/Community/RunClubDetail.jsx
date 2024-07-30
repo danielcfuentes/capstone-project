@@ -105,7 +105,11 @@ const RunClubDetail = ({ currentUser }) => {
             <ClubChat clubId={id} currentUser={currentUser} />
           </TabPane>
           <TabPane tab="Events" key="2">
-            <UpcomingEvents clubId={id} />
+            <UpcomingEvents
+              clubId={id}
+              isOwner={isOwner}
+              currentUser={currentUser}
+            />
           </TabPane>
           <TabPane tab="Members" key="3">
             <ClubMembersList club={club} currentUser={currentUser} />
