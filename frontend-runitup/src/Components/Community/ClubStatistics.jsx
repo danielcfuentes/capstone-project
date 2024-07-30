@@ -1,3 +1,4 @@
+// ClubStatistics.jsx
 import React, { useState, useEffect } from "react";
 import { Card, Statistic, Row, Col, Spin } from "antd";
 import {
@@ -13,6 +14,7 @@ const ClubStatistics = ({ clubId }) => {
 
   useEffect(() => {
     const fetchStats = async () => {
+      setLoading(true);
       try {
         const response = await fetch(
           `${import.meta.env.VITE_POST_ADDRESS}/run-clubs/${clubId}/statistics`,

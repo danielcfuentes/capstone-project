@@ -1,3 +1,4 @@
+// ClubMembersList.jsx
 import React, { useState, useEffect } from "react";
 import { List, Avatar, Typography, Spin } from "antd";
 import { UserOutlined } from "@ant-design/icons";
@@ -11,6 +12,7 @@ const ClubMembersList = ({ clubId, currentUser }) => {
 
   useEffect(() => {
     const fetchMembers = async () => {
+      setLoading(true);
       try {
         const response = await fetch(
           `${import.meta.env.VITE_POST_ADDRESS}/run-clubs/${clubId}/members`,
