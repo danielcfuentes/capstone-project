@@ -62,14 +62,13 @@ const RunClubList = ({ user }) => {
       const data = await response.json();
       message.success(data.message);
 
-      // Update local state
       setClubs((prevClubs) =>
         prevClubs.map((club) =>
           club.id === clubId
             ? {
                 ...club,
-                isUserMember: action === "join",
-                _count: { members: data.updatedClub._count.members },
+                isUserMember: data.isUserMember,
+                _count: { ...club._count, members: data.memberCount },
               }
             : club
         )

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Card, Avatar, message, Button, Tabs, Layout } from "antd";
+import { Card, Avatar, message, Button, Tabs, Layout, Tooltip } from "antd";
+import { CrownOutlined } from "@ant-design/icons";
 import { getHeaders } from "../../utils/apiConfig";
 import ClubChat from "./ClubChat";
 import ClubMembersList from "./ClubMembersList";
@@ -54,11 +55,8 @@ const RunClubDetail = ({ currentUser }) => {
       message.success(data.message);
       setClub((prevClub) => ({
         ...prevClub,
-        isUserMember: action === "join",
-        memberCount:
-          action === "join"
-            ? prevClub.memberCount + 1
-            : prevClub.memberCount - 1,
+        isUserMember: data.isUserMember,
+        memberCount: data.memberCount,
       }));
       setMembershipChanged((prev) => !prev);
     } catch (error) {
@@ -68,6 +66,7 @@ const RunClubDetail = ({ currentUser }) => {
 
   if (loading) return <div>Loading...</div>;
   if (!club) return <div>Club not found</div>;
+  const isOwner = club.owner.username === currentUser.name;
 
   return (
     <Layout className="run-club-detail">
@@ -75,7 +74,11 @@ const RunClubDetail = ({ currentUser }) => {
         <Card
           title={club.name}
           extra={
-            club.ownerId !== currentUser.id && (
+            isOwner ? (
+              <Tooltip title="You are the owner">
+                <CrownOutlined style={{ color: "gold", fontSize: "24px" }} />
+              </Tooltip>
+            ) : (
               <Button
                 type="primary"
                 onClick={() =>

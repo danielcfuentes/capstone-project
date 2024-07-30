@@ -1159,17 +1159,14 @@ app.post("/run-clubs/:clubId/join", authenticateToken, async (req, res) => {
     const updatedClub = await prisma.runClub.findUnique({
       where: { id: parseInt(clubId) },
       include: {
-        _count: { select: { members: true } },
+        _count: { select: { ClubMember: true } },
       },
     });
 
-    const updatedStats = await calculateClubStatistics(clubId);
-
     res.status(200).json({
       message: "Joined club successfully",
-      updatedClub: updatedClub,
-      updatedStats: updatedStats,
-      isUserMember: true
+      memberCount: updatedClub._count.ClubMember,
+      isUserMember: true,
     });
   } catch (error) {
     console.error("Error joining club:", error);
@@ -1191,17 +1188,14 @@ app.post("/run-clubs/:clubId/leave", authenticateToken, async (req, res) => {
     const updatedClub = await prisma.runClub.findUnique({
       where: { id: parseInt(clubId) },
       include: {
-        _count: { select: { members: true } },
+        _count: { select: { ClubMember: true } },
       },
     });
 
-    const updatedStats = await calculateClubStatistics(clubId);
-
     res.status(200).json({
       message: "Left club successfully",
-      updatedClub: updatedClub,
-      updatedStats: updatedStats,
-      isUserMember: false
+      memberCount: updatedClub._count.ClubMember,
+      isUserMember: false,
     });
   } catch (error) {
     console.error("Error leaving club:", error);
