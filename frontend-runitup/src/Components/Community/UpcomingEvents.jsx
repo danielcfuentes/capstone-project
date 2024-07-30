@@ -49,27 +49,24 @@ const UpcomingEvents = ({ clubId, isOwner, currentUser }) => {
       message.success("Event created successfully");
       setIsModalVisible(false);
       form.resetFields();
-      fetchEvents();
+      fetchEvents(); // Refetch events after creating a new one
     } catch (error) {
       message.error("Error creating event");
     }
   };
 
-  const handleRSVP = async (eventId, isRSVPd) => {
+  const handleRSVP = async (eventId) => {
     try {
-      const method = isRSVPd ? "DELETE" : "POST";
       const response = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/events/${eventId}/rsvp`,
-        { method, headers: getHeaders() }
+        { method: "POST", headers: getHeaders() }
       );
-      if (!response.ok)
-        throw new Error(`Failed to ${isRSVPd ? "cancel" : "submit"} RSVP`);
-      message.success(
-        `RSVP ${isRSVPd ? "cancelled" : "submitted"} successfully`
-      );
-      fetchEvents();
+      if (!response.ok) throw new Error("Failed to update RSVP");
+      const data = await response.json();
+      message.success(data.message);
+      fetchEvents(); // Refetch events after RSVP action
     } catch (error) {
-      message.error(`Error ${isRSVPd ? "cancelling" : "submitting"} RSVP`);
+      message.error("Error updating RSVP");
     }
   };
 
@@ -95,7 +92,7 @@ const UpcomingEvents = ({ clubId, isOwner, currentUser }) => {
               extra={
                 <Button
                   type={event.isUserRSVPd ? "default" : "primary"}
-                  onClick={() => handleRSVP(event.id, event.isUserRSVPd)}
+                  onClick={() => handleRSVP(event.id)}
                 >
                   {event.isUserRSVPd ? "Cancel RSVP" : "RSVP"}
                 </Button>

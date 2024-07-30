@@ -98,7 +98,7 @@ const RunClubDetail = ({ currentUser }) => {
           <p style={{ marginTop: 16 }}>{club.description}</p>
         </Card>
 
-        <ClubStatistics club={club} />
+        <ClubStatistics clubId={id} />
 
         <Tabs defaultActiveKey="1" style={{ marginTop: 20 }}>
           <TabPane tab="Discussion" key="1">
@@ -107,12 +107,12 @@ const RunClubDetail = ({ currentUser }) => {
           <TabPane tab="Events" key="2">
             <UpcomingEvents
               clubId={id}
-              isOwner={isOwner}
+              isOwner={club?.ownerId === currentUser.id}
               currentUser={currentUser}
             />
           </TabPane>
           <TabPane tab="Members" key="3">
-            <ClubMembersList club={club} currentUser={currentUser} />
+            <ClubMembersList clubId={id} currentUser={currentUser} />
           </TabPane>
         </Tabs>
       </Content>
