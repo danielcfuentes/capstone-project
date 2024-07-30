@@ -59,9 +59,8 @@ const RunClubList = ({ user }) => {
       );
       if (!response.ok) throw new Error(`Failed to ${action} run club`);
 
-      message.success(
-        `Successfully ${action === "join" ? "joined" : "left"} the run club`
-      );
+      const data = await response.json();
+      message.success(data.message);
 
       // Update local state
       setClubs((prevClubs) =>
@@ -70,10 +69,7 @@ const RunClubList = ({ user }) => {
             ? {
                 ...club,
                 isUserMember: action === "join",
-                _count: {
-                  ...club._count,
-                  members: club._count.members + (action === "join" ? 1 : -1),
-                },
+                _count: { members: data.updatedClub._count.members },
               }
             : club
         )
@@ -85,20 +81,15 @@ const RunClubList = ({ user }) => {
 
   const handleCreateClub = async (values) => {
     try {
-      const formData = new FormData();
-      formData.append("name", values.name);
-      formData.append("description", values.description);
-      formData.append("location", values.location);
-      if (values.logo && values.logo[0]) {
-        formData.append("logo", values.logo[0].originFileObj);
-      }
-
       const response = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/run-clubs`,
         {
           method: "POST",
-          headers: getHeaders(),
-          body: formData,
+          headers: {
+            ...getHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
         }
       );
       if (!response.ok) throw new Error("Failed to create run club");

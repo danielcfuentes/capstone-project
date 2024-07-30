@@ -15,6 +15,7 @@ const RunClubDetail = ({ currentUser }) => {
   const { id } = useParams();
   const [club, setClub] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [membershipChanged, setMembershipChanged] = useState(false);
 
   useEffect(() => {
     fetchClubDetail();
@@ -38,6 +39,30 @@ const RunClubDetail = ({ currentUser }) => {
     }
   };
 
+  const handleJoinOrLeave = async (action) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/run-clubs/${id}/${action}`,
+        {
+          method: "POST",
+          headers: getHeaders(),
+        }
+      );
+      if (!response.ok) throw new Error(`Failed to ${action} run club`);
+
+      const data = await response.json();
+      message.success(data.message);
+      setClub((prevClub) => ({
+        ...prevClub,
+        isUserMember: action === "join",
+        _count: { members: data.updatedClub._count.members },
+      }));
+      setMembershipChanged((prev) => !prev);
+    } catch (error) {
+      message.error(`Failed to ${action} run club`);
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (!club) return <div>Club not found</div>;
 
@@ -46,20 +71,28 @@ const RunClubDetail = ({ currentUser }) => {
       <Content>
         <Card
           title={club.name}
-          extra={<Button type="primary">Join</Button>}
+          extra={
+            club.ownerId !== currentUser.id && (
+              <Button
+                type="primary"
+                onClick={() =>
+                  handleJoinOrLeave(club.isUserMember ? "leave" : "join")
+                }
+              >
+                {club.isUserMember ? "Leave" : "Join"}
+              </Button>
+            )
+          }
           style={{ marginBottom: 20 }}
         >
           <Card.Meta
-            avatar={
-              <Avatar src={`data:image/jpeg;base64,${club.logo}`} size={64} />
-            }
             title={`Location: ${club.location}`}
             description={`Members: ${club._count.members}`}
           />
           <p style={{ marginTop: 16 }}>{club.description}</p>
         </Card>
 
-        <ClubStatistics clubId={id} />
+        <ClubStatistics clubId={id} membershipChanged={membershipChanged} />
 
         <Tabs defaultActiveKey="1" style={{ marginTop: 20 }}>
           <TabPane tab="Discussion" key="1">

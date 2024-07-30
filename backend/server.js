@@ -1092,17 +1092,15 @@ app.post("/generate-route", authenticateToken, async (req, res) => {
 
 
 // Create a new run club
-app.post("/run-clubs", authenticateToken, upload.single('logo'), async (req, res) => {
+app.post("/run-clubs", authenticateToken, async (req, res) => {
   try {
     const { name, description, location } = req.body;
-    const logo = req.file ? req.file.buffer : null;
 
     const newClub = await prisma.runClub.create({
       data: {
         name,
         description,
         location,
-        logo,
         ownerId: req.user.id,
       },
     });
@@ -1126,6 +1124,9 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
           select: { id: true },
         },
       },
+      orderBy: {
+        createdAt: "asc", // This ensures consistent ordering
+      },
     });
 
     const clubsWithMembershipStatus = clubs.map((club) => ({
@@ -1141,6 +1142,7 @@ app.get("/run-clubs", authenticateToken, async (req, res) => {
   }
 });
 
+
 // Join a club
 app.post("/run-clubs/:clubId/join", authenticateToken, async (req, res) => {
   try {
@@ -1153,7 +1155,19 @@ app.post("/run-clubs/:clubId/join", authenticateToken, async (req, res) => {
         },
       },
     });
-    res.status(200).json({ message: "Joined club successfully" });
+
+    // Fetch updated club data
+    const updatedClub = await prisma.runClub.findUnique({
+      where: { id: parseInt(clubId) },
+      include: {
+        _count: { select: { members: true } },
+      },
+    });
+
+    res.status(200).json({
+      message: "Joined club successfully",
+      updatedClub: updatedClub
+    });
   } catch (error) {
     console.error("Error joining club:", error);
     res.status(500).json({ error: "Failed to join club" });
@@ -1172,7 +1186,19 @@ app.post("/run-clubs/:clubId/leave", authenticateToken, async (req, res) => {
         },
       },
     });
-    res.status(200).json({ message: "Left club successfully" });
+
+    // Fetch updated club data
+    const updatedClub = await prisma.runClub.findUnique({
+      where: { id: parseInt(clubId) },
+      include: {
+        _count: { select: { members: true } },
+      },
+    });
+
+    res.status(200).json({
+      message: "Left club successfully",
+      updatedClub: updatedClub
+    });
   } catch (error) {
     console.error("Error leaving club:", error);
     res.status(500).json({ error: "Failed to leave club" });
