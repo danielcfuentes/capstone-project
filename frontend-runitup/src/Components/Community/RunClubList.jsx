@@ -1,17 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  List,
-  Card,
-  Avatar,
-  Button,
-  Modal,
-  Form,
-  Input,
-  message,
-  Tooltip,
-  Row,
-  Col,
-} from "antd";
+import { List, Card, Button, Modal, Form, Input, message, Spin } from "antd";
 import {
   PlusOutlined,
   CrownOutlined,
@@ -19,11 +7,11 @@ import {
 } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import { getHeaders } from "../../utils/apiConfig";
-import "../../styles/RunClubList.css";
-
-const RunClubList = ({ user }) => {
+import "../../styles/RunClubList.css"
+const RunClubList = ({ currentUser }) => {
   const [clubs, setClubs] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -31,6 +19,7 @@ const RunClubList = ({ user }) => {
   }, []);
 
   const fetchClubs = async () => {
+    setLoading(true);
     try {
       const response = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/run-clubs`,
@@ -38,13 +27,14 @@ const RunClubList = ({ user }) => {
           headers: getHeaders(),
         }
       );
-      if (!response.ok) {
-        throw new Error("Failed to fetch run clubs");
-      }
+      if (!response.ok) throw new Error("Failed to fetch run clubs");
       const data = await response.json();
       setClubs(data);
     } catch (error) {
       message.error("Failed to fetch run clubs");
+      console.error("Error fetching clubs:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,7 +48,6 @@ const RunClubList = ({ user }) => {
         }
       );
       if (!response.ok) throw new Error(`Failed to ${action} run club`);
-
       const data = await response.json();
       message.success(data.message);
 
@@ -68,7 +57,7 @@ const RunClubList = ({ user }) => {
             ? {
                 ...club,
                 isUserMember: data.isUserMember,
-                _count: { ...club._count, members: data.memberCount },
+                memberCount: data.memberCount,
               }
             : club
         )
@@ -84,10 +73,7 @@ const RunClubList = ({ user }) => {
         `${import.meta.env.VITE_POST_ADDRESS}/run-clubs`,
         {
           method: "POST",
-          headers: {
-            ...getHeaders(),
-            "Content-Type": "application/json",
-          },
+          headers: getHeaders(),
           body: JSON.stringify(values),
         }
       );
@@ -101,6 +87,10 @@ const RunClubList = ({ user }) => {
     }
   };
 
+  if (loading) {
+    return <Spin size="large" />;
+  }
+
   return (
     <div className="run-club-list">
       <Button
@@ -112,21 +102,19 @@ const RunClubList = ({ user }) => {
         Create Run Club
       </Button>
       <List
-        grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 4, xxl: 4 }}
+        grid={{ gutter: 16, column: 3 }}
         dataSource={clubs}
         renderItem={(club) => {
-          const isOwner = club.owner.username === user.name;
+          const isOwner =
+            club.owner && club.owner.username === currentUser.name;
 
           return (
             <List.Item>
               <Card
-                className="run-club-card"
                 title={<Link to={`/run-clubs/${club.id}`}>{club.name}</Link>}
                 extra={
                   isOwner ? (
-                    <Tooltip title="You are the owner">
-                      <CrownOutlined style={{ color: "gold" }} />
-                    </Tooltip>
+                    <CrownOutlined style={{ color: "gold" }} />
                   ) : (
                     <Button
                       onClick={() =>
@@ -135,26 +123,18 @@ const RunClubList = ({ user }) => {
                           club.isUserMember ? "leave" : "join"
                         )
                       }
-                      disabled={isOwner}
-                      type={club.isUserMember ? "default" : "primary"}
                     >
                       {club.isUserMember ? "Leave" : "Join"}
                     </Button>
                   )
                 }
               >
-                <Card.Meta
-                  title={club.location}
-                  description={
-                    <Row>
-                      <Col span={12}>
-                        <UsergroupAddOutlined /> {club._count.members} members
-                      </Col>
-                      <Col span={12}>Owner: {club.owner.username}</Col>
-                    </Row>
-                  }
-                />
-                <p style={{ marginTop: 16 }}>{club.description}</p>
+                <p>{club.location || "No location specified"}</p>
+                <p>
+                  <UsergroupAddOutlined /> {club.memberCount || 0} members
+                </p>
+                <p>Owner: {club.owner ? club.owner.username : "Unknown"}</p>
+                <p>{club.description || "No description available"}</p>
               </Card>
             </List.Item>
           );
