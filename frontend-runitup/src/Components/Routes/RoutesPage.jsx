@@ -66,6 +66,7 @@ const RoutesPage = () => {
   const [activeChallenges, setActiveChallenges] = useState([]);
   const [completedChallenges, setCompletedChallenges] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
+  const [lastLocation, setLastLocation] = useState("");
 
   // Effect to initialize the map and fetch user profile on component mount
   useEffect(() => {
@@ -76,6 +77,7 @@ const RoutesPage = () => {
     });
     fetchUserProfile();
     fetchChallenges();
+    fetchLastActivity();
     return () => map.remove();
   }, []);
 
@@ -127,6 +129,25 @@ const RoutesPage = () => {
       setRecommendations(recommendedRoutes);
     } catch (error) {
       return;
+    }
+  };
+
+  const fetchLastActivity = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/user-activities?limit=1`,
+        {
+          headers: getHeaders(),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch last activity");
+      const data = await response.json();
+      if (data.length > 0 && data[0].startLocation) {
+        setLastLocation(data[0].startLocation);
+        form.setFieldsValue({ startLocation: data[0].startLocation });
+      }
+    } catch (error) {
+      console.error("Error fetching last activity:", error);
     }
   };
 
@@ -444,6 +465,7 @@ const RoutesPage = () => {
           onFinish={handleSubmit}
           layout="inline"
           className="route-form"
+          initialValues={{ startLocation: lastLocation }}
         >
           <Form.Item
             name="startLocation"
