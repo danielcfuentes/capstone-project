@@ -1,26 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Card, Avatar, message, Button, Tabs, Layout } from "antd";
+import { Card, Button, Tabs, Layout, message, Spin } from "antd";
 import { getHeaders } from "../../utils/apiConfig";
 import ClubChat from "./ClubChat";
 import ClubMembersList from "./ClubMembersList";
 import ClubStatistics from "./ClubStatistics";
 import UpcomingEvents from "./UpcomingEvents";
-import "../../styles/RunClubList.css";
 
-const { TabPane } = Tabs;
 const { Content } = Layout;
+const { TabPane } = Tabs;
 
 const RunClubDetail = ({ currentUser }) => {
   const { id } = useParams();
   const [club, setClub] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchClubDetail();
-  }, [id]);
-
   const fetchClubDetail = async () => {
+    setLoading(true);
     try {
       const response = await fetch(
         `${import.meta.env.VITE_POST_ADDRESS}/run-clubs/${id}`,
@@ -38,38 +34,76 @@ const RunClubDetail = ({ currentUser }) => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (!club) return <div>Club not found</div>;
+  useEffect(() => {
+    fetchClubDetail();
+  }, [id]);
 
+  const handleJoinLeave = async () => {
+    try {
+      const action = club.isUserMember ? "leave" : "join";
+      const response = await fetch(
+        `${import.meta.env.VITE_POST_ADDRESS}/run-clubs/${id}/${action}`,
+        {
+          method: "POST",
+          headers: getHeaders(),
+        }
+      );
+      if (!response.ok) throw new Error(`Failed to ${action} club`);
+      await fetchClubDetail(); // Fetch updated club details
+      message.success(`Successfully ${action}ed the club`);
+    } catch (error) {
+      message.error(
+        `Failed to ${club.isUserMember ? "leave" : "join"} the club`
+      );
+    }
+  };
+
+  if (loading) {
+    return <Spin size="large" />;
+  }
+
+  if (!club) {
+    return <div>Club not found</div>;
+  }
+
+  const isOwner = club.owner.username === currentUser.name;
   return (
     <Layout className="run-club-detail">
       <Content>
         <Card
           title={club.name}
-          extra={<Button type="primary">Join</Button>}
-          style={{ marginBottom: 20 }}
+          extra={
+            !isOwner && (
+              <Button onClick={handleJoinLeave}>
+                {club.isUserMember ? "Leave" : "Join"}
+              </Button>
+            )
+          }
         >
-          <Card.Meta
-            avatar={
-              <Avatar src={`data:image/jpeg;base64,${club.logo}`} size={64} />
-            }
-            title={`Location: ${club.location}`}
-            description={`Members: ${club._count.members}`}
-          />
-          <p style={{ marginTop: 16 }}>{club.description}</p>
+          <p>Location: {club.location}</p>
+          <p>Members: {club.memberCount}</p>
+          <p>{club.description}</p>
         </Card>
 
-        <ClubStatistics clubId={id} />
+        <ClubStatistics clubId={id} key={`stats-${club.memberCount}`} />
 
         <Tabs defaultActiveKey="1" style={{ marginTop: 20 }}>
           <TabPane tab="Discussion" key="1">
             <ClubChat clubId={id} currentUser={currentUser} />
           </TabPane>
           <TabPane tab="Events" key="2">
-            <UpcomingEvents clubId={id} />
+            <UpcomingEvents
+              clubId={id}
+              isOwner={isOwner}
+              currentUser={currentUser}
+            />
           </TabPane>
           <TabPane tab="Members" key="3">
-            <ClubMembersList clubId={id} currentUser={currentUser} />
+            <ClubMembersList
+              clubId={id}
+              currentUser={currentUser}
+              key={`members-${club.memberCount}`}
+            />
           </TabPane>
         </Tabs>
       </Content>

@@ -1,5 +1,6 @@
 .run-club-list {
   padding: 20px;
+  padding-top: 100px;
 }
 
 .run-club-card {
@@ -13,8 +14,9 @@
 }
 
 .run-club-detail {
+  margin-top: 80px;
+  padding-top: 100px;
   padding: 20px;
-  min-height: calc(100vh - 64px); /*header height is 64px */
 }
 
 .club-statistics {

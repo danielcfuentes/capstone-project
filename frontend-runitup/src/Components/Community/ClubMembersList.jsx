@@ -1,5 +1,6 @@
+// ClubMembersList.jsx
 import React, { useState, useEffect } from "react";
-import { List, Avatar, Typography, message } from "antd";
+import { List, Avatar, Typography, Spin, message } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import { getHeaders, generateColor } from "../../utils/apiConfig";
 
@@ -10,32 +11,33 @@ const ClubMembersList = ({ clubId, currentUser }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchMembers = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_POST_ADDRESS}/run-clubs/${clubId}/members`,
+          { headers: getHeaders() }
+        );
+        if (!response.ok) throw new Error("Failed to fetch members");
+        const data = await response.json();
+        setMembers(data);
+      } catch (error) {
+        message.error("Error fetching members:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchMembers();
   }, [clubId]);
 
-  const fetchMembers = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_POST_ADDRESS}/run-clubs/${clubId}/members`,
-        {
-          headers: getHeaders(),
-        }
-      );
-      if (!response.ok) throw new Error("Failed to fetch members");
-      const data = await response.json();
-      setMembers(data);
-    } catch (error) {
-      message.error("Error fetching members:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (loading) return <Spin size="large" />;
+  if (members.length === 0) return <div>No members found</div>;
 
   return (
     <div className="members-list">
       <Title level={4}>Club Members</Title>
       <List
-        loading={loading}
         itemLayout="horizontal"
         dataSource={members}
         renderItem={(member) => (
@@ -50,9 +52,11 @@ const ClubMembersList = ({ clubId, currentUser }) => {
                 </Avatar>
               }
               title={
-                <span className={member.username === currentUser.name ? "current-user" : ""}>
+                <span
+                  className={member.id === currentUser.id ? "current-user" : ""}
+                >
                   {member.username}
-                  {member.username === currentUser.name && " (You)"}
+                  {member.id === currentUser.id && " (You)"}
                 </span>
               }
             />
