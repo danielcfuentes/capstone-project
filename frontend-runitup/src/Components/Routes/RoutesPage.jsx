@@ -41,6 +41,7 @@ import {
   getRouteRecommendations,
   applyRecommendation,
 } from "../../utils/routeRecommendations";
+import LocationSearch from "./LocationSearch";
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -450,7 +451,7 @@ const RoutesPage = () => {
               { required: true, message: "Please enter a starting location" },
             ]}
           >
-            <Input placeholder="Starting Location" />
+            <LocationSearch placeholder="Starting Location" />
           </Form.Item>
           <Form.Item
             name="distance"
