@@ -1113,18 +1113,36 @@ app.post("/run-clubs", authenticateToken, async (req, res) => {
   }
 });
 
-// Get all run clubs
+// Update the GET /run-clubs route to include member count, owner info, and user membership status
 app.get("/run-clubs", authenticateToken, async (req, res) => {
   try {
     const clubs = await prisma.runClub.findMany({
       include: {
         owner: { select: { username: true } },
         _count: { select: { members: true } },
+        members: {
+          where: { username: req.user.name },
+          select: { username: true },
+        },
       },
     });
-    res.json(clubs);
+
+
+    const clubsWithMembershipStatus = clubs.map((club) => ({
+      ...club,
+      isUserMember: club.members.length > 0,
+      members: undefined, // Remove the members array from the response
+    }));
+
+    res.json(clubsWithMembershipStatus);
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch run clubs" });
+    res
+      .status(500)
+      .json({
+        error: "Failed to fetch run clubs",
+        details: error.message,
+        stack: error.stack,
+      });
   }
 });
 
@@ -1320,7 +1338,7 @@ app.get("/user/owned-clubs", authenticateToken, async (req, res) => {
 });
 
 // Fetch messages for a run club
-router.get('/run-clubs/:clubId/messages', authenticateToken, async (req, res) => {
+app.get('/run-clubs/:clubId/messages', authenticateToken, async (req, res) => {
   try {
     const messages = await prisma.message.findMany({
       where: { clubId: parseInt(req.params.clubId) },
@@ -1329,13 +1347,12 @@ router.get('/run-clubs/:clubId/messages', authenticateToken, async (req, res) =>
     });
     res.json(messages);
   } catch (error) {
-    console.error('Error fetching messages:', error);
     res.status(500).json({ error: 'Failed to fetch messages', details: error.message });
   }
 });
 
 // Send a message in a run club
-router.post('/run-clubs/:clubId/messages', authenticateToken, async (req, res) => {
+app.post('/run-clubs/:clubId/messages', authenticateToken, async (req, res) => {
   const { content } = req.body;
   if (!content) {
     return res.status(400).json({ error: 'Message content cannot be empty' });
@@ -1352,8 +1369,76 @@ router.post('/run-clubs/:clubId/messages', authenticateToken, async (req, res) =
     });
     res.status(201).json(message);
   } catch (error) {
-    console.error('Error sending message:', error);
     res.status(500).json({ error: 'Failed to send message', details: error.message });
+  }
+});
+
+// Fetch club members
+app.get('/run-clubs/:clubId/members', authenticateToken, async (req, res) => {
+  try {
+    const members = await prisma.clubMember.findMany({
+      where: { clubId: parseInt(req.params.clubId) },
+      include: { User: { select: { username: true } } },
+    });
+    res.json(members.map(member => member.User));
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch club members', details: error.message });
+  }
+});
+
+const MINUTES_PER_HOUR = 60;
+
+// Fetch club statistics
+app.get('/run-clubs/:clubId/statistics', authenticateToken, async (req, res) => {
+  try {
+    const clubMembers = await prisma.clubMember.findMany({
+      where: { clubId: parseInt(req.params.clubId) },
+      select: { userId: true },
+    });
+    const memberIds = clubMembers.map(member => member.userId);
+
+    const activities = await prisma.userActivity.findMany({
+      where: { userId: { in: memberIds } },
+    });
+
+    const totalDistance = activities.reduce((sum, activity) => sum + activity.distance, 0);
+    const totalDuration = activities.reduce((sum, activity) => sum + activity.duration, 0);
+    const averagePace = totalDistance > 0 ? (totalDuration / MINUTES_PER_HOUR) / totalDistance : 0;
+
+    res.json({
+      totalDistance: parseFloat(totalDistance.toFixed(2)),
+      averagePace: parseFloat(averagePace.toFixed(2)),
+      totalActivities: activities.length,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch club statistics', details: error.message });
+  }
+});
+
+// Fetch club events
+app.get("/run-clubs/:clubId/events", authenticateToken, async (req, res) => {
+  try {
+    const events = await prisma.event.findMany({
+      where: { clubId: parseInt(req.params.clubId) },
+      include: {
+        participants: {
+          select: { id: true },
+        },
+      },
+      orderBy: { date: "asc" },
+    });
+
+    const eventsWithParticipantCount = events.map((event) => ({
+      ...event,
+      participantCount: event.participants.length,
+      participants: undefined, // Remove the participants array from the response
+    }));
+
+    res.json(eventsWithParticipantCount);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Failed to fetch club events", details: error.message });
   }
 });
 
