@@ -16,11 +16,10 @@ const RunClubDetail = ({ currentUser }) => {
   const [club, setClub] = useState(null);
   const [loading, setLoading] = useState(true);
   const [membershipChanged, setMembershipChanged] = useState(false);
-  const [clubStats, setClubStats] = useState(null);
 
   useEffect(() => {
     fetchClubDetail();
-  }, [id]);
+  }, [id, membershipChanged]);
 
   const fetchClubDetail = async () => {
     try {
@@ -55,10 +54,12 @@ const RunClubDetail = ({ currentUser }) => {
       message.success(data.message);
       setClub((prevClub) => ({
         ...prevClub,
-        isUserMember: data.isUserMember,
-        _count: { members: data.updatedClub._count.members },
+        isUserMember: action === "join",
+        memberCount:
+          action === "join"
+            ? prevClub.memberCount + 1
+            : prevClub.memberCount - 1,
       }));
-      setClubStats(data.updatedStats);
       setMembershipChanged((prev) => !prev);
     } catch (error) {
       message.error(`Failed to ${action} run club`);
@@ -89,17 +90,13 @@ const RunClubDetail = ({ currentUser }) => {
         >
           <Card.Meta
             title={`Location: ${club.location}`}
-            description={`Members: ${club._count.members}`}
+            description={`Members: ${club.memberCount}`}
           />
           <p style={{ marginTop: 16 }}>{club.description}</p>
         </Card>
 
-        <ClubStatistics
-          clubId={id}
-          membershipChanged={membershipChanged}
-          stats={clubStats}
-          setStats={setClubStats}
-        />
+        <ClubStatistics clubId={id} membershipChanged={membershipChanged} />
+
         <Tabs defaultActiveKey="1" style={{ marginTop: 20 }}>
           <TabPane tab="Discussion" key="1">
             <ClubChat clubId={id} currentUser={currentUser} />
@@ -108,7 +105,11 @@ const RunClubDetail = ({ currentUser }) => {
             <UpcomingEvents clubId={id} />
           </TabPane>
           <TabPane tab="Members" key="3">
-            <ClubMembersList clubId={id} currentUser={currentUser} />
+            <ClubMembersList
+              clubId={id}
+              currentUser={currentUser}
+              membershipChanged={membershipChanged}
+            />
           </TabPane>
         </Tabs>
       </Content>

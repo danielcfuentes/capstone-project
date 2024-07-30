@@ -1,41 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { Card, Statistic, Row, Col, Spin, message } from "antd";
+import React from "react";
+import { Card, Statistic, Row, Col } from "antd";
 import {
   DashboardOutlined,
   FireOutlined,
   FieldTimeOutlined,
 } from "@ant-design/icons";
-import { getHeaders } from "../../utils/apiConfig";
 
-const ClubStatistics = ({ clubId, membershipChanged, stats, setStats }) => {
-  const [loading, setLoading] = useState(!stats);
+const ClubStatistics = ({ club }) => {
+  if (!club || !club.stats) return <div>Loading statistics...</div>;
 
-  useEffect(() => {
-    if (!stats) {
-      fetchStats();
-    }
-  }, [clubId, membershipChanged]);
-
-  const fetchStats = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_POST_ADDRESS}/run-clubs/${clubId}/statistics`,
-        {
-          headers: getHeaders(),
-        }
-      );
-      if (!response.ok) throw new Error("Failed to fetch statistics");
-      const data = await response.json();
-      setStats(data);
-    } catch (error) {
-      message.error("Error fetching statistics:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) return <Spin size="large" />;
-  if (!stats) return <div>No statistics available</div>;
+  const { stats } = club;
 
   return (
     <Card title="Club Statistics" className="club-statistics">

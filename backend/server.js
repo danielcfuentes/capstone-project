@@ -1306,20 +1306,36 @@ app.get("/run-clubs/:id", authenticateToken, async (req, res) => {
       where: { id: parseInt(id) },
       include: {
         owner: { select: { username: true } },
-        _count: { select: { ClubMember: true } },
         ClubMember: {
-          where: { userId: req.user.id },
-          select: { userId: true },
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
         },
       },
     });
 
     if (!club) return res.status(404).json({ error: "Run club not found" });
 
+    const isUserMember = club.ClubMember.some(
+      (member) => member.user.id === req.user.id
+    );
+
+    const clubStats = await calculateClubStatistics(parseInt(id));
+
     const clubWithMembershipStatus = {
       ...club,
-      isUserMember: club.ClubMember.length > 0,
-      memberCount: club._count.ClubMember,
+      isUserMember,
+      memberCount: club.ClubMember.length,
+      members: club.ClubMember.map((member) => ({
+        id: member.user.id,
+        username: member.user.username,
+      })),
+      stats: clubStats,
       ClubMember: undefined, // Remove the ClubMember array from the response
     };
 
@@ -1479,18 +1495,25 @@ app.get("/run-clubs/:clubId/events", authenticateToken, async (req, res) => {
 // Helper function to calculate club statistics
 async function calculateClubStatistics(clubId) {
   const clubMembers = await prisma.clubMember.findMany({
-    where: { clubId: parseInt(clubId) },
+    where: { clubId },
     select: { userId: true },
   });
-  const memberIds = clubMembers.map(member => member.userId);
+  const memberIds = clubMembers.map((member) => member.userId);
 
   const activities = await prisma.userActivity.findMany({
     where: { userId: { in: memberIds } },
   });
 
-  const totalDistance = activities.reduce((sum, activity) => sum + activity.distance, 0);
-  const totalDuration = activities.reduce((sum, activity) => sum + activity.duration, 0);
-  const averagePace = totalDistance > 0 ? (totalDuration / 60) / totalDistance : 0;
+  const totalDistance = activities.reduce(
+    (sum, activity) => sum + activity.distance,
+    0
+  );
+  const totalDuration = activities.reduce(
+    (sum, activity) => sum + activity.duration,
+    0
+  );
+  const averagePace =
+    totalDistance > 0 ? totalDuration / 60 / totalDistance : 0;
 
   return {
     totalDistance: parseFloat(totalDistance.toFixed(2)),
