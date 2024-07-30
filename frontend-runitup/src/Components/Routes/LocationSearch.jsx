@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { AutoComplete } from "antd";
+import { AutoComplete, message } from "antd";
 import mapboxgl from "mapbox-gl";
 
 const LocationSearch = ({ placeholder, onChange, value }) => {
@@ -28,7 +28,7 @@ const LocationSearch = ({ placeholder, onChange, value }) => {
         }));
         setOptions(newOptions);
       } catch (error) {
-        console.error("Error fetching location suggestions:", error);
+        message.error("Error fetching location suggestions:", error);
       }
     } else {
       setOptions([]);

@@ -147,7 +147,7 @@ const RoutesPage = () => {
         form.setFieldsValue({ startLocation: data[0].startLocation });
       }
     } catch (error) {
-      console.error("Error fetching last activity:", error);
+      message.error("Error fetching last activity:", error);
     }
   };
 
